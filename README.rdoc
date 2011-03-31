@@ -6,6 +6,97 @@ crucial database operations from primitive selects and updates to more complex o
 batch updates, prepared statements and transactions.
 As the name implies, only works on JRuby.
 
+= Examples
+
+== Prerequisites
+Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
+ export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java.jar
+
+
+== Connecting to a database
+
+ # :driver and :url must be given
+ conn = JDBCHelper::Connection.new(
+              :driver => 'com.mysql.jdbc.Driver',
+              :url    => 'jdbc:mysql://localhost/test')
+ conn.close
+ 
+ 
+ # Optional :user and :password
+ conn = JDBCHelper::Connection.new(
+              :driver   => 'com.mysql.jdbc.Driver',
+              :url      => 'jdbc:mysql://localhost/test',
+              :user     => 'mysql',
+              :password => '')
+ conn.close
+ 
+ 
+ # MySQL shortcut connector
+ conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
+ conn.close
+  
+== Querying database table
+
+ conn.query("SELECT a, b, c FROM T") do | row |
+     p row.labels
+     p row.rownum
+
+     puts row.a, row.b, row.c
+     puts row[0], row[1], row[2]
+     puts row['a'], row['b'], row['c']
+ end
+
+ # Returns an array of rows when block is not given
+ rows = conn.query("SELECT b FROM T")
+ uniq_rows = rows.uniq
+
+ # You can even nest queries
+ conn.query("SELECT a FROM T") do | row1 |
+     conn.query("SELECT * FROM T_#{row1.a}") do | row2 |
+         # ...
+     end
+ end
+== Updating database table
+ del_count = conn.update("DELETE FROM T")
+
+== Transaction
+ committed = conn.transaction do | tx |
+     # ...
+     # Transaction logic here
+     # ...
+ 
+     if success
+         tx.commit
+     else
+         tx.rollback
+     end
+ end
+
+== Using batch interface
+ conn.add_batch("DELETE FROM T");
+ conn.execute_batch
+ conn.add_batch("DELETE FROM T");
+ conn.clear_batch
+  
+== Using prepared statements
+ p_sel = conn.prepare("SELECT * FROM T WHERE b = ? and c = ?")
+ p_sel.query(100, 200) do | row |
+     p row
+ end
+ p_sel.close
+
+ p_upd = conn.prepare("UPDATE T SET a = ? WHERE b = ?")
+ count = 0
+ 100.times do | i |
+     count += p_upd.update('updated a', i)
+ end
+
+ p_upd.add_batch('pstmt + batch', 10)
+ p_upd.add_batch('pstmt + batch', 20)
+ p_upd.add_batch('pstmt + batch', 30)
+ p_upd.execute_batch
+ p_upd.close
+
 == Contributing to jdbc-helper
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
