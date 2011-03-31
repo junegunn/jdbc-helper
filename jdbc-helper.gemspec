@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{jdbc-helper}
-  s.version = "0.1.1"
+  s.version = "0.1.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Junegunn Choi"]
-  s.date = %q{2011-03-31}
+  s.date = %q{2011-04-01}
   s.description = %q{JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to crucial database operations from primitive selects and updates to more complex ones involving batch updates, prepared statements and transactions.}
   s.email = %q{junegunn.c@gmail.com}
   s.extra_rdoc_files = [

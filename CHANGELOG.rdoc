@@ -1,3 +1,5 @@
-=== 0.1.0 / 2011/01/31
+=== 0.1.0 / 2011/03/31
 * Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained from now on.
 
+=== 0.1.1-0.1.2 / 2011/04/01
+* Yanked bad gem.
