@@ -1,0 +1,13 @@
+---
+mysql:
+    driver: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost/test
+    user: mysql
+    password:
+
+# oracle:
+#     driver: com.mysql.jdbc.Driver
+#     url: jdbc:mysql://localhost/test
+#     user: mysql
+#     password:
+

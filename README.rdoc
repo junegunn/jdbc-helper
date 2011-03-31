@@ -1,6 +1,10 @@
 = jdbc-helper
 
-Description goes here.
+A JDBC helper for Ruby/Database developers.
+JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to
+crucial database operations from primitive selects and updates to more complex ones involving
+batch updates, prepared statements and transactions.
+As the name implies, only works on JRuby.
 
 == Contributing to jdbc-helper
  
