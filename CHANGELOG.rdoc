@@ -1,3 +1,3 @@
 === 0.1.0 / 2011/01/31
-* Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained.
+* Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained from now on.
 
