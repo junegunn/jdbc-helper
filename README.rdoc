@@ -56,6 +56,17 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
          # ...
      end
  end
+
+ # `enumerate' method returns an Enumerable object if block is not given.
+ # When the result set of the query is expected to be large and you wish to
+ # chain enumerators, `enumerate' is much preferred over `query'. (which returns the
+ # array of the entire rows)
+ conn.enumerate("SELECT * FROM LARGE_T").each_slice(1000) do | slice |
+	slice.each do
+		# ...
+	end
+ end
+
 == Updating database table
  del_count = conn.update("DELETE FROM T")
 
