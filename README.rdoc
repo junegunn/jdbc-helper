@@ -62,7 +62,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  # chain enumerators, `enumerate' is much preferred over `query'. (which returns the
  # array of the entire rows)
  conn.enumerate("SELECT * FROM LARGE_T").each_slice(1000) do | slice |
-	slice.each do
+	slice.each do | row |
 		# ...
 	end
  end
