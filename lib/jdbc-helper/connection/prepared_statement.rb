@@ -105,8 +105,9 @@ private
 				@pstmt.set_null(idx += 1, java.sql.Types::NULL)
 			elsif setter = SETTER_MAP[param.class.to_s]
 				if setter == :setBinaryStream
-					@pstmt.send(setter, idx += 1,
-								param.getBinaryStream, param.length)
+					@pstmt.send(setter, idx += 1, param.getBinaryStream, param.length)
+				elsif setter == :setTimestamp && param.is_a?(Time)
+					@pstmt.send(setter, idx += 1, java.sql.Timestamp.new(param.to_i * 1000))
 				else
 					@pstmt.send(setter, idx += 1, param)
 				end
@@ -126,12 +127,16 @@ private
 
 	SETTER_MAP =
 	{
- 		'java.sql.Date' => :setDate,
- 		'java.sql.Time' => :setTime,
- 		'java.sql.Timestamp' => :setTimestamp,
-		'java.sql.Blob' => :setBinaryStream,
+ 		'Java::JavaSql::Date' => :setDate,
+ 		'Java::JavaSql::Time' => :setTime,
+ 		'Java::JavaSql::Timestamp' => :setTimestamp,
+ 		'Time'                     => :setTimestamp,
+		'Java::JavaSql::Blob' => :setBinaryStream,
 
-		'com.mysql.jdbc.Blob' => :setBinaryStream
+		# Only available when MySQL JDBC driver is loaded.
+		# So we use the string representation of the class.
+		'Java::ComMysqlJdbc::Blob' => :setBinaryStream
+
 		# FIXME-MORE
 	} # :nodoc:
 

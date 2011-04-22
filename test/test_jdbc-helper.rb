@@ -49,11 +49,20 @@ class TestJdbcHelper < Test::Unit::TestCase
 
 	def reset_test_table conn
 		conn.update "drop table #{TEST_TABLE}" rescue nil
-		cnt = conn.update '
-			create table tmp_jdbc_helper_test (
+		cnt = conn.update "
+			create table #{TEST_TABLE} (
 				a int primary key,
 				b varchar(100)
-			)'
+			)"
+		assert_equal 0, cnt
+	end
+
+	def reset_test_table_ts conn
+		conn.update "drop table #{TEST_TABLE}" rescue nil
+		cnt = conn.update "
+			create table #{TEST_TABLE} (
+				a timestamp
+			)"
 		assert_equal 0, cnt
 	end
 
@@ -286,6 +295,23 @@ class TestJdbcHelper < Test::Unit::TestCase
 				conn.close
 				assert conn.closed?
 			end
+		end
+	end
+
+	def test_setter_timestamp
+		each_connection do | conn |
+			# Java timestamp
+			reset_test_table_ts conn
+			ts = java.sql.Timestamp.new(Time.now.to_i * 1000)
+			conn.prepare("insert into #{TEST_TABLE} values (?)").update(ts)
+			assert_equal ts, conn.query("select * from #{TEST_TABLE}")[0][0]
+
+			# Ruby time
+			reset_test_table_ts conn
+			ts = Time.now
+			conn.prepare("insert into #{TEST_TABLE} values (?)").update(ts)
+			got = conn.query("select * from #{TEST_TABLE}")[0][0]
+			assert_equal ts.to_i * 1000, got.getTime
 		end
 	end
 end

@@ -1,5 +1,11 @@
-=== 0.1.0 / 2011/03/31
-* Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained from now on.
+=== 0.1.3 / 2011/04/22
+* Bug fix: setTimestamp now works correctly for java.sql.Timestamp
+* Usability: Ruby Time object is automatically converted to java.sql.Timestamp object if the
+             type of the target column is Timestamp.
 
 === 0.1.1-0.1.2 / 2011/04/01
 * Yanked bad gem.
+
+=== 0.1.0 / 2011/03/31
+* Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained from now on.
+
