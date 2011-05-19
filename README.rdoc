@@ -119,7 +119,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   conn.table('test.data').update(:a => 1, :b => 2, :where => { :c => 3 })
   conn.table('test.data').insert(:a => 10, :b => 20, :c => 30)
   conn.table('test.data').insert_ignore(:a => 10, :b => 20, :c => 30)
-  conn.table('test.data').insert_replace(:a => 10, :b => 20, :c => 30)
+  conn.table('test.data').replace(:a => 10, :b => 20, :c => 30)
   conn.table('test.data').delete(:c => 3)
   conn.table('test.data').truncate_table!
   conn.table('test.data').drop_table!
