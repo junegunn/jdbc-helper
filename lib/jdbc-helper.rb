@@ -15,6 +15,8 @@ module JavaSql # :nodoc:
 	include_package 'java.sql'
 end
 
+require 'jdbc-helper/sql'
+require 'jdbc-helper/object_wrapper'
 require 'jdbc-helper/constants'
 require 'jdbc-helper/connection'
 require 'jdbc-helper/connector'

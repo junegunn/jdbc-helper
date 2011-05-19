@@ -86,15 +86,28 @@ private
 		@labels_d = col_labels.map { | l | l.downcase }
 		@values = values
 		@rownum = rownum
+
+		# @labels_d.each do | l |
+		# 	(class << self; self; end).instance_eval do
+		# 		define_method l do
+		# 			self[l]
+		# 		end
+		# 	end
+		# end
 	end
 
+	# Performs better than defining methods
 	def method_missing(symb, *args)
 		if vidx = @labels_d.index(symb.to_s.downcase)
-			@values[vidx]
+			begin
+				@values[vidx]
+			rescue NameError
+				raise NoMethodError.new("undefined method or attribute `#{symb}'")
+			end
 		elsif @values.respond_to?(symb)
 			@values.send(symb, *args)
 		else
-			raise NameError.new("Unknown method: #{symb}")
+			raise NoMethodError.new("undefined method or attribute `#{symb}'")
 		end
 	end
 

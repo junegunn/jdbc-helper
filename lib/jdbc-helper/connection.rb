@@ -102,8 +102,6 @@ module JDBCHelper
 #  p_upd.execute_batch
 #  p_upd.close
 class Connection
-	Stat = Struct.new("DBExecStat", :type, :elapsed, :success_count, :fail_count) # :nodoc:
-
 	# Returns the statistics of the previous operation
 	def prev_stat
 		@prev_stat.dup
@@ -174,7 +172,7 @@ class Connection
 		return @pstmts[qstr] if @pstmts.has_key? qstr
 
 		pstmt =	PreparedStatement.send(:new, self, @pstmts, qstr,
-									  measure(:prepare) { @conn.prepare_statement(qstr) })
+									  measure_exec(:prepare) { @conn.prepare_statement(qstr) })
 		@pstmts[qstr] = pstmt
 		pstmt
 	end
@@ -210,7 +208,7 @@ class Connection
 		check_closed
 
 		@spool.with do | stmt |
-			ret = measure(:update) { stmt.execute_update(qstr) }
+			ret = measure_exec(:update) { stmt.execute_update(qstr) }
 		end
 	end
 
@@ -231,7 +229,7 @@ class Connection
 		check_closed
 
 		@spool.with do | stmt |
-			measure(:query) { stmt.execute(qstr) }
+			measure_exec(:query) { stmt.execute(qstr) }
 			process_and_close_rset(stmt.get_result_set, &blk)
 		end
 	end
@@ -254,7 +252,7 @@ class Connection
 
 		stmt = @spool.take
 		begin
-			measure(:query) { stmt.execute(qstr) }
+			measure_exec(:query) { stmt.execute(qstr) }
 		rescue Exception
 			@spool.give stmt
 			raise
@@ -276,7 +274,7 @@ class Connection
 		check_closed
 
 		return unless @bstmt
-		ret = measure(:execute_batch) { @bstmt.execute_batch }
+		ret = measure_exec(:execute_batch) { @bstmt.execute_batch }
 		@spool.give @bstmt
 		@bstmt = nil
 		ret
@@ -313,6 +311,22 @@ class Connection
 	# Returns if this connection is closed or not
 	def closed?
 		@conn.nil?
+	end
+
+	def method_missing(symb, *args)
+		raise NoMethodError.new("undefined method `#{symb}'") if args.length > 0
+		return JDBCHelper::ObjectWrapper.send(:new, self, [symb])
+	end
+
+	class Stat
+		attr_accessor :type, :elapsed, :success_count, :fail_count
+
+		def initialize(t, e, s, f)
+			self.type = t
+			self.elapsed = e
+			self.success_count = s
+			self.fail_count = f
+		end
 	end
 
 private
@@ -374,7 +388,7 @@ private
 		accum.fail_count += fail_count
 	end
 
-	def measure(type)
+	def measure_exec(type)
 		begin
 			st = Time.now
 			ret = yield

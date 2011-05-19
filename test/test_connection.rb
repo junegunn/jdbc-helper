@@ -1,27 +1,15 @@
 require 'helper'
 
-class TestJdbcHelper < Test::Unit::TestCase
+class TestConnection < Test::Unit::TestCase
+	include JDBCHelperTestHelper
+
 	def setup
-		require 'yaml'
-		@config = YAML.load File.read(File.dirname(__FILE__) + '/database.yml')
 	end
 
 	def teardown
-
 	end
 
 	TEST_TABLE = 'tmp_jdbc_helper_test'
-
-	def each_connection
-		@config.each do | db, conn_info |
-			conn = JDBCHelper::Connection.new(conn_info)
-			begin
-				yield conn
-			ensure
-				conn.close
-			end
-		end
-	end
 
 	def get_one_two
 		"
@@ -42,7 +30,7 @@ class TestJdbcHelper < Test::Unit::TestCase
 		assert_equal 'two', rec[1]
 		assert_equal 'two', rec['two']
 
-		assert_raise(NameError) { rec.three }
+		assert_raise(NoMethodError) { rec.three }
 		assert_raise(NameError) { rec['three'] }
 		assert_raise(RangeError) { rec[3] }
 	end
@@ -69,7 +57,7 @@ class TestJdbcHelper < Test::Unit::TestCase
 	# ---------------------------------------------------------------
 
 	def test_connect_and_close
-		@config.each do | db, conn_info |
+		config.each do | db, conn_info |
 			4.times do | i |
 				# With or without timeout parameter
 				conn_info['timeout'] = 60 if i % 2 == 1
@@ -272,28 +260,6 @@ class TestJdbcHelper < Test::Unit::TestCase
 
 				assert_equal (i == 0 ? 0 : count),
 					conn.query("select count(*) from #{TEST_TABLE}").first.first
-			end
-		end
-	end
-
-	def test_connectors
-		@config.each do | db, conn_info |
-			if db == 'mysql'
-				host = conn_info['url'].match(%r{//(.*?)/})[1]
-				db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
-				conn = JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db)
-
-				assert conn.closed? == false
-				conn.close
-				assert conn.closed?
-			elsif db == 'oracle'
-				host = conn_info['url'].match(%r{//(.*?)/})[1]
-				svc = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
-				conn = JDBCHelper::OracleConnector.connect(host, conn_info['user'], conn_info['password'], svc)
-
-				assert conn.closed? == false
-				conn.close
-				assert conn.closed?
 			end
 		end
 	end

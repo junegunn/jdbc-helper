@@ -4,10 +4,12 @@ mysql:
     url: jdbc:mysql://localhost/test
     user: mysql
     password:
+    database: test
 
 # oracle:
 #     driver: com.mysql.jdbc.Driver
-#     url: jdbc:mysql://localhost/test
-#     user: mysql
+#     url: jdbc:oracle:thin:@localhost/test
+#     user: test
 #     password:
+#     database: test
 

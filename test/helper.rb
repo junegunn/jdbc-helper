@@ -15,3 +15,25 @@ require 'jdbc-helper'
 
 class Test::Unit::TestCase
 end
+
+module JDBCHelperTestHelper
+	require 'yaml'
+	def config
+		@db_config ||= YAML.load File.read(File.dirname(__FILE__) + '/database.yml')
+	end
+
+	def each_connection(&block)
+		config.each do | db, conn_info |
+			conn = JDBCHelper::Connection.new(conn_info)
+			begin
+				if block.arity == 1
+					yield conn
+				else
+					yield conn, conn_info
+				end
+			ensure
+				conn.close
+			end
+		end
+	end
+end

@@ -31,7 +31,7 @@ class PreparedStatement
 		check_closed
 
 		set_params(params)
-		measure(:p_update) { @pstmt.execute_update }
+		measure_exec(:p_update) { @pstmt.execute_update }
 	end
 
 	def query(*params, &blk)
@@ -40,7 +40,7 @@ class PreparedStatement
 		set_params(params)
 		# sorry, ignoring privacy
 		@conn.send(:process_and_close_rset,
-				   measure(:p_query) { @pstmt.execute_query }, &blk)
+				   measure_exec(:p_query) { @pstmt.execute_query }, &blk)
 	end
 
 	def enumerate(*params, &blk)
@@ -49,7 +49,7 @@ class PreparedStatement
 		return query(*params, &blk) if block_given?
 
 		set_params(params)
-		ResultSetEnumerator.new(measure(:p_query) { @pstmt.execute_query })
+		ResultSetEnumerator.new(measure_exec(:p_query) { @pstmt.execute_query })
 	end
 
 	# batch interface
@@ -62,7 +62,7 @@ class PreparedStatement
 	def execute_batch
 		check_closed
 
-		measure(:p_execute_batch) {
+		measure_exec(:p_execute_batch) {
 			@pstmt.executeBatch
 		}
 	end
@@ -117,8 +117,8 @@ private
 		end
 	end
 
-	def measure(type, &blk)	# :nodoc:
-		@conn.send(:measure, type, &blk)
+	def measure_exec(type, &blk)	# :nodoc:
+		@conn.send(:measure_exec, type, &blk)
 	end
 
 	def check_closed
