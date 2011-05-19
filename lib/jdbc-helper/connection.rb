@@ -10,15 +10,12 @@ module JDBCHelper
 # Encapsulates JDBC database connection.
 # Lets you easily execute SQL statements and access their results.
 #
-#
-# = Examples
-# 
-# == Prerequisites
-# Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
+# @example Prerequisites
+#  # Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
 #  export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java.jar
 # 
 # 
-# == Connecting to a database
+# @example Connecting to a database
 # 
 #  # :driver and :url must be given
 #  conn = JDBCHelper::Connection.new(
@@ -40,7 +37,7 @@ module JDBCHelper
 #  conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
 #  conn.close
 #	
-# == Querying database table
+# @example Querying database table
 #
 #  conn.query("SELECT a, b, c FROM T") do | row |
 #      p row.labels
@@ -61,10 +58,10 @@ module JDBCHelper
 #          # ...
 #      end
 #  end
-# == Updating database table
+# @example Updating database table
 #  del_count = conn.update("DELETE FROM T")
 # 
-# == Transaction
+# @example Transaction
 #  committed = conn.transaction do | tx |
 #      # ...
 #      # Transaction logic here
@@ -77,13 +74,13 @@ module JDBCHelper
 #      end
 #  end
 # 
-# == Using batch interface
+# @example Using batch interface
 #  conn.add_batch("DELETE FROM T");
 #  conn.execute_batch
 #  conn.add_batch("DELETE FROM T");
 #  conn.clear_batch
 #   
-# == Using prepared statements
+# @example Using prepared statements
 #  p_sel = conn.prepare("SELECT * FROM T WHERE b = ? and c = ?")
 #  p_sel.query(100, 200) do | row |
 #      p row
@@ -109,6 +106,7 @@ class Connection
 	end
 
 	# Returns the accumulated statistics of each operation
+	# @return [Hash] Accumulated statistics of each type of operation
 	attr_reader :stats
 
 	# Returns the underlying JDBC Connection object.
@@ -125,6 +123,7 @@ class Connection
 	#
 	# Must be closed explicitly if not used.
 	# If a block is given, the connection is automatically closed after executing the block.
+	# @param [Hash] args
 	def initialize(args = {})
 		# String-tolerance..
 		%w[driver url user password timeout].each do | strk |
@@ -167,6 +166,7 @@ class Connection
 	end
 
 	# Creates a prepared statement, which is also an encapsulation of Java PreparedStatement object
+	# @param [String] qstr SQL string
 	def prepare(qstr)
 		check_closed
 
@@ -181,6 +181,8 @@ class Connection
 	# Executes the given code block as a transaction. Returns true if the transaction is committed.
 	# A transaction object is passed to the block, which only has commit and rollback methods.
 	# The execution breaks out of the code block when either of the methods is called.
+	# @yield [JDBCHelper::Connection::Transaction] Responds to commit and rollback.
+	# @return [Boolean] True if committed
 	def transaction
 		check_closed
 
@@ -205,6 +207,8 @@ class Connection
 	end
 
 	# Executes an update and returns the count of the updated rows.
+	# @param [String] qstr SQL string
+	# @return [Fixnum] Count of affected records
 	def update(qstr)
 		check_closed
 
@@ -226,6 +230,9 @@ class Connection
 	#           # ... and so on ...
 	#       end
 	#   end
+	# @param [String] qstr SQL string
+	# @yield [JDBCHelper::Connection::Row]
+	# @return [Array]
 	def query(qstr, &blk)
 		check_closed
 
@@ -246,6 +253,9 @@ class Connection
 	#       puts
 	#   end
 	#
+	# @param [String] qstr SQL string
+	# @yield [JDBCHelper::Connection::Row] Yields each record if block is given
+	# @return [JDBCHelper::Connection::ResultSetEnumerator] Returns an enumerator if block is not given
 	def enumerate(qstr, &blk)
 		check_closed
 
@@ -263,6 +273,9 @@ class Connection
 	end
 
 	# Adds a statement to be executed in batch
+	# Adds to the batch
+	# @param [String] qstr
+	# @return [NilClass]
 	def add_batch(qstr)
 		check_closed
 
@@ -271,6 +284,7 @@ class Connection
 	end
 
 	# Executes batched statements. No effect when no statment is added
+	# @return [NilClass]
 	def execute_batch
 		check_closed
 
@@ -282,6 +296,7 @@ class Connection
 	end
 
 	# Clears the batched statements
+	# @return [NilClass]
 	def clear_batch
 		check_closed
 
@@ -293,6 +308,8 @@ class Connection
 
 	# Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
 	# This is only a hint. It may have no effect at all.
+	# @param [Fixnum] fsz
+	# @return [NilClass]
 	def set_fetch_size(fsz)
 		check_closed
 
@@ -301,6 +318,7 @@ class Connection
 	end
 
 	# Closes the connection
+	# @return [NilClass]
 	def close
 		return if closed?
 		@pstmts.each { | q, pstmt | pstmt.close }
@@ -310,10 +328,13 @@ class Connection
 	end
 
 	# Returns if this connection is closed or not
+	# @return [Boolean]
 	def closed?
 		@conn.nil?
 	end
 
+	# @param [String] table_name Name of the table to be wrapped
+	# @return [JDBCHelper::TableWrapper]
 	def table table_name
 		JDBCHelper::TableWrapper.new self, table_name
 	end
@@ -334,11 +355,13 @@ private
 	# Transaction object passed to the code block given to transaction method
 	class Transaction
 		# Commits the transaction
+		# @raise [JDBCHelper::Transaction::Commit]
 		def commit
 			@conn.commit
 			raise Commit
 		end
 		# Rolls back this transaction
+		# @raise [JDBCHelper::Transaction::Rollback]
 		def rollback
 			@conn.rollback
 			raise Rollback

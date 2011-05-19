@@ -7,6 +7,13 @@ class MySQLConnector
 	include Constants
 	include Constants::Connector
 
+	# @param [String] host
+	# @param [String] user
+	# @param [String] password
+	# @param [String] db
+	# @param [Fixnum] timeout
+	# @param [Hash] extra_params
+	# @return [JDBCHelper::Connection]
 	def self.connect(host, user, password, db,
 					 timeout = DEFAULT_LOGIN_TIMEOUT, 
 					 extra_params = DEFAULT_PARAMETERS[:mysql])

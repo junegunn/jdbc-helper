@@ -2,10 +2,11 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
-# Internal implementation for supporting query nesting.
-# Not thread-safe. Well, sharing a JDBC connection between threads is not the best idea anyway.
 class Connection
-class StatementPool # :nodoc:
+# Internal implementation for supporting query nesting.
+# Not thread-safe. (Sharing a JDBC connection between threads is not the best idea anyway.)
+# @private
+class StatementPool
 	def initialize(conn, max_size = 20)
 		@conn = conn
 		@max_size = max_size # TODO

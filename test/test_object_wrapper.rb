@@ -52,6 +52,9 @@ class TestObjectWrapper < Test::Unit::TestCase
 			assert_raise(ArgumentError) { conn.table("tab'le") }
 			assert_raise(ArgumentError) { conn.table('tab"le') }
 			assert_raise(ArgumentError) { conn.table("tab`le") }
+
+			# Abstract class
+			assert_raise(Exception) { JDBCHelper::ObjectWrapper.new(conn, 'table') }
 		end
 	end
 
@@ -95,6 +98,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
+	# This will fail if the database doesn't support insert ignore syntax
 	def test_insert_ignore
 		each_connection do |conn|
 			create_table conn
@@ -113,6 +117,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
+	# This will fail if the database doesn't support replace syntax
 	def test_replace
 		each_connection do |conn|
 			create_table conn

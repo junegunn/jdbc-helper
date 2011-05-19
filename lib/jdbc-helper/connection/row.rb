@@ -2,12 +2,12 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
+class Connection
 # The result of database queries.
 # Designed to be very flexible on its interface.
 # You can access it like an array, a hash or an ORM object.
 #
-# e.g.
-#
+# @example
 #   conn.query('SELECT a, b, c FROM t') do | row |
 #       puts row.a
 #       puts row[1]
@@ -22,26 +22,36 @@ module JDBCHelper
 #
 #       puts row.rownum
 #   end
-#
-class Connection
 class Row
-	attr_reader :labels, :values, :rownum
+	# @return [Array] Labels of the columns
+	attr_reader :labels
+	# @return [Array] Values in Array
+	attr_reader :values
+	# @return [Fixnum] Sequential row number assigned within the scope of the query
+	attr_reader :rownum
 	alias_method :keys, :labels
 
 	include Enumerable
 
+	# @param [Fixnum/String] idx
+	# @return [Object]
 	def [](idx)
-		if idx.is_a? Fixnum
+		case idx
+		when Fixnum
 			raise RangeError.new("Index out of bound") if idx >= @values.length
 			@values[idx]
-		else
+		when String
 			# case-insensitive, assuming no duplicate labels
 			vidx = @labels_d.index(idx.downcase) or
 				raise NameError.new("Unknown column label: #{idx}")
 			@values[vidx]
+		else
+			# See how it goes...
+			@values[idx]
 		end
 	end
 
+	# @yield [Object]
 	def each(&blk)
 		@values.each { | v | yield v }
 
@@ -50,6 +60,7 @@ class Row
 		# end
 	end
 
+	# @return [String]
 	def inspect
 		strs = []
 		@labels.each do | col |
@@ -58,18 +69,22 @@ class Row
 		'[' + strs.join(', ') + ']'
 	end
 
+	# @return [String]
 	def to_s
 		@values.to_s
 	end
 
+	# @return [Array]
 	def to_a
 		@values
 	end
 
+	# @return [String]
 	def join(sep = $,)
 		to_a.join(sep)
 	end
 
+	# @return [Boolean]
 	def eql?(other)
 		self.hash == other.hash
 	end

@@ -7,6 +7,12 @@ module OracleConnector
 	include Constants
 	include Constants::Connector
 
+	# @param [String] host
+	# @param [String] user
+	# @param [String] password
+	# @param [String] service_name
+	# @param [Fixnum] timeout
+	# @return [JDBCHelper::Connection]
 	def self.connect(host, user, password, service_name, timeout = DEFAULT_LOGIN_TIMEOUT)
 		Connection.new(
 			:driver   => JDBC_DRIVER[:oracle],
@@ -16,6 +22,12 @@ module OracleConnector
 			:timeout  => timeout)
 	end
 
+	# @param [String] host
+	# @param [String] user
+	# @param [String] password
+	# @param [String] sid
+	# @param [Fixnum] timeout
+	# @return [JDBCHelper::Connection]
 	def self.connect_by_sid(host, user, password, sid, timeout = DEFAULT_LOGIN_TIMEOUT)
 		Connection.new(
 			:driver   => JDBC_DRIVER[:oracle],

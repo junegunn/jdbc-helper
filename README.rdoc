@@ -4,7 +4,7 @@ A JDBC helper for Ruby/Database developers.
 JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to
 crucial database operations from primitive selects and updates to more complex ones involving
 batch updates, prepared statements and transactions.
-As the name implies, only works on JRuby.
+As the name implies, this gem only works on JRuby.
 
 = Examples
 
@@ -107,6 +107,22 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  p_upd.add_batch('pstmt + batch', 30)
  p_upd.execute_batch
  p_upd.close
+
+== Using table wrappers (since 0.2.0)
+  # For more complex examples, refer to test/test_object_wrapper.rb
+  
+  conn.table('test.data').count
+  conn.table('test.data').empty?
+  conn.table('test.data').select(:c => 3) do |row|
+    puts row.a
+  end
+  conn.table('test.data').update(:a => 1, :b => 2, :where => { :c => 3 })
+  conn.table('test.data').insert(:a => 10, :b => 20, :c => 30)
+  conn.table('test.data').insert_ignore(:a => 10, :b => 20, :c => 30)
+  conn.table('test.data').insert_replace(:a => 10, :b => 20, :c => 30)
+  conn.table('test.data').delete(:c => 3)
+  conn.table('test.data').truncate_table!
+  conn.table('test.data').drop_table!
 
 == Contributing to jdbc-helper
  

@@ -2,18 +2,18 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
+class Connection
 # An encapsulation of Java PreparedStatment object.
 # Used to execute parameterized queries efficiently.
-# Has a very similar set of interface as JDBCHelper::Connection.
+# Has a very similar set of interface to that of JDBCHelper::Connection.
 #
-# e.g.
-#
+# @example
 #   pstmt = conn.prepare("SELECT * FROM T WHERE a = ? and b = ?")
 #   rows = pstmt.query(10, 20)
 #   enum = pstmt.enumerate(10, 20)
-#
-class Connection
 class PreparedStatement
+	# SQL string
+	# @return [String]
 	attr_reader :sql
 
 	# Returns the encapsulated JDBC PreparedStatement object.
@@ -22,11 +22,13 @@ class PreparedStatement
 	end
 
 	# Returns the number of parameters required
+	# @return [Fixnum]
 	def parameter_count
 		@pmd ||= @pstmt.get_parameter_meta_data
 		@pmd.get_parameter_count
 	end
 
+	# @return [Fixnum]
 	def update(*params)
 		check_closed
 
@@ -34,6 +36,7 @@ class PreparedStatement
 		measure_exec(:p_update) { @pstmt.execute_update }
 	end
 
+	# @return [Array] Returns an Array if block is not given
 	def query(*params, &blk)
 		check_closed
 
@@ -43,6 +46,7 @@ class PreparedStatement
 				   measure_exec(:p_query) { @pstmt.execute_query }, &blk)
 	end
 
+	# @return [JDBCHelper::Connection::ResultSetEnumerator]
 	def enumerate(*params, &blk)
 		check_closed
 
@@ -52,13 +56,15 @@ class PreparedStatement
 		ResultSetEnumerator.new(measure_exec(:p_query) { @pstmt.execute_query })
 	end
 
-	# batch interface
+	# Adds to the batch
+	# @return [NilClass]
 	def add_batch(*params)
 		check_closed
 
 		set_params(params)
 		@pstmt.add_batch
 	end
+	# Executes the batch
 	def execute_batch
 		check_closed
 
@@ -66,6 +72,8 @@ class PreparedStatement
 			@pstmt.executeBatch
 		}
 	end
+	# Clears the batch
+	# @return [NilClass]
 	def clear_batch
 		check_closed
 
@@ -74,12 +82,15 @@ class PreparedStatement
 
 	# Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
 	# This is only a hint. It may no effect at all.
+	# @return [NilClass]
 	def set_fetch_size(fsz)
 		check_closed
 
 		@pstmt.set_fetch_size fsz
 	end
 
+	# Closes the prepared statement
+	# @return [NilClass]
 	def close
 		return if closed?
 		@pstmt.close
@@ -87,6 +98,7 @@ class PreparedStatement
 		@pstmt = @pstmts = nil
 	end
 
+	# @return [Boolean]
 	def closed?
 		@pstmt.nil?
 	end
@@ -127,10 +139,10 @@ private
 
 	SETTER_MAP =
 	{
- 		'Java::JavaSql::Date' => :setDate,
- 		'Java::JavaSql::Time' => :setTime,
- 		'Java::JavaSql::Timestamp' => :setTimestamp,
- 		'Time'                     => :setTimestamp,
+		'Java::JavaSql::Date' => :setDate,
+		'Java::JavaSql::Time' => :setTime,
+		'Java::JavaSql::Timestamp' => :setTimestamp,
+		'Time'                     => :setTimestamp,
 		'Java::JavaSql::Blob' => :setBinaryStream,
 
 		# Only available when MySQL JDBC driver is loaded.

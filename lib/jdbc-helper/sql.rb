@@ -155,7 +155,10 @@ private
 		end
 	end
 
+	# Class to represent "(IS) NOT NULL" expression in SQL
 	class NotNilClass
+		# Returns the singleton object of NotNilClass
+		# @return [NotNilClass]
 		def self.singleton
 			@@singleton ||= NotNilClass.new
 		end
