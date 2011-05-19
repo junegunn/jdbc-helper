@@ -2,9 +2,9 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
-# Class for enumerating query results
-# Automatically closed after used. When not used, you must close it explicitly by calling "close".
 class Connection
+# Class for enumerating query results.
+# Automatically closed after used. When not used, you must close it explicitly by calling "close".
 class ResultSetEnumerator
 	include Enumerable
 
