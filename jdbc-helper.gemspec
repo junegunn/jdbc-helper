@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{jdbc-helper}
-  s.version = "0.1.2"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Junegunn Choi"]
-  s.date = %q{2011-04-01}
+  s.date = %q{2011-05-19}
   s.description = %q{JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to crucial database operations from primitive selects and updates to more complex ones involving batch updates, prepared statements and transactions.}
   s.email = %q{junegunn.c@gmail.com}
   s.extra_rdoc_files = [
@@ -26,17 +26,23 @@ Gem::Specification.new do |s|
     "lib/jdbc-helper/connector.rb",
     "lib/jdbc-helper/connector/mysql_connector.rb",
     "lib/jdbc-helper/connector/oracle_connector.rb",
-    "lib/jdbc-helper/constants.rb"
+    "lib/jdbc-helper/constants.rb",
+    "lib/jdbc-helper/object_wrapper.rb",
+    "lib/jdbc-helper/sql.rb"
   ]
   s.homepage = %q{http://github.com/junegunn/jdbc-helper}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.6.2}
+  s.rubygems_version = %q{1.7.2}
   s.summary = %q{A JDBC helper for Ruby/Database developers}
   s.test_files = [
     "test/database.yml",
     "test/helper.rb",
-    "test/test_jdbc-helper.rb"
+    "test/test_connection.rb",
+    "test/test_connectors.rb",
+    "test/test_object_wrapper.rb",
+    "test/test_performance.rb",
+    "test/test_sql.rb"
   ]
 
   if s.respond_to? :specification_version then

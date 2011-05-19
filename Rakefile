@@ -15,8 +15,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "jdbc-helper"
   gem.homepage = "http://github.com/junegunn/jdbc-helper"
   gem.license = "MIT"
-  gem.summary = %Q{A JDBC helper for Ruby/Database developers}
-  gem.description = %Q{JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to crucial database operations from primitive selects and updates to more complex ones involving batch updates, prepared statements and transactions.}
+  gem.summary = %Q{A JDBC helper for JRuby/Database developers.}
+  gem.description = %Q{A JDBC helper for JRuby/Database developers.}
   gem.email = "junegunn.c@gmail.com"
   gem.authors = ["Junegunn Choi"]
   gem.files = ['lib/**/*']

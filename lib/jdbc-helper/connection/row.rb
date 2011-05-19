@@ -12,6 +12,7 @@ class Connection
 #       puts row.a
 #       puts row[1]
 #       puts row['c']
+#       puts row[:a]
 #
 #       row.each do | value |
 #           # ...
@@ -33,16 +34,24 @@ class Row
 
 	include Enumerable
 
-	# @param [Fixnum/String] idx
-	# @return [Object]
-	def [](idx)
+	# @overload [](idx)
+	#   @param [Fixnum/String/Symbol/Range] idx Access index
+	#   @return [Object]
+	# @overload [](offset, len)
+	#   @param [Fixnum] offset Start offset
+	#   @param [Fixnum] len Length of Array
+	#   @return [Array]
+	def [](*idx)
+		return @values[*idx] if idx.length > 1
+
+		idx = idx.first
 		case idx
 		when Fixnum
 			raise RangeError.new("Index out of bound") if idx >= @values.length
 			@values[idx]
-		when String
+		when String, Symbol
 			# case-insensitive, assuming no duplicate labels
-			vidx = @labels_d.index(idx.downcase) or
+			vidx = @labels_d.index(idx.to_s.downcase) or
 				raise NameError.new("Unknown column label: #{idx}")
 			@values[vidx]
 		else

@@ -25,10 +25,19 @@ class TestConnection < Test::Unit::TestCase
 		assert_equal 1, rec.one
 		assert_equal 1, rec[0]
 		assert_equal 1, rec['one']
+		assert_equal 1, rec[:one]
+		assert_equal [1], rec[0...1]
+		assert_equal [1], rec[0, 1]
 
 		assert_equal 'two', rec.two
 		assert_equal 'two', rec[1]
 		assert_equal 'two', rec['two']
+		assert_equal ['two'], rec[1..-1]
+		assert_equal ['two'], rec[1, 1]
+
+		assert_equal [1, 'two'], rec[0..1]
+		assert_equal [1, 'two'], rec[0..-1]
+		assert_equal [1, 'two'], rec[0, 2]
 
 		assert_raise(NoMethodError) { rec.three }
 		assert_raise(NameError) { rec['three'] }

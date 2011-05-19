@@ -29,21 +29,25 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
               :user     => 'mysql',
               :password => '')
  conn.close
- 
- 
+
+
  # MySQL shortcut connector
  conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
  conn.close
-  
+
 == Querying database table
 
  conn.query("SELECT a, b, c FROM T") do | row |
-     p row.labels
-     p row.rownum
+     row.labels
+     row.rownum
 
-     puts row.a, row.b, row.c
-     puts row[0], row[1], row[2]
-     puts row['a'], row['b'], row['c']
+     row.a, row.b, row.c          # Dot-notation
+     row[0], row[1], row[2]       # Numeric index
+     row['a'], row['b'], row['c'] # String index. Case-insensitive.
+     row[:a], row[:b], row[:c]    # Symbol index. Case-insensitive.
+
+     row[0..-1]                   # Range index. Returns an array of values.
+     row[0, 3]                    # Offset and length. Returns an array of values.
  end
 
  # Returns an array of rows when block is not given
@@ -62,9 +66,9 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  # chain enumerators, `enumerate' is much preferred over `query'. (which returns the
  # array of the entire rows)
  conn.enumerate("SELECT * FROM LARGE_T").each_slice(1000) do | slice |
-	slice.each do | row |
-		# ...
-	end
+    slice.each do | row |
+        # ...
+    end
  end
 
 == Updating database table
@@ -75,7 +79,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
      # ...
      # Transaction logic here
      # ...
- 
+
      if success
          tx.commit
      else
@@ -88,7 +92,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  conn.execute_batch
  conn.add_batch("DELETE FROM T");
  conn.clear_batch
-  
+
 == Using prepared statements
  p_sel = conn.prepare("SELECT * FROM T WHERE b = ? and c = ?")
  p_sel.query(100, 200) do | row |
@@ -110,7 +114,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
 
 == Using table wrappers (since 0.2.0)
   # For more complex examples, refer to test/test_object_wrapper.rb
-  
+
   conn.table('test.data').count
   conn.table('test.data').empty?
   conn.table('test.data').select(:c => 3) do |row|
@@ -125,7 +129,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   conn.table('test.data').drop_table!
 
 == Contributing to jdbc-helper
- 
+
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
 * Fork the project
