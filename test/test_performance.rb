@@ -7,7 +7,7 @@ class TestPerformance < Test::Unit::TestCase
 	def setup
 		@table = 'tmp_jdbc_helper'
 		@range = 'aaa'..'aaz'
-		@count = 1000
+		@count = 10000
 	end
 
 	def teardown
@@ -33,6 +33,39 @@ class TestPerformance < Test::Unit::TestCase
 				end
 				pins.close
 			}.real}"
+
+			puts "Prepared inserts (batch & chuck-transactional): #{Benchmark.measure {
+				pins = conn.prepare "insert into #{@table} values (#{@range.map{'?'}.join ','})"
+				(0...@count).each_slice(50) do |slice|
+					conn.transaction do
+						slice.each do |i|
+							pins.add_batch *(@range.map {rand @count})
+						end
+						pins.execute_batch
+					end
+				end
+				pins.close
+			}.real}"
+
+			puts "Inserts with hash: #{Benchmark.measure {
+				table = conn.table(@table)
+				@count.times do |i|
+					table.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
+				end
+			}.real}"
+
+			puts "Inserts with hash (chunk-transactional): #{Benchmark.measure {
+				table = conn.table(@table)
+				(0...@count).each_slice(50) do |slice|
+					conn.transaction do
+						slice.each do |i|
+							table.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
+						end
+					end
+				end
+			}.real}"
+
+			assert_equal @count * 5, conn.table(@table).count
 
 			conn.query("select * from #{@table}") do |row|
 				# ...

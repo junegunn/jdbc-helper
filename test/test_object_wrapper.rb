@@ -4,7 +4,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	include JDBCHelperTestHelper
 
 	def setup
-		@table = "tmp_jdbc_helper"
+		@table_name = "tmp_jdbc_helper"
 	end
 
 	def teardown
@@ -16,7 +16,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def create_table conn
 		drop_table conn
 		conn.update "
-			create table tmp_jdbc_helper (
+			create table #{@table_name} (
 				id    int primary key,
 				alpha int,
 				beta  float,
@@ -27,32 +27,31 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 	def drop_table conn
 		begin
-			conn.update "drop table #{@table}"
+			conn.update "drop table #{@table_name}"
 			return true
 		rescue Exception
 			return false
 		end
 	end
 
-	def test_dsl
-		each_connection do |conn, conn_info|
-			# Object
-			assert_equal JDBCHelper::ObjectWrapper, conn.some_table.class
+	def test_wrapper
+		each_connection do |conn|
+			# With symbol
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.table(:some_table)
+			assert_instance_of JDBCHelper::TableWrapper, conn.table(:some_table)
+			assert_equal       'some_table', conn.table(:some_table).name
 
-			# Database.Object
-			assert_equal JDBCHelper::ObjectWrapper, conn.some_database.some_table.class
+			# With string
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.table('db.table')
+			assert_instance_of JDBCHelper::TableWrapper, conn.table('db.table')
+			assert_equal       'db.table', conn.table('db.table').name
 
-			# Database.Object
-			if conn_info.has_key? 'database'
-				assert_equal JDBCHelper::ObjectWrapper, conn.send(conn_info['database']).some_table.class
-			end
-
-			# Takes no parameter
-			assert_raise(NoMethodError) { conn.some_database(1, 2) }
-			assert_raise(NoMethodError) { conn.some_database.some_table(3) }
-
-			# No more than 2 depths
-			assert_raise(NoMethodError) { conn.some_database.some_table.no_more }
+			# Invalid table name
+			assert_raise(ArgumentError) { conn.table('table;') }
+			assert_raise(ArgumentError) { conn.table('table -- ') }
+			assert_raise(ArgumentError) { conn.table("tab'le") }
+			assert_raise(ArgumentError) { conn.table('tab"le') }
+			assert_raise(ArgumentError) { conn.table("tab`le") }
 		end
 	end
 
@@ -71,7 +70,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_empty
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 
 			assert table.empty?
 		end
@@ -80,7 +79,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_insert_count
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 
 			# Count
 			assert_equal 0, table.count
@@ -99,7 +98,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_insert_ignore
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			params = {
 				:id => 1,
 				:alpha => 100, 
@@ -117,7 +116,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_replace
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			params = {
 				:id => 1,
 				:beta => JDBCHelper::SQL.expr('0.1 + 0.2'), 
@@ -135,7 +134,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_select
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			insert table
 			assert_equal 100, table.count
 
@@ -160,7 +159,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_delete
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			insert table
 
 			# Count
@@ -184,7 +183,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_update
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			insert table
 
 			assert_equal 10, table.update(:beta => 0, :where => { :id => (1..10) })
@@ -196,7 +195,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_truncate_table
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			insert table
 
 			table.truncate_table!
@@ -207,10 +206,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def test_drop_table
 		each_connection do |conn|
 			create_table conn
-			table = conn.tmp_jdbc_helper
+			table = conn.table(@table_name)
 			table.drop_table!
 
-			assert drop_table(conn) == false
+			assert_equal false, drop_table(conn)
 		end
 	end
 end

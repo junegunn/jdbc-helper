@@ -42,6 +42,8 @@ class TestSQL < Test::Unit::TestCase
 		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'a--b' -- cde")) }
 		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'aabbb''dd")) }
 		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'aabbb''dd' /* aaa */")) }
+		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(' aabbb"""  ')) }
+		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(' aab`bb``  ')) }
 	end
 
 	def test_select

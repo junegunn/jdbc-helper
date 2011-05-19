@@ -80,10 +80,10 @@ module SQL
 	def self.check expr
 		return nil if expr.nil?
 
-		test = expr.gsub(/'[^']*'/, '')
+		test = expr.gsub(/'[^']*'/, '').gsub(/`[^`]*`/, '').gsub(/"[^"]*"/, '')
 		raise ArgumentError.new("Expression cannot contain semi-colons: #{test}") if test.include?(';')
 		raise ArgumentError.new("Expression cannot contain comments: #{test}") if test.match(%r{--|/\*|\*/})
-		raise ArgumentError.new("Unclosed quotation mark: #{test}") if test.include?("'")
+		raise ArgumentError.new("Unclosed quotation mark: #{test}") if test.match(/['"`]/)
 
 		return expr
 	end

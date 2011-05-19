@@ -103,6 +103,7 @@ module JDBCHelper
 #  p_upd.close
 class Connection
 	# Returns the statistics of the previous operation
+	# @return [JDBCHelper::Connection::Stat] The statistics of the previous operation.
 	def prev_stat
 		@prev_stat.dup
 	end
@@ -313,11 +314,11 @@ class Connection
 		@conn.nil?
 	end
 
-	def method_missing(symb, *args)
-		raise NoMethodError.new("undefined method `#{symb}'") if args.length > 0
-		return JDBCHelper::ObjectWrapper.send(:new, self, [symb])
+	def table table_name
+		JDBCHelper::TableWrapper.new self, table_name
 	end
 
+	# Statistics
 	class Stat
 		attr_accessor :type, :elapsed, :success_count, :fail_count
 
