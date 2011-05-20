@@ -13,12 +13,20 @@ class Connection
 
 	SETTER_MAP =
 	{
+		'String' => :setString,
+		'Fixnum' => :setInt,
+		'Float' => :setDouble,
+		# See there's a caveat. Check out ParameterizedStatement#set_param
+		'Time' => :setTimestamp,
+
 		'Java::JavaSql::Date' => :setDate,
 		'Java::JavaSql::Time' => :setTime,
 		'Java::JavaSql::Timestamp' => :setTimestamp,
-		'Time'                     => :setTimestamp,
 		'Java::JavaSql::Blob' => :setBinaryStream,
 
+		#########
+		# MySQL #
+		#########
 		# Only available when MySQL JDBC driver is loaded.
 		# So we use the string representation of the class.
 		'Java::ComMysqlJdbc::Blob' => :setBinaryStream
@@ -28,36 +36,36 @@ class Connection
 
 	GETTER_MAP =
 	{
-		java.sql.Types::TINYINT => :get_int,
-		java.sql.Types::SMALLINT => :get_int,
-		java.sql.Types::INTEGER => :get_int,
-		java.sql.Types::BIGINT => :get_long,
+		java.sql.Types::TINYINT => :getInt,
+		java.sql.Types::SMALLINT => :getInt,
+		java.sql.Types::INTEGER => :getInt,
+		java.sql.Types::BIGINT => :getLong,
 
-		java.sql.Types::CHAR => :get_string,
-		java.sql.Types::VARCHAR => :get_string,
-		java.sql.Types::LONGVARCHAR => :get_string,
-		(java.sql.Types::NCHAR        rescue nil) => :get_string,
-		(java.sql.Types::NVARCHAR     rescue nil) => :get_string,
-		(java.sql.Types::LONGNVARCHAR rescue nil) => :get_blob, # FIXME: MySQL
-		java.sql.Types::BINARY => :get_string,
-		java.sql.Types::VARBINARY => :get_string,
-		java.sql.Types::LONGVARBINARY => :get_blob,	# FIXME: MySQL
+		java.sql.Types::CHAR => :getString,
+		java.sql.Types::VARCHAR => :getString,
+		java.sql.Types::LONGVARCHAR => :getString,
+		(java.sql.Types::NCHAR        rescue nil) => :getString,
+		(java.sql.Types::NVARCHAR     rescue nil) => :getString,
+		(java.sql.Types::LONGNVARCHAR rescue nil) => :getBlob, # FIXME: MySQL
+		java.sql.Types::BINARY => :getString,
+		java.sql.Types::VARBINARY => :getString,
+		java.sql.Types::LONGVARBINARY => :getBlob,	# FIXME: MySQL
 
-		java.sql.Types::REAL => :get_double,
-		java.sql.Types::FLOAT => :get_float,
-		java.sql.Types::DOUBLE => :get_double,
-		java.sql.Types::NUMERIC => :get_string, # FIXME: get_big_decimal=no inherent jruby support
-		java.sql.Types::DECIMAL => :get_string, # FIXME: get_big_decimal
+		java.sql.Types::REAL => :getDouble,
+		java.sql.Types::FLOAT => :getFloat,
+		java.sql.Types::DOUBLE => :getDouble,
+		java.sql.Types::NUMERIC => :getString, # FIXME: get_big_decimal=no inherent jruby support
+		java.sql.Types::DECIMAL => :getString, # FIXME: get_big_decimal
 
-		java.sql.Types::DATE => :get_date,
-		java.sql.Types::TIME => :get_time,
-		java.sql.Types::TIMESTAMP => :get_timestamp,
+		java.sql.Types::DATE => :getDate,
+		java.sql.Types::TIME => :getTime,
+		java.sql.Types::TIMESTAMP => :getTimestamp,
 
-		java.sql.Types::BLOB => :get_blob,
-		java.sql.Types::CLOB => :get_string,
-		(java.sql.Types::NCLOB rescue nil) => :get_string,
+		java.sql.Types::BLOB => :getBlob,
+		java.sql.Types::CLOB => :getString,
+		(java.sql.Types::NCLOB rescue nil) => :getString,
 
-		java.sql.Types::BOOLEAN => :get_boolean
+		java.sql.Types::BOOLEAN => :getBoolean
 	} # :nodoc:
 end#Connection
 end#JDBCHelper
