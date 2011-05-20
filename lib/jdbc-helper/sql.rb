@@ -32,7 +32,12 @@ module SQL
 	# Generates SQL where cluase with the given conditions.
 	# Parameter can be either Hash of String.
 	def self.where conds
-		check(where_internal conds)
+		where_clause = where_internal conds
+		where_clause.empty? ? where_clause : check(where_internal conds)
+	end
+
+	# Generates SQL order by cluase with the given conditions.
+	def self.order_by criteria
 	end
 
 	# SQL Helpers
@@ -56,34 +61,41 @@ module SQL
 	# Generates update SQL with hash.
 	# :where element of the given hash is taken out to generate where clause.
 	def self.update table, data_hash
-		where_clause = make_where(data_hash.delete :where)
+		where_clause = where_internal(data_hash.delete :where)
 		updates = data_hash.map { |k, v| "#{k} = #{value v}" }.join(', ')
-		check "update #{table} set #{updates}#{where_clause}"
+		check "update #{table} set #{updates} #{where_clause}".strip
 	end
 
 	# Generates select * SQL with the given conditions
 	def self.select table, conds = nil
-		check "select * from #{table}#{make_where conds}"
+		check "select * from #{table} #{where_internal conds}".strip
 	end
 
 	# Generates count SQL with the given conditions
 	def self.count table, conds = nil
-		check "select count(*) from #{table}#{make_where conds}"
+		check "select count(*) from #{table} #{where_internal conds}".strip
 	end
 
 	# Generates delete SQL with the given conditions
 	def self.delete table, conds = nil
-		check "delete from #{table}#{make_where conds}"
+		check "delete from #{table} #{where_internal conds}".strip
 	end
 
 	# FIXME: Naive protection for SQL Injection
-	def self.check expr
+	def self.check expr, is_name = false
 		return nil if expr.nil?
 
-		test = expr.gsub(/'[^']*'/, '').gsub(/`[^`]*`/, '').gsub(/"[^"]*"/, '')
-		raise ArgumentError.new("Expression cannot contain semi-colons: #{test}") if test.include?(';')
-		raise ArgumentError.new("Expression cannot contain comments: #{test}") if test.match(%r{--|/\*|\*/})
-		raise ArgumentError.new("Unclosed quotation mark: #{test}") if test.match(/['"`]/)
+		tag = is_name ? 'Object name' : 'Expression'
+		test = expr.gsub(/'[^']*'/, '').gsub(/`[^`]*`/, '').gsub(/"[^"]*"/, '').strip
+		raise ArgumentError.new("#{tag} cannot contain (unquoted) semi-colons: #{expr}") if test.include?(';')
+		raise ArgumentError.new("#{tag} cannot contain (unquoted) comments: #{expr}") if test.match(%r{--|/\*|\*/})
+		raise ArgumentError.new("Unclosed quotation mark: #{expr}") if test.match(/['"`]/)
+		raise ArgumentError.new("#{tag} is blank") if test.empty?
+
+		if is_name
+			raise ArgumentError.new(
+				"#{tag} cannot contain (unquoted) parentheses: #{expr}") if test.match(%r{\(|\)})
+		end
 
 		return expr
 	end
@@ -93,51 +105,45 @@ private
 		str.gsub("'", "''")
 	end
 
-	def self.make_where conds
-		str = where_internal conds
-		str = ' where ' + str if str
-		str
-	end
-
 	# No check
 	def self.where_internal conds
-		return nil if conds.nil?
+		return '' if conds.nil?
 
-		case conds
-		when String
-			return nil if conds.strip.empty?
-			conds
-		when Hash
-			return nil if conds.empty?
-			conds.map { |k, v|
-				"#{k} " +
-					case v
-					when NilClass
-						"is null"
-					when NotNilClass
-						"is not null"
-					when Fixnum, Bignum, Float, JDBCHelper::SQL::Expr
-						"= #{v}"
-					when Range
-						">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
-					when Array
-						"in (" + 
-						v.map { |e|
-							case e
-							when String
-								"'#{esc e}'"
-							else
-								e
-							end }.join(', ') + ")"
-					when String
-						"= '#{esc v}'"
-					else
-						raise NotImplementedError.new("Unsupported class: #{v.class}")
-					end
-			}.join(' and ')
-		else
-			raise NotImplementedError.new("Parameter to where must be either Hash or String")
-		end
+		where = 
+			case conds
+			when String
+				conds.strip
+			when Hash
+				conds.map { |k, v|
+					"#{k} " +
+						case v
+						when NilClass
+							"is null"
+						when NotNilClass
+							"is not null"
+						when Fixnum, Bignum, Float, JDBCHelper::SQL::Expr
+							"= #{v}"
+						when Range
+							">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
+						when Array
+							"in (" + 
+							v.map { |e|
+								case e
+								when String
+									"'#{esc e}'"
+								else
+									e
+								end }.join(', ') + ")"
+						when String
+							"= '#{esc v}'"
+						else
+							raise NotImplementedError.new("Unsupported class: #{v.class}")
+						end
+				}.join(' and ')
+			else
+				raise NotImplementedError.new("Parameter to where must be either Hash or String")
+			end
+		where.empty? ? '' : 'where ' + where
 	end
 
 	def self.insert_internal cmd, table, data_hash

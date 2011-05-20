@@ -1,10 +1,18 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
-require 'jdbc-helper/connection/statement_pool'
+require 'jdbc-helper/connection/type_map'
+require 'jdbc-helper/connection/parameterized_statement'
 require 'jdbc-helper/connection/prepared_statement'
+require 'jdbc-helper/connection/callable_statement'
+require 'jdbc-helper/connection/statement_pool'
 require 'jdbc-helper/connection/result_set_enumerator'
 require 'jdbc-helper/connection/row'
+
+require 'jdbc-helper/wrapper/object_wrapper'
+require 'jdbc-helper/wrapper/table_wrapper'
+require 'jdbc-helper/wrapper/function_wrapper'
+require 'jdbc-helper/wrapper/procedure_wrapper'
 
 module JDBCHelper
 # Encapsulates JDBC database connection.
@@ -150,7 +158,6 @@ class Connection
 		
 		@conn = JavaSql::DriverManager.get_connection(args[:url], props)
 		@spool = StatementPool.send :new, self
-		@pstmts = {}
 		@bstmt = nil
 
 		@stats = Hash.new { | h, k | h[k] = Stat.new(k, 0, 0, 0) }
@@ -170,12 +177,17 @@ class Connection
 	def prepare(qstr)
 		check_closed
 
-		return @pstmts[qstr] if @pstmts.has_key? qstr
+		PreparedStatement.send(:new, self, qstr,
+				measure_exec(:prepare) { @conn.prepare_statement(qstr) })
+	end
 
-		pstmt =	PreparedStatement.send(:new, self, @pstmts, qstr,
-									  measure_exec(:prepare) { @conn.prepare_statement(qstr) })
-		@pstmts[qstr] = pstmt
-		pstmt
+	# Creates a callable statement.
+	# @param [String] qstr SQL string
+	def prepare_call(qstr)
+		check_closed
+
+		CallableStatement.send(:new, self, qstr,
+				measure_exec(:prepare_call) { @conn.prepare_call qstr })
 	end
 
 	# Executes the given code block as a transaction. Returns true if the transaction is committed.
@@ -321,7 +333,6 @@ class Connection
 	# @return [NilClass]
 	def close
 		return if closed?
-		@pstmts.each { | q, pstmt | pstmt.close }
 		@spool.close
 		@conn.close
 		@conn = @spool = nil
@@ -333,10 +344,28 @@ class Connection
 		@conn.nil?
 	end
 
-	# @param [String] table_name Name of the table to be wrapped
+	# Returns a table wrapper for the given table name
+	# @since 0.2.0
+	# @param [String/Symbol] table_name Name of the table to be wrapped
 	# @return [JDBCHelper::TableWrapper]
 	def table table_name
 		JDBCHelper::TableWrapper.new self, table_name
+	end
+
+	# Returns a function wrapper for the given function name
+	# @since 0.2.2
+	# @param [String/Symbol] func_name Name of the function to be wrapped
+	# @return [JDBCHelper::FunctionWrapper]
+	def function func_name
+		JDBCHelper::FunctionWrapper.new self, func_name
+	end
+
+	# Returns a procedure wrapper for the given procedure name
+	# @since 0.3.0
+	# @param [String/Symbol] proc_name Name of the procedure to be wrapped
+	# @return [JDBCHelper::ProcedureWrapper]
+	def procedure proc_name
+		JDBCHelper::ProcedureWrapper.new self, proc_name
 	end
 
 	# Statistics

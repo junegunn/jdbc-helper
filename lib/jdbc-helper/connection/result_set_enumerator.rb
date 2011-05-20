@@ -14,10 +14,24 @@ class ResultSetEnumerator
 		count = -1
 		begin
 			while @rset.next
+				idx = 0
+				# Oracle returns numbers in NUMERIC type, which can be of any precision.
+				# So, we retrieve the numbers in String type not to lose their precision.
+				# This can be quite annoying when you're just working with integers,
+				# so I tried the following code to automatically convert integer string into integer
+				# when it's obvious. However, the performance drop is untolerable.
+				# Thus, commented out.
+				#
+				# if v && @cols_meta[i-1] == java.sql.Types::NUMERIC && v !~ /[\.e]/i
+				# 	v.to_i
+				# else
+				# 	v
+				# end
 				yield Connection::Row.new(
 						@col_labels,
-						(1..@num_col).map { | i |
-							v = @rset.send(GETTER_MAP.fetch(@cols_meta[i-1], :get_string), i)
+						@col_labels_d,
+						@getters.map { |gt|
+							v = @rset.send gt, idx+=1
 							@rset.was_null ? nil : v
 						},
 						count += 1)
@@ -52,48 +66,20 @@ private
 		@rsmd = @rset.get_meta_data
 		@num_col = @rsmd.get_column_count
 		@cols_meta = []
+		@getters = []
 		@col_labels = []
+		@col_labels_d = []
 		(1..@num_col).each do | i |
 			@cols_meta << @rsmd.get_column_type(i)
+			@getters << JDBCHelper::Connection::GETTER_MAP.fetch(@cols_meta.last, :get_string)
+
 			@col_labels << @rsmd.get_column_label(i)
+			@col_labels_d << @col_labels.last.downcase
+
 		end
 
 		@closed = false
 	end
-
-	GETTER_MAP =
-	{
-		java.sql.Types::TINYINT => :get_int,
-		java.sql.Types::SMALLINT => :get_int,
-		java.sql.Types::INTEGER => :get_int,
-		java.sql.Types::BIGINT => :get_long,
-
-		java.sql.Types::CHAR => :get_string,
-		java.sql.Types::VARCHAR => :get_string,
-		java.sql.Types::LONGVARCHAR => :get_string,
-		(java.sql.Types::NCHAR        rescue nil) => :get_string,
-		(java.sql.Types::NVARCHAR     rescue nil) => :get_string,
-		(java.sql.Types::LONGNVARCHAR rescue nil) => :get_blob, # FIXME: MySQL
-		java.sql.Types::BINARY => :get_string,
-		java.sql.Types::VARBINARY => :get_string,
-		java.sql.Types::LONGVARBINARY => :get_blob,	# FIXME: MySQL
-
-		java.sql.Types::REAL => :get_double,
-		java.sql.Types::FLOAT => :get_float,
-		java.sql.Types::DOUBLE => :get_double,
-		java.sql.Types::NUMERIC => :get_string, # FIXME
-		java.sql.Types::DECIMAL => :get_string, # FIXME
-
-		java.sql.Types::DATE => :get_date,
-		java.sql.Types::TIME => :get_time,
-		java.sql.Types::TIMESTAMP => :get_timestamp,
-
-		java.sql.Types::BLOB => :get_blob,
-		java.sql.Types::CLOB => :get_string,
-		(java.sql.Types::NCLOB rescue nil) => :get_string,
-
-		java.sql.Types::BOOLEAN => :get_boolean
-	} # :nodoc:
 end#ResultSetEnumerator
 end#Connection
 end#JDBCHelper

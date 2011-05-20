@@ -7,9 +7,12 @@ class TestConnection < Test::Unit::TestCase
 	end
 
 	def teardown
+		conn.update "drop table #{TEST_TABLE}" rescue nil
+		conn.update "drop procedure #{TEST_PROCEDURE}" rescue nil
 	end
 
 	TEST_TABLE = 'tmp_jdbc_helper_test'
+	TEST_PROCEDURE = 'tmp_jdbc_helper_test_proc'
 
 	def get_one_two
 		"
@@ -26,8 +29,8 @@ class TestConnection < Test::Unit::TestCase
 		assert_equal 1, rec[0]
 		assert_equal 1, rec['one']
 		assert_equal 1, rec[:one]
-		assert_equal [1], rec[0...1]
-		assert_equal [1], rec[0, 1]
+		assert_equal ['1'], rec[0...1].map(&:to_s)
+		assert_equal ['1'], rec[0, 1].map(&:to_s)
 
 		assert_equal 'two', rec.two
 		assert_equal 'two', rec[1]
@@ -35,9 +38,9 @@ class TestConnection < Test::Unit::TestCase
 		assert_equal ['two'], rec[1..-1]
 		assert_equal ['two'], rec[1, 1]
 
-		assert_equal [1, 'two'], rec[0..1]
-		assert_equal [1, 'two'], rec[0..-1]
-		assert_equal [1, 'two'], rec[0, 2]
+		assert_equal ['1', 'two'], rec[0..1].map(&:to_s)
+		assert_equal ['1', 'two'], rec[0..-1].map(&:to_s)
+		assert_equal ['1', 'two'], rec[0, 2].map(&:to_s)
 
 		assert_raise(NoMethodError) { rec.three }
 		assert_raise(NameError) { rec['three'] }
@@ -66,8 +69,10 @@ class TestConnection < Test::Unit::TestCase
 	# ---------------------------------------------------------------
 
 	def test_connect_and_close
-		config.each do | db, conn_info |
+		config.each do | db, conn_info_org |
 			4.times do | i |
+				conn_info = conn_info_org.dup
+
 				# With or without timeout parameter
 				conn_info['timeout'] = 60 if i % 2 == 1
 
@@ -197,6 +202,8 @@ class TestConnection < Test::Unit::TestCase
 		each_connection do | conn |
 			reset_test_table conn
 			ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
+			assert_equal 2, ins.parameter_count
+
 			count = 100
 
 			# update
@@ -287,6 +294,47 @@ class TestConnection < Test::Unit::TestCase
 			conn.prepare("insert into #{TEST_TABLE} values (?)").update(ts)
 			got = conn.query("select * from #{TEST_TABLE}")[0][0]
 			assert_equal ts.to_i * 1000, got.getTime
+		end
+	end
+
+	def test_callable_statement
+		each_connection do | conn |
+			# Creating test procedure (Defined in JDBCHelperTestHelper)
+			create_test_procedure conn, TEST_PROCEDURE
+			cstmt = conn.prepare_call "{call #{TEST_PROCEDURE}(?, ?, ?, ?, ?)}"
+
+			# Array parameter
+			result = cstmt.call('hello', [100, Fixnum], [Time.now, Time], Float, String)
+			assert_instance_of Hash, result
+			assert_equal 1000, result[2]
+			assert_equal 'hello', result[5]
+
+			# Hash parameter
+			result = cstmt.call(
+				:i1 => 'hello', :io1 => [100, Fixnum], 
+				'io2' => [Time.now, Time], 
+				:o1 => Float, 'o2' => String)
+			assert_instance_of Hash, result
+			assert_equal 1000, result[:io1]
+			assert_equal 'hello', result['o2']
+
+			# Invalid parameters
+			assert_raise(NativeException) { cstmt.call 1 }
+			assert_raise(ArgumentError)   { cstmt.call({}, {}) }
+
+			assert_equal false, cstmt.closed?
+			cstmt.close
+			assert_equal true, cstmt.closed?
+			assert_raise(RuntimeError) { cstmt.call }
+
+			# With fixed parameter
+			cstmt = conn.prepare_call "{call #{TEST_PROCEDURE}('hello', ?, ?, ?, ?)}"
+
+			# Array parameter
+			result = cstmt.call([100, Fixnum], [Time.now, Time], Float, String)
+			assert_instance_of Hash, result
+			assert_equal 1000, result[1]
+			assert_equal 'hello', result[4]
 		end
 	end
 end

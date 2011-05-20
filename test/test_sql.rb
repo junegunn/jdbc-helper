@@ -18,22 +18,30 @@ class TestSQL < Test::Unit::TestCase
 
 	end
 
+	def test_order_by
+		SQL.order_by(:a)
+		SQL.order_by('a')
+		SQL.order_by('a desc')
+		SQL.order_by('a asc')
+		SQL.order_by([:a, 'b asc', 'c desc'])
+	end
+
 	def test_where
-		assert_equal "a = 1",                   SQL.where(:a => 1)
-		assert_equal "a = 1.2",                 SQL.where(:a => 1.2)
-		assert_equal "a = 9999999999999999999", SQL.where(:a => 9999999999999999999)
-		assert_equal "a >= 1 and a <= 2",       SQL.where(:a => 1..2)
-		assert_equal "a >= 1 and a < 2",        SQL.where(:a => 1...2)
-		assert_equal "a = 'A''s'",              SQL.where(:a => "A's")
-		assert_equal "a is null",               SQL.where(:a => nil)
-		assert_equal "a is not null",           SQL.where(:a => SQL.not_nil)
-		assert_equal "a = sysdate",             SQL.where(:a => SQL.expr('sysdate'))
-		assert_equal "sysdate = sysdate",       SQL.where(SQL.expr('sysdate') => SQL.expr('sysdate'))
-		assert_equal "a in ('aa', 'bb', 'cc')", SQL.where(:a => %w[aa bb cc])
-		assert_equal "a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
-		assert_equal "a = 1 or b = 1",          SQL.where("a = 1 or b = 1")
-		assert_equal nil, SQL.where(nil)
-		assert_equal nil, SQL.where(" ")
+		assert_equal "where a = 1",                   SQL.where(:a => 1)
+		assert_equal "where a = 1.2",                 SQL.where(:a => 1.2)
+		assert_equal "where a = 9999999999999999999", SQL.where(:a => 9999999999999999999)
+		assert_equal "where a >= 1 and a <= 2",       SQL.where(:a => 1..2)
+		assert_equal "where a >= 1 and a < 2",        SQL.where(:a => 1...2)
+		assert_equal "where a = 'A''s'",              SQL.where(:a => "A's")
+		assert_equal "where a is null",               SQL.where(:a => nil)
+		assert_equal "where a is not null",           SQL.where(:a => SQL.not_nil)
+		assert_equal "where a = sysdate",             SQL.where(:a => SQL.expr('sysdate'))
+		assert_equal "where sysdate = sysdate",       SQL.where(SQL.expr('sysdate') => SQL.expr('sysdate'))
+		assert_equal "where a in ('aa', 'bb', 'cc')", SQL.where(:a => %w[aa bb cc])
+		assert_equal "where a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
+		assert_equal "where a = 1 or b = 1",          SQL.where("a = 1 or b = 1")
+		assert_equal '', SQL.where(nil)
+		assert_equal '', SQL.where(" ")
 
 		# Non-primitive datatypes not implemented (TODO?)
 		assert_raise(NotImplementedError) { SQL.where(:a => Time.now) }

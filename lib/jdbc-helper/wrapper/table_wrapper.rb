@@ -2,33 +2,6 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
-# Abstract base class for wrappers for various database objects.
-# @abstract
-# @since 0.2.0
-# @todo Need to add more subclasses (such as for functions and procedures)
-class ObjectWrapper
-	# Underlying JDBCHelper::Connection object
-	# @return [JDBCHelper::Connection]
-	attr_reader :connection
-
-	# Object name (or expression)
-	# @return [String]
-	attr_reader :name
-
-	# Base constructor.
-	# @param [JDBCHelper::Connection] conn JDBCHelper::Connection object
-	# @param [String] name Name of the object to be wrapped
-	def initialize(conn, name)
-		raise Exception.new(
-			"JDBCHelper::ObjectWrapper is an abstract class") if 
-					self.instance_of? ObjectWrapper
-
-		@connection = conn
-		@name = name.to_s
-		JDBCHelper::SQL.check @name
-	end
-end#ObjectWrapper
-
 # A wrapper object representing a database table. Allows you to perform table operations easily.
 # @since 0.2.0
 # @example Usage
@@ -47,10 +20,14 @@ end#ObjectWrapper
 #  conn.table('test.data').truncate_table!
 #  conn.table('test.data').drop_table!
 class TableWrapper < ObjectWrapper
+	# Returns the name of the table
+	# @return [String]
+	alias to_s name
+
 	# Retrieves the count of the table
 	# @return [Fixnum] Count of the records.
 	def count(where = nil)
-		@connection.query(JDBCHelper::SQL.count name, where)[0][0]
+		@connection.query(JDBCHelper::SQL.count name, where)[0][0].to_i
 	end
 
 	# Sees if the table is empty
@@ -121,6 +98,5 @@ class TableWrapper < ObjectWrapper
 		@connection.update(JDBCHelper::SQL.check "drop table #{name}")
 	end
 end#TableWrapper
-
 end#JDBCHelper
 

@@ -11,20 +11,11 @@ class Connection
 #   pstmt = conn.prepare("SELECT * FROM T WHERE a = ? and b = ?")
 #   rows = pstmt.query(10, 20)
 #   enum = pstmt.enumerate(10, 20)
-class PreparedStatement
-	# SQL string
-	# @return [String]
-	attr_reader :sql
-
-	# Returns the encapsulated JDBC PreparedStatement object.
-	def java_obj
-		@pstmt
-	end
-
+class PreparedStatement < ParameterizedStatement
 	# Returns the number of parameters required
 	# @return [Fixnum]
 	def parameter_count
-		@pmd ||= @pstmt.get_parameter_meta_data
+		@pmd ||= @java_obj.get_parameter_meta_data
 		@pmd.get_parameter_count
 	end
 
@@ -33,7 +24,7 @@ class PreparedStatement
 		check_closed
 
 		set_params(params)
-		measure_exec(:p_update) { @pstmt.execute_update }
+		measure_exec(:p_update) { @java_obj.execute_update }
 	end
 
 	# @return [Array] Returns an Array if block is not given
@@ -43,7 +34,7 @@ class PreparedStatement
 		set_params(params)
 		# sorry, ignoring privacy
 		@conn.send(:process_and_close_rset,
-				   measure_exec(:p_query) { @pstmt.execute_query }, &blk)
+				   measure_exec(:p_query) { @java_obj.execute_query }, &blk)
 	end
 
 	# @return [JDBCHelper::Connection::ResultSetEnumerator]
@@ -53,7 +44,7 @@ class PreparedStatement
 		return query(*params, &blk) if block_given?
 
 		set_params(params)
-		ResultSetEnumerator.new(measure_exec(:p_query) { @pstmt.execute_query })
+		ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.execute_query })
 	end
 
 	# Adds to the batch
@@ -62,14 +53,14 @@ class PreparedStatement
 		check_closed
 
 		set_params(params)
-		@pstmt.add_batch
+		@java_obj.add_batch
 	end
 	# Executes the batch
 	def execute_batch
 		check_closed
 
 		measure_exec(:p_execute_batch) {
-			@pstmt.executeBatch
+			@java_obj.executeBatch
 		}
 	end
 	# Clears the batch
@@ -77,7 +68,7 @@ class PreparedStatement
 	def clear_batch
 		check_closed
 
-		@pstmt.clear_batch
+		@java_obj.clear_batch
 	end
 
 	# Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
@@ -86,72 +77,19 @@ class PreparedStatement
 	def set_fetch_size(fsz)
 		check_closed
 
-		@pstmt.set_fetch_size fsz
+		@java_obj.set_fetch_size fsz
 	end
 
-	# Closes the prepared statement
-	# @return [NilClass]
-	def close
-		return if closed?
-		@pstmt.close
-		@pstmts.delete @sql
-		@pstmt = @pstmts = nil
-	end
-
-	# @return [Boolean]
-	def closed?
-		@pstmt.nil?
-	end
 private
-	def initialize(conn, pstmts, sql, pstmt) # :nodoc:
-		@conn = conn
-		@pstmts = pstmts
-		@sql = sql
-		@pstmt = pstmt
-	end
-
 	def set_params(params) # :nodoc:
-		idx = 0
-		params.each do | param |
-			if param.nil?
-				@pstmt.set_null(idx += 1, java.sql.Types::NULL)
-			elsif setter = SETTER_MAP[param.class.to_s]
-				if setter == :setBinaryStream
-					@pstmt.send(setter, idx += 1, param.getBinaryStream, param.length)
-				elsif setter == :setTimestamp && param.is_a?(Time)
-					@pstmt.send(setter, idx += 1, java.sql.Timestamp.new(param.to_i * 1000))
-				else
-					@pstmt.send(setter, idx += 1, param)
-				end
-			else
-				@pstmt.set_string(idx += 1, param.to_s)
-			end
+		params.each_with_index do | param, idx |
+			set_param(idx + 1, param)
 		end
 	end
 
-	def measure_exec(type, &blk)	# :nodoc:
-		@conn.send(:measure_exec, type, &blk)
+	def initialize(*args)
+		super(*args)
 	end
-
-	def check_closed
-		raise RuntimeError.new("Prepared statement already closed") if closed?
-	end
-
-	SETTER_MAP =
-	{
-		'Java::JavaSql::Date' => :setDate,
-		'Java::JavaSql::Time' => :setTime,
-		'Java::JavaSql::Timestamp' => :setTimestamp,
-		'Time'                     => :setTimestamp,
-		'Java::JavaSql::Blob' => :setBinaryStream,
-
-		# Only available when MySQL JDBC driver is loaded.
-		# So we use the string representation of the class.
-		'Java::ComMysqlJdbc::Blob' => :setBinaryStream
-
-		# FIXME-MORE
-	} # :nodoc:
-
 end#PreparedStatment
 end#Connection
 end#JDBCHelper

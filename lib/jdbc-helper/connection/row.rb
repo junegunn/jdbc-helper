@@ -105,9 +105,9 @@ class Row
 	alias :== :eql?
 
 private
-	def initialize(col_labels, values, rownum) # :nodoc:
+	def initialize(col_labels, col_labels_d, values, rownum) # :nodoc:
 		@labels = col_labels
-		@labels_d = col_labels.map { | l | l.downcase }
+		@labels_d = col_labels_d
 		@values = values
 		@rownum = rownum
 

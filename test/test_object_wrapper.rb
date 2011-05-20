@@ -5,11 +5,13 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 	def setup
 		@table_name = "tmp_jdbc_helper"
+		@procedure_name = "tmp_jdbc_helper_test_proc"
 	end
 
 	def teardown
 		each_connection do |conn|
 			drop_table conn
+			conn.update "drop procedure #{@procedure_name}" rescue nil
 		end
 	end
 
@@ -39,19 +41,29 @@ class TestObjectWrapper < Test::Unit::TestCase
 			# With symbol
 			assert_kind_of     JDBCHelper::ObjectWrapper, conn.table(:some_table)
 			assert_instance_of JDBCHelper::TableWrapper, conn.table(:some_table)
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.function(:some_func)
+			assert_instance_of JDBCHelper::FunctionWrapper, conn.function(:some_func)
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.procedure(:some_proc)
+			assert_instance_of JDBCHelper::ProcedureWrapper, conn.procedure(:some_proc)
 			assert_equal       'some_table', conn.table(:some_table).name
 
 			# With string
-			assert_kind_of     JDBCHelper::ObjectWrapper, conn.table('db.table')
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.table('table')
 			assert_instance_of JDBCHelper::TableWrapper, conn.table('db.table')
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.function('db.some_func')
+			assert_instance_of JDBCHelper::FunctionWrapper, conn.function('some_func')
+			assert_kind_of     JDBCHelper::ObjectWrapper, conn.procedure('some_proc')
+			assert_instance_of JDBCHelper::ProcedureWrapper, conn.procedure('db.some_proc')
 			assert_equal       'db.table', conn.table('db.table').name
 
-			# Invalid table name
-			assert_raise(ArgumentError) { conn.table('table;') }
-			assert_raise(ArgumentError) { conn.table('table -- ') }
-			assert_raise(ArgumentError) { conn.table("tab'le") }
-			assert_raise(ArgumentError) { conn.table('tab"le') }
-			assert_raise(ArgumentError) { conn.table("tab`le") }
+			# Invalid object name
+			[ '  ', 'object;', 'object -- ', "obj'ect",
+				'obj"ect', 'obj`ect', 'obje(t', 'ob)ect' ].each do |inv|
+				assert_raise(ArgumentError) { conn.table(inv) }
+				assert_raise(ArgumentError) { conn.function(inv) }
+				assert_raise(ArgumentError) { conn.table(inv.to_sym) }
+				assert_raise(ArgumentError) { conn.function(inv.to_sym) }
+			end
 
 			# Abstract class
 			assert_raise(Exception) { JDBCHelper::ObjectWrapper.new(conn, 'table') }
@@ -79,6 +91,34 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
+	def test_function_wrapper
+		each_connection do |conn|
+			assert_equal 2.to_i, conn.function(:mod).call(5, 3).to_i
+			assert_equal 'yeah', conn.function(:coalesce).call(nil, nil, 'yeah', 'no')
+		end
+	end
+
+	def test_procedure_wrapper
+		each_connection do |conn|
+			create_test_procedure conn, @procedure_name
+
+			pr = conn.procedure(@procedure_name)
+
+			result = pr.call 'hello', [100, Fixnum], [Time.now, Time], Float, String
+			assert_instance_of Hash, result
+			assert_equal 1000, result[2]
+			assert_equal 'hello', result[5]
+
+			result = pr.call(
+				:i1 => 'hello', :io1 => [100, Fixnum], 
+				'io2' => [Time.now, Time], 
+				:o1 => Float, 'o2' => String)
+			assert_instance_of Hash, result
+			assert_equal 1000, result[:io1]
+			assert_equal 'hello', result['o2']
+		end
+	end
+
 	def test_insert_count
 		each_connection do |conn|
 			create_table conn
@@ -98,9 +138,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
-	# This will fail if the database doesn't support insert ignore syntax
 	def test_insert_ignore
 		each_connection do |conn|
+			next unless @type == :mysql
+
 			create_table conn
 			table = conn.table(@table_name)
 			params = {
@@ -117,9 +158,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
-	# This will fail if the database doesn't support replace syntax
 	def test_replace
 		each_connection do |conn|
+			next unless @type == :mysql
+
 			create_table conn
 			table = conn.table(@table_name)
 			params = {

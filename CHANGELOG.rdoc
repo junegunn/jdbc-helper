@@ -1,3 +1,6 @@
+=== 0.2.2 / 2011/05/20
+* Added JDBCHelper::FunctionWrapper
+
 === 0.2.1 / 2011/05/19
 * JDBCHelper::Connection::Row can now be accessed with Range, Symbol and *[offset, length] index
 

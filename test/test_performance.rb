@@ -86,6 +86,26 @@ class TestPerformance < Test::Unit::TestCase
 					end
 				end
 			}.real}"
+
+			puts "Chaining enumerators with query: #{Benchmark.measure {
+				conn.query("select * from #{@table}").each_slice(50) do |slice|
+					slice.each do |row|
+						@range.each_with_index do |r,i|
+							row[i]
+						end
+					end
+				end
+			}.real}"
+
+			puts "Chaining enumerators with enumerate: #{Benchmark.measure {
+				conn.enumerate("select * from #{@table}").each_slice(50) do |slice|
+					slice.each do |row|
+						@range.each_with_index do |r,i|
+							row[i]
+						end
+					end
+				end
+			}.real}"
 		end
 	end
 
