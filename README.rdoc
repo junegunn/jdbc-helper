@@ -6,14 +6,14 @@ crucial database operations from primitive selects and updates to more complex o
 batch updates, prepared statements and transactions.
 As the name implies, this gem only works on JRuby.
 
-= Examples
+== Examples
 
-== Prerequisites
+=== Prerequisites
 Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java.jar
 
 
-== Connecting to a database
+=== Connecting to a database
 
  # :driver and :url must be given
  conn = JDBCHelper::Connection.new(
@@ -35,7 +35,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
  conn.close
 
-== Querying database table
+=== Querying database table
 
  conn.query("SELECT a, b, c FROM T") do | row |
      row.labels
@@ -71,10 +71,10 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
     end
  end
 
-== Updating database table
+=== Updating database table
  del_count = conn.update("DELETE FROM T")
 
-== Transaction
+=== Transaction
  committed = conn.transaction do | tx |
      # ...
      # Transaction logic here
@@ -87,13 +87,13 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
      end
  end
 
-== Using batch interface
+=== Using batch interface
  conn.add_batch("DELETE FROM T");
  conn.execute_batch
  conn.add_batch("DELETE FROM T");
  conn.clear_batch
 
-== Using prepared statements
+=== Using prepared statements
  p_sel = conn.prepare("SELECT * FROM T WHERE b = ? and c = ?")
  p_sel.query(100, 200) do | row |
      p row
@@ -112,7 +112,7 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
  p_upd.execute_batch
  p_upd.close
 
-== Using table wrappers (since 0.2.0)
+=== Using table wrappers (since 0.2.0)
   # For more complex examples, refer to test/test_object_wrapper.rb
 
   table = conn.table('test.data')
@@ -129,9 +129,65 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   table.truncate_table!
   table.drop_table!
 
-== Using function wrappers (since 0.2.2)
+=== Using function wrappers (since 0.2.2)
   conn.function(:mod).call 5, 3
   conn.function(:coalesce).call(nil, nil, 'king')
+
+=== Using procedure wrappers (since 0.3.0)
+  # Working with IN/INOUT/OUT parameteres
+  # Bind by ordinal number
+  conn.procedure(:update_and_fetch_something).call(
+		  100, ["value", String], Fixnum)
+
+  # Bind by parameter name
+  conn.procedure(:update_and_fetch_something).call(
+		  :a => 100, :b => ["value", String], :c => Fixnum)
+
+== Notes on vendor-independence
+
+jdbc-helper tries to be a vendor-independent library, so that it behaves the same on any RDBMS,
+and that is why it's built on JDBC in the first place which can be used to minimize the amount of vendor-specific code.
+(Ideally, one codebase for all RDBMSs.)
+So far so good, but not great. It has small amount of code that is vendor-specific, non-standard JDBC.
+and it has been confirmed to work the same for both MySQL and Oracle, except for stored procedures.
+MySQL and Oracle implement parameter binding of CallableStatement differently.
+See the following example.
+  # Let's say we have a stored procedure named my_procedure
+  # which takes 3 parameters, param1, param2, and param3.
+
+  # Creates a CallableStatemet
+  cstmt = conn.prepare_call("{call my_procedure(?, ?, ?)}")
+
+  cstmt.call(10, "ten", Fixnum)
+    # OK for both MySQL and Oracle. Filling paramters sequentially.
+
+  cstmt.call(:param1 => 10, :param2 => "ten", :param3 => Fixnum)
+    # MySQL automatically binds values by the parameter names in the original procedure definition.
+    # Oracle fails to do so.
+  cstmt.close
+
+  # For Oracle, if you prepare as follows,
+  cstmt = conn.prepare_call("{call my_procedure(:p1, :p2, :p3)}")
+
+  # Then you can do this. 
+  cstmt.call(:p1 => 10, :p2 => "ten", :p3 => Fixnum)
+    # However, p1, p2, p3 have nothing to do with # the original
+    # parameter names (param1, param2, param3) in the procedure definition.
+    # They're just aliases for ordinal positions.
+    # So, it's semantically different from the first example.
+
+  cstmt.close
+
+There's no way to find out the original parameter names and their ordinal positions without looking up the metadata of the database,
+which requires having to write vendor-specific code branches, and that is definitely not desirable.
+ProcedureWrapper prepares call with '?'s as the first example. 
+So it would work fine for MySQL, but you can't use it with parameter names on Oracle.
+
+  # Good for both
+  conn.procedure(:my_procedure).call(10, "ten", Fixnum)
+
+  # Only for MySQL
+  conn.procedure(:my_procedure).call(:param1 => 10, :param2 => "ten", :param3 => Fixnum)
 
 == Contributing to jdbc-helper
 

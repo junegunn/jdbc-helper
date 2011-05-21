@@ -28,15 +28,20 @@ module JDBCHelperTestHelper
 			conn.update "drop procedure #{name}" rescue nil
 			conn.update("
 				create procedure #{name} 
-				(IN i1 varchar(100), INOUT io1 int, INOUT io2 timestamp, OUT o1 float, OUT o2 varchar(100))
+				(IN i1 varchar(100), IN i2 int, 
+				 INOUT io1 int, INOUT io2 timestamp,
+				 OUT o1 float, OUT o2 varchar(100))
 				select io1 * 10, 0.1, i1 into io1, o1, o2 from dual")
 		when :oracle
 			conn.update "drop procedure #{name}" rescue nil
 			conn.update "
 				create or replace
-				procedure #{name} (i in varchar2, io in out int, o1 out float, o2 out varchar2) as
+				procedure #{name} 
+				(i1 in varchar2, i2 in int,
+				 io1 in out int, io2 in out date,
+				 o1 out float, o2 out varchar2) as
 				begin
-					  select io * 10, 0.1, i into io, o1, o2 from dual;
+					  select io1 * 10, 0.1, i1 into io1, o1, o2 from dual;
 				end;"
 		else
 			raise NotImplementedError.new "Procedure test not implemented for #{@type}"

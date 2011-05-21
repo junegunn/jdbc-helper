@@ -9,6 +9,7 @@ GEM
     rake (0.8.7)
     rcov (0.9.9)
     rcov (0.9.9-java)
+    test-unit (2.3.0)
 
 PLATFORMS
   java
@@ -18,3 +19,4 @@ DEPENDENCIES
   bundler (~> 1.0.0)
   jeweler (~> 1.5.2)
   rcov
+  test-unit (>= 2.3.0)
