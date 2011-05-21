@@ -1,13 +1,13 @@
 ---
-# mysql:
-#     driver: com.mysql.jdbc.Driver
-#     url: jdbc:mysql://localhost/test
-#     user: root
-#     password:
+mysql:
+    driver: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost/test
+    user: root
+    password:
 
 oracle:
     driver: oracle.jdbc.driver.OracleDriver
-    url: jdbc:oracle:thin:@10.20.253.105/DIDEV
-    user: wisefn
-    password: wisefndb
+    url: jdbc:oracle:thin:@localhost/test
+    user: user
+    password: password
 
