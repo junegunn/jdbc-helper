@@ -19,11 +19,17 @@ class TestSQL < Test::Unit::TestCase
 	end
 
 	def test_order_by
-		SQL.order_by(:a)
-		SQL.order_by('a')
-		SQL.order_by('a desc')
-		SQL.order_by('a asc')
-		SQL.order_by([:a, 'b asc', 'c desc'])
+		assert_equal "", SQL.order_by()
+		assert_equal "", SQL.order_by(nil)
+		assert_equal "", SQL.order_by(nil, nil)
+		assert_equal "order by a", SQL.order_by(:a)
+		assert_equal "order by a", SQL.order_by('a')
+		assert_equal "order by a desc", SQL.order_by('a desc')
+		assert_equal "order by a asc", SQL.order_by('a asc')
+		assert_equal "order by a, b asc, c desc", SQL.order_by(:a, 'b asc', 'c desc')
+
+		assert_raise(ArgumentError) { SQL.order_by(" -- ") }
+		assert_raise(ArgumentError) { SQL.order_by(:a, :b, "c 'd") }
 	end
 
 	def test_where

@@ -149,7 +149,7 @@ jdbc-helper tries to be a vendor-independent library, so that it behaves the sam
 and that is why it's built on JDBC in the first place which can be used to minimize the amount of vendor-specific code.
 (Ideally, one codebase for all RDBMSs.)
 So far so good, but not great. It has small amount of code that is vendor-specific, non-standard JDBC.
-and it has been confirmed to work the same for both MySQL and Oracle, except for stored procedures.
+And it has been confirmed to work the same for both MySQL and Oracle, except for stored procedures.
 MySQL and Oracle implement parameter binding of CallableStatement differently.
 See the following example.
   # Let's say we have a stored procedure named my_procedure
@@ -171,7 +171,7 @@ See the following example.
 
   # Then you can do this. 
   cstmt.call(:p1 => 10, :p2 => "ten", :p3 => Fixnum)
-    # However, p1, p2, p3 have nothing to do with # the original
+    # However, p1, p2, p3 have nothing to do with the original
     # parameter names (param1, param2, param3) in the procedure definition.
     # They're just aliases for ordinal positions.
     # So, it's semantically different from the first example.

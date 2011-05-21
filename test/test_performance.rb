@@ -7,7 +7,7 @@ class TestPerformance < Test::Unit::TestCase
 	def setup
 		@table = 'tmp_jdbc_helper'
 		@range = 'aaa'..'aaz'
-		@count = 10000
+		@count = 10000 # Increase this for performance measurement
 	end
 
 	def teardown

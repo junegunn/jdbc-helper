@@ -104,18 +104,20 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 			pr = conn.procedure(@procedure_name)
 
-			result = pr.call 'hello', [100, Fixnum], [Time.now, Time], Float, String
+			result = pr.call 'hello', 10, [100, Fixnum], [Time.now, Time], Float, String
 			assert_instance_of Hash, result
-			assert_equal 1000, result[2]
-			assert_equal 'hello', result[5]
+			assert_equal 1000, result[3]
+			assert_equal 'hello', result[6]
 
-			result = pr.call(
-				:i1 => 'hello', :io1 => [100, Fixnum], 
-				'io2' => [Time.now, Time], 
-				:o1 => Float, 'o2' => String)
-			assert_instance_of Hash, result
-			assert_equal 1000, result[:io1]
-			assert_equal 'hello', result['o2']
+			if @type != :oracle
+				result = pr.call(
+					:i1 => 'hello', :i2 => 10,
+					:io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+					:o1 => Float, 'o2' => String)
+				assert_instance_of Hash, result
+				assert_equal 1000, result[:io1]
+				assert_equal 'hello', result['o2']
+			end
 		end
 	end
 

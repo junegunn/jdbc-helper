@@ -33,11 +33,13 @@ module SQL
 	# Parameter can be either Hash of String.
 	def self.where conds
 		where_clause = where_internal conds
-		where_clause.empty? ? where_clause : check(where_internal conds)
+		where_clause.empty? ? where_clause : check(where_clause)
 	end
 
 	# Generates SQL order by cluase with the given conditions.
-	def self.order_by criteria
+	def self.order_by *criteria
+		str = criteria.map(&:to_s).reject(&:empty?).join(', ')
+		str.empty? ? str : check('order by ' + str)
 	end
 
 	# SQL Helpers
@@ -67,8 +69,12 @@ module SQL
 	end
 
 	# Generates select * SQL with the given conditions
-	def self.select table, conds = nil
-		check "select * from #{table} #{where_internal conds}".strip
+	def self.select table, conds = nil, orders = nil
+		check [
+			"select * from #{table}", 
+			where_internal(conds),
+			order_by(orders)
+		].reject(&:empty?).join(' ')
 	end
 
 	# Generates count SQL with the given conditions
