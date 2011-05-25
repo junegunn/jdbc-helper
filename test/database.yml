@@ -7,7 +7,7 @@ mysql:
 
 oracle:
     driver: oracle.jdbc.driver.OracleDriver
-    url: jdbc:oracle:thin:@10.20.253.105/didev
-    user: wisefn
-    password: wisefndb
+    url: jdbc:oracle:thin:@localhost/test
+    user: testuser
+    password: testpassword
 
