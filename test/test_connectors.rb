@@ -19,6 +19,15 @@ class TestConnectors < Test::Unit::TestCase
 				assert conn.closed? == false
 				conn.close
 				assert conn.closed?
+
+				@conn = nil
+				ret = JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db) do |conn|
+					assert conn.closed? == false
+					@conn = conn
+					1
+				end
+				assert @conn.closed?
+				assert_equal 1, ret
 			elsif conn_info['driver'] =~ /oracle/
 				host = conn_info['url'].match(%r{@(.*?)/})[1]
 				svc = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
@@ -27,6 +36,15 @@ class TestConnectors < Test::Unit::TestCase
 				assert conn.closed? == false
 				conn.close
 				assert conn.closed?
+
+				@conn = nil
+				ret = JDBCHelper::OracleConnector.connect(host, conn_info['user'], conn_info['password'], svc) do |conn|
+					assert conn.closed? == false
+					@conn = conn
+					1
+				end
+				assert @conn.closed?
+				assert_equal 1, ret
 			end
 		end
 	end
