@@ -118,8 +118,8 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   table = conn.table('test.data')
   table.count
   table.empty?
-  table.select(:c => 3) do |row|
-    puts row.a
+  table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc') do |row|
+    puts row.apple
   end
   table.update(:a => 1, :b => 2, :where => { :c => 3 })
   table.insert(:a => 10, :b => 20, :c => 30)
