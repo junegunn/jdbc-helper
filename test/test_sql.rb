@@ -1,6 +1,7 @@
 require 'helper'
 include JDBCHelper
 
+# WARNING: tests assumes ordered hash
 class TestSQL < Test::Unit::TestCase
 	def setup
 	end
@@ -18,18 +19,18 @@ class TestSQL < Test::Unit::TestCase
 
 	end
 
-	def test_order_by
-		assert_equal "", SQL.order_by()
-		assert_equal "", SQL.order_by(nil)
-		assert_equal "", SQL.order_by(nil, nil)
-		assert_equal "order by a", SQL.order_by(:a)
-		assert_equal "order by a", SQL.order_by('a')
-		assert_equal "order by a desc", SQL.order_by('a desc')
-		assert_equal "order by a asc", SQL.order_by('a asc')
-		assert_equal "order by a, b asc, c desc", SQL.order_by(:a, 'b asc', 'c desc')
+	def test_order
+		assert_equal "", SQL.order()
+		assert_equal "", SQL.order(nil)
+		assert_equal "", SQL.order(nil, nil)
+		assert_equal "order by a", SQL.order(:a)
+		assert_equal "order by a", SQL.order('a')
+		assert_equal "order by a desc", SQL.order('a desc')
+		assert_equal "order by a asc", SQL.order('a asc')
+		assert_equal "order by a, b asc, c desc", SQL.order(:a, 'b asc', 'c desc')
 
-		assert_raise(ArgumentError) { SQL.order_by(" -- ") }
-		assert_raise(ArgumentError) { SQL.order_by(:a, :b, "c 'd") }
+		assert_raise(ArgumentError) { SQL.order(" -- ") }
+		assert_raise(ArgumentError) { SQL.order(:a, :b, "c 'd") }
 	end
 
 	def test_where
@@ -62,7 +63,14 @@ class TestSQL < Test::Unit::TestCase
 
 	def test_select
 		assert_equal "select * from a.b", SQL.select('a.b')
-		assert_equal "select * from a.b where a is not null", SQL.select('a.b', :a => SQL.not_nil)
+		assert_equal "select aa, bb from a.b where a is not null",
+				SQL.select('a.b', :select => %w[aa bb], :where => {:a => SQL.not_nil})
+		assert_equal "select aa, bb from a.b where a is not null and b >= 1 and b <= 10 order by cc, dd", 
+				SQL.select('a.b', 
+						   :select => %w[aa bb], 
+						   :where => {:a => SQL.not_nil, :b => (1..10)},
+						   :order => %w[cc dd]
+						  )
 	end
 
 	def test_count

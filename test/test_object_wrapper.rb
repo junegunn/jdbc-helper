@@ -187,21 +187,60 @@ class TestObjectWrapper < Test::Unit::TestCase
 			insert table
 			assert_equal 100, table.count
 
+			def check_row row
+				assert_equal 100, row.alpha
+				assert_equal 'hello world', row.gamma
+			end
+
 			cnt = 0
 			table.select do |row|
 				cnt += 1
-				assert_equal 100, row.alpha
-				assert_equal 'hello world', row.gamma
+				check_row row
 			end
 			assert_equal 100, cnt
 
 			cnt = 0
-			table.select(:id => 11..20) do |row|
+			table.each do |row|
 				cnt += 1
-				assert_equal 100, row.alpha
-				assert_equal 'hello world', row.gamma
+				check_row row
+			end
+			assert_equal 100, cnt
+
+			cnt = 0
+			table.each_slice(10) do |rows|
+				cnt += rows.length
+			end
+			assert_equal 100, cnt
+
+			cnt = 0
+			table.select('alpha omega') do |row|
+				cnt += 1
+				assert_equal 100, row.omega
+				assert_equal ['omega'], row.labels
+			end
+			assert_equal 100, cnt
+
+			cnt = 0
+			prev_id = 100
+			table.where(:id => 11..20).order('id desc') do |row|
+				cnt += 1
+				check_row row
+
+				assert row.id < prev_id
+				prev_id = row.id
 			end
 			assert_equal 10, cnt
+
+			assert_equal "select a, b, c cc from tmp_jdbc_helper " +
+					"where id >= 11 and id <= 20 order by id desc, name asc",
+					table.where(:id => 11..20).
+						select(:a, :b, 'c cc').
+						order('id desc', 'name asc').sql
+
+			assert_raise(ArgumentError) { table.order }
+			assert_raise(ArgumentError) { table.order.where }
+			assert_raise(ArgumentError) { table.where.order }
+			assert_raise(ArgumentError) { table.select.order }
 		end
 	end
 

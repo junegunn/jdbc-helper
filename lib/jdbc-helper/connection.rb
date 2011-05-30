@@ -11,6 +11,7 @@ require 'jdbc-helper/connection/row'
 
 require 'jdbc-helper/wrapper/object_wrapper'
 require 'jdbc-helper/wrapper/table_wrapper'
+require 'jdbc-helper/wrapper/table_wrapper'
 require 'jdbc-helper/wrapper/function_wrapper'
 require 'jdbc-helper/wrapper/procedure_wrapper'
 

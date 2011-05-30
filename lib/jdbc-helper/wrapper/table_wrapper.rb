@@ -97,6 +97,68 @@ class TableWrapper < ObjectWrapper
 	def drop_table!
 		@connection.update(JDBCHelper::SQL.check "drop table #{name}")
 	end
+
+	# Select SQL wrapper
+	include Enumerable
+
+	# Returns a new TableWrapper object which can be used to execute a select
+	# statement for the table selecting only the specified fields.
+	# If a block is given, executes the select statement and yields each row to the block.
+	# @return [*String/*Symbol] List of fields to select
+	# @return [JDBCHelper::TableWrapper]
+	def select *fields, &block
+		obj = self.dup
+		obj.instance_variable_set :@query_select, fields unless fields.empty?
+		ret obj, &block
+	end
+
+	# Returns a new TableWrapper object which can be used to execute a select
+	# statement for the table with the specified filter conditions.
+	# If a block is given, executes the select statement and yields each row to the block.
+	# @param [Hash/String] Filter conditions
+	# @return [JDBCHelper::TableWrapper]
+	def where conditions, &block
+		obj = self.dup
+		obj.instance_variable_set :@query_where, conditions
+		ret obj, &block
+	end
+
+	# Returns a new TableWrapper object which can be used to execute a select
+	# statement for the table with the given sorting criteria.
+	# If a block is given, executes the select statement and yields each row to the block.
+	# @param [*String/*Symbol] Sorting criteria
+	# @return [JDBCHelper::TableWrapper]
+	def order *criteria, &block
+		raise ArgumentError.new("Wrong number of arguments") if criteria.empty?
+		obj = self.dup
+		obj.instance_variable_set :@query_order, criteria
+		ret obj, &block
+	end
+
+	# Executes a select SQL for the table and returns an Enumerable object,
+	# or yields each row if block is given.
+	# @return [JDBCHelper::Connection::ResultSetEnumerator]
+	def each &block
+		@connection.enumerate sql, &block
+	end
+
+	# Returns the select SQL for this wrapper object
+	# @return [String] Select SQL
+	def sql
+		JDBCHelper::SQL.select(
+				name, 
+				:select => @query_select, 
+				:where => @query_where,
+				:order => @query_order)
+	end
+private
+	def ret obj, &block
+		if block_given?
+			obj.each &block
+		else
+			obj
+		end
+	end
 end#TableWrapper
 end#JDBCHelper
 

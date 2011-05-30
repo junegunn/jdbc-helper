@@ -37,7 +37,7 @@ module SQL
 	end
 
 	# Generates SQL order by cluase with the given conditions.
-	def self.order_by *criteria
+	def self.order *criteria
 		str = criteria.map(&:to_s).reject(&:empty?).join(', ')
 		str.empty? ? str : check('order by ' + str)
 	end
@@ -68,12 +68,13 @@ module SQL
 		check "update #{table} set #{updates} #{where_clause}".strip
 	end
 
-	# Generates select * SQL with the given conditions
-	def self.select table, conds = nil, orders = nil
+	# Generates select SQL with the given conditions
+	def self.select table, opts = {}
+		opts = opts.reject { |k, v| v.nil? }
 		check [
-			"select * from #{table}", 
-			where_internal(conds),
-			order_by(orders)
+			"select #{opts.fetch(:select, ['*']).join(', ')} from #{table}", 
+			where_internal(opts.fetch(:where, {})),
+			order(opts.fetch(:order, []).join(', '))
 		].reject(&:empty?).join(' ')
 	end
 
