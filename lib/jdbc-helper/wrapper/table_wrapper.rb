@@ -36,14 +36,6 @@ class TableWrapper < ObjectWrapper
 		count == 0
 	end
 
-	# Select * with optional conditions
-	# @param [Hash/String] where Select filters
-	# @return [Array] Array is returned if block is not given
-	# @yield [JDBCHelper::Connection::Row]
-	def select where = nil, &block
-		@connection.query(JDBCHelper::SQL.select(name, where), &block)
-	end
-
 	# Inserts a record into the table with the given hash
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
@@ -106,6 +98,7 @@ class TableWrapper < ObjectWrapper
 	# If a block is given, executes the select statement and yields each row to the block.
 	# @return [*String/*Symbol] List of fields to select
 	# @return [JDBCHelper::TableWrapper]
+	# @since 0.4.0
 	def select *fields, &block
 		obj = self.dup
 		obj.instance_variable_set :@query_select, fields unless fields.empty?
@@ -117,6 +110,7 @@ class TableWrapper < ObjectWrapper
 	# If a block is given, executes the select statement and yields each row to the block.
 	# @param [Hash/String] Filter conditions
 	# @return [JDBCHelper::TableWrapper]
+	# @since 0.4.0
 	def where conditions, &block
 		obj = self.dup
 		obj.instance_variable_set :@query_where, conditions
@@ -128,6 +122,7 @@ class TableWrapper < ObjectWrapper
 	# If a block is given, executes the select statement and yields each row to the block.
 	# @param [*String/*Symbol] Sorting criteria
 	# @return [JDBCHelper::TableWrapper]
+	# @since 0.4.0
 	def order *criteria, &block
 		raise ArgumentError.new("Wrong number of arguments") if criteria.empty?
 		obj = self.dup
@@ -138,12 +133,14 @@ class TableWrapper < ObjectWrapper
 	# Executes a select SQL for the table and returns an Enumerable object,
 	# or yields each row if block is given.
 	# @return [JDBCHelper::Connection::ResultSetEnumerator]
+	# @since 0.4.0
 	def each &block
 		@connection.enumerate sql, &block
 	end
 
 	# Returns the select SQL for this wrapper object
 	# @return [String] Select SQL
+	# @since 0.4.0
 	def sql
 		JDBCHelper::SQL.select(
 				name, 
