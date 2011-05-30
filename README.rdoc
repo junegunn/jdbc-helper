@@ -115,17 +115,38 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
 === Using table wrappers (since 0.2.0)
   # For more complex examples, refer to test/test_object_wrapper.rb
 
+  # Creates a table wrapper
   table = conn.table('test.data')
+
+  # Counting the records in the table
   table.count
+  table.count(:a => 10)
+  table.where(:a => 10).count
+
   table.empty?
+  table.where(:a => 10).empty?
+
+  # Selects the table by combining select, where, and order methods
   table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc') do |row|
     puts row.apple
   end
-  table.update(:a => 1, :b => 2, :where => { :c => 3 })
-  table.insert(:a => 10, :b => 20, :c => 30)
+
+  # Updates with conditions
+  table.update(:a => 'hello', :b => JDBCHelper::SQL('now()'), :where => { :c => 3 })
+  # Or equivalently,
+  table.where(:c => 3).update(:a => 'hello', :b => JDBCHelper::SQL('now()'))
+
+  # Insert into the table
+  table.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
   table.insert_ignore(:a => 10, :b => 20, :c => 30)
   table.replace(:a => 10, :b => 20, :c => 30)
+
+  # Delete with conditions
   table.delete(:c => 3)
+  # Or equivalently,
+  table.where(:c => 3).delete
+
+  # Truncate or drop table (Cannot be undone)
   table.truncate_table!
   table.drop_table!
 

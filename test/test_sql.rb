@@ -15,7 +15,7 @@ class TestSQL < Test::Unit::TestCase
 		assert_equal 9999999999999999999, SQL.value(9999999999999999999)
 		assert_equal "'sysdate'",         SQL.value('sysdate')
 		assert_equal "'A''s'",            SQL.value("A's")
-		assert_equal "sysdate",           SQL.value(SQL.expr('sysdate'))
+		assert_equal "sysdate",           SQL.value(JDBCHelper::SQL('sysdate'))
 
 	end
 
@@ -42,8 +42,9 @@ class TestSQL < Test::Unit::TestCase
 		assert_equal "where a = 'A''s'",              SQL.where(:a => "A's")
 		assert_equal "where a is null",               SQL.where(:a => nil)
 		assert_equal "where a is not null",           SQL.where(:a => SQL.not_nil)
-		assert_equal "where a = sysdate",             SQL.where(:a => SQL.expr('sysdate'))
-		assert_equal "where sysdate = sysdate",       SQL.where(SQL.expr('sysdate') => SQL.expr('sysdate'))
+		assert_equal "where a is not null",           SQL.where(:a => SQL.not_null)
+		assert_equal "where a = sysdate",             SQL.where(:a => JDBCHelper::SQL('sysdate'))
+		assert_equal "where sysdate = sysdate",       SQL.where(JDBCHelper::SQL('sysdate') => JDBCHelper::SQL('sysdate'))
 		assert_equal "where a in ('aa', 'bb', 'cc')", SQL.where(:a => %w[aa bb cc])
 		assert_equal "where a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
 		assert_equal "where a = 1 or b = 1",          SQL.where("a = 1 or b = 1")
@@ -54,11 +55,11 @@ class TestSQL < Test::Unit::TestCase
 		assert_raise(NotImplementedError) { SQL.where(:a => Time.now) }
 
 		# Invalid SQL detection
-		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'a--b' -- cde")) }
-		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'aabbb''dd")) }
-		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(" 'aabbb''dd' /* aaa */")) }
-		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(' aabbb"""  ')) }
-		assert_raise(ArgumentError) { SQL.where(:a => SQL.expr(' aab`bb``  ')) }
+		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'a--b' -- cde")) }
+		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'aabbb''dd")) }
+		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'aabbb''dd' /* aaa */")) }
+		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(' aabbb"""  ')) }
+		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(' aab`bb``  ')) }
 	end
 
 	def test_select
@@ -68,7 +69,7 @@ class TestSQL < Test::Unit::TestCase
 		assert_equal "select aa, bb from a.b where a is not null and b >= 1 and b <= 10 order by cc, dd", 
 				SQL.select('a.b', 
 						   :select => %w[aa bb], 
-						   :where => {:a => SQL.not_nil, :b => (1..10)},
+						   :where => {:a => SQL.not_null, :b => (1..10)},
 						   :order => %w[cc dd]
 						  )
 	end
@@ -85,10 +86,10 @@ class TestSQL < Test::Unit::TestCase
 
 	def test_update
 		assert_equal "update a.b set a = 1, b = 'A''s', c = now()", 
-			SQL.update('a.b', :a => 1, :b => "A's", :c => SQL.expr('now()'))
+			SQL.update('a.b', {:a => 1, :b => "A's", :c => JDBCHelper::SQL('now()')}, {})
 
 		assert_equal "update a.b set a = 1, b = 'A''s', c = now() where a is not null", 
-			SQL.update('a.b', :a => 1, :b => "A's", :c => SQL.expr('now()'), :where => { :a => SQL.not_nil })
+			SQL.update('a.b', {:a => 1, :b => "A's", :c => JDBCHelper::SQL('now()')}, { :a => SQL.not_nil })
 	end
 
 	def test_insert

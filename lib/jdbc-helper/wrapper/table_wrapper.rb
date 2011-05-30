@@ -25,15 +25,17 @@ class TableWrapper < ObjectWrapper
 	alias to_s name
 
 	# Retrieves the count of the table
+	# @param [Hash/String] Filter conditions
 	# @return [Fixnum] Count of the records.
-	def count(where = nil)
-		@connection.query(JDBCHelper::SQL.count name, where)[0][0].to_i
+	def count where = nil
+		@connection.query(JDBCHelper::SQL.count name, where || @query_where)[0][0].to_i
 	end
 
 	# Sees if the table is empty
+	# @param [Hash/String] Filter conditions
 	# @return [boolean]
-	def empty?
-		count == 0
+	def empty? where = nil
+		count(where) == 0
 	end
 
 	# Inserts a record into the table with the given hash
@@ -66,14 +68,15 @@ class TableWrapper < ObjectWrapper
 	#   :where element of the given hash can (usually should) point to another Hash representing update filters.
 	# @return [Fixnum] Number of affected records
 	def update data_hash_with_where
-		@connection.update(JDBCHelper::SQL.update name, data_hash_with_where)
+		where = data_hash_with_where.delete(:where) || @query_where
+		@connection.update(JDBCHelper::SQL.update name, data_hash_with_where, where)
 	end
 
 	# Deletes records matching given condtion
 	# @param [Hash] where Delete filters
 	# @return [Fixnum] Number of affected records
 	def delete where = nil
-		@connection.update(JDBCHelper::SQL.delete name, where)
+		@connection.update(JDBCHelper::SQL.delete name, where || @query_where)
 	end
 
 	# Empties the table.

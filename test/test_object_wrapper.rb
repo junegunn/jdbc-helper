@@ -73,7 +73,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 	def insert table
 		params = {
 			:alpha => 100, 
-			:beta => JDBCHelper::SQL.expr('0.1 + 0.2'), 
+			:beta => JDBCHelper::SQL('0.1 + 0.2'), 
 			:gamma => 'hello world' }
 
 		(1..100).each do |pk|
@@ -133,10 +133,22 @@ class TestObjectWrapper < Test::Unit::TestCase
 			# Insert
 			insert table
 
+			# Empty?
+			assert_equal false, table.empty?
+			assert_equal true, table.empty?(:alpha => 999)
+			assert_equal true, table.where(:alpha => 999).empty?
+
 			# Count
 			assert_equal 100, table.count
 			assert_equal 100, table.count(:alpha => 100)
 			assert_equal 0, table.count(:beta => nil)
+
+			assert_equal 100, table.where(:alpha => 100).count
+			assert_equal 0, table.where(:beta => nil).count
+			assert_equal 0, table.where(:alpha => 100).count(:beta => nil)
+
+			assert_equal true, table.empty?(:beta => nil)
+			assert_equal true, table.where(:beta => nil).empty?
 		end
 	end
 
@@ -149,7 +161,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 			params = {
 				:id => 1,
 				:alpha => 100, 
-				:beta => JDBCHelper::SQL.expr('0.1 + 0.2'), 
+				:beta => JDBCHelper::SQL('0.1 + 0.2'), 
 				:gamma => 'hello world' }
 
 			100.times do
@@ -168,7 +180,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 			table = conn.table(@table_name)
 			params = {
 				:id => 1,
-				:beta => JDBCHelper::SQL.expr('0.1 + 0.2'), 
+				:beta => JDBCHelper::SQL('0.1 + 0.2'), 
 				:gamma => 'hello world' }
 
 			100.times do |i|
@@ -259,9 +271,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 			assert_equal 1, table.delete(:id => 21)
 			assert_equal 4, table.delete(:id => [22, 23, 24, 25])
 			assert_equal 5, table.delete("id <= 30")
+			assert_equal 10, table.where("id <= 40").delete
 
 			# Could be dangerous (XXX)
-			assert_equal 70, table.delete
+			assert_equal 60, table.delete
 
 			# Count
 			assert_equal 0, table.count
@@ -275,8 +288,9 @@ class TestObjectWrapper < Test::Unit::TestCase
 			insert table
 
 			assert_equal 10, table.update(:beta => 0, :where => { :id => (1..10) })
-			assert_equal 10, table.count(:beta => 0)
-
+			assert_equal 10, table.where(:id => (11..20)).update(:beta => 0)
+			assert_equal 20, table.count(:beta => 0)
+			assert_equal 100, table.update(:beta => 1)
 		end
 	end
 

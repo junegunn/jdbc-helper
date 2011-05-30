@@ -2,15 +2,23 @@
 # Junegunn Choi (junegunn.c@gmail.com)
 
 module JDBCHelper
-module SQL
-	# Prevents a string from being quoted
-	def self.expr str
-		Expr.new str
-	end
-	
+
+# Generate SQL snippet, prevents the string from being quoted.
+# @param [String] SQL snippet
+# @return [JDBCHelper::SQL]
+def self.SQL str
+	JDBCHelper::SQL.new str
+end
+
+# Class representing an SQL snippet. Also has many SQL generator class methods.
+class SQL
 	# Returns NotNilClass singleton object
+	# @return [JDBCHelper::SQL::NotNilClass]
 	def self.not_nil
 		NotNilClass.singleton
+	end
+	class << self
+		alias not_null not_nil
 	end
 
 	# Formats the given data so that it can be injected into SQL
@@ -20,7 +28,7 @@ module SQL
 			'null'
 		when Fixnum, Bignum, Float
 			data
-		when JDBCHelper::SQL::Expr
+		when JDBCHelper::SQL
 			data.to_s
 		when String
 			"'#{esc data}'"
@@ -62,8 +70,8 @@ module SQL
 
 	# Generates update SQL with hash.
 	# :where element of the given hash is taken out to generate where clause.
-	def self.update table, data_hash
-		where_clause = where_internal(data_hash.delete :where)
+	def self.update table, data_hash, where
+		where_clause = where_internal where
 		updates = data_hash.map { |k, v| "#{k} = #{value v}" }.join(', ')
 		check "update #{table} set #{updates} #{where_clause}".strip
 	end
@@ -107,6 +115,10 @@ module SQL
 		return expr
 	end
 
+	def to_s
+		@expr
+	end
+
 private
 	def self.esc str
 		str.gsub("'", "''")
@@ -128,7 +140,7 @@ private
 							"is null"
 						when NotNilClass
 							"is not null"
-						when Fixnum, Bignum, Float, JDBCHelper::SQL::Expr
+						when Fixnum, Bignum, Float, JDBCHelper::SQL
 							"= #{v}"
 						when Range
 							">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
@@ -158,16 +170,10 @@ private
 		check "#{cmd} into #{table} (#{cols.join ', '}) values (#{cols.map{|c|value data_hash[c]}.join ', '})"
 	end
 
-	class Expr
-		def initialize str
-			@expr = str
-		end
-		
-		def to_s
-			@expr
-		end
+	def initialize str
+		@expr = JDBCHelper::SQL.check str
 	end
-
+	
 	# Class to represent "(IS) NOT NULL" expression in SQL
 	class NotNilClass
 		# Returns the singleton object of NotNilClass
