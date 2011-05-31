@@ -1,7 +1,7 @@
 === 0.4.0 / 2011/05/31
 * Rewrote JDBCHelper::TableWrapper interface
-** JDBCHelper::TableWrapper has become Enumerable with new select, where, and order methods
-** WARNING: JDBCHelper::TableWrapper#select and methods in JDBCHelper::SQL are not backward-compatible.
+ * JDBCHelper::TableWrapper has become Enumerable with new select, where, and order methods
+ * WARNING: JDBCHelper::TableWrapper#select and methods in JDBCHelper::SQL are not backward-compatible.
 
 === 0.3.2 / 2011/05/25
 * JDBCHelper::MySQLConnector.connect and JDBCHelper::OracleConnector.connect can take a block
