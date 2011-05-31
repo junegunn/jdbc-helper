@@ -249,6 +249,12 @@ class TestObjectWrapper < Test::Unit::TestCase
 						select(:a, :b, 'c cc').
 						order('id desc', 'name asc').sql
 
+			assert_equal "select a, b, c cc from tmp_jdbc_helper " +
+					"where (id != 15) and id >= 11 and id <= 20 order by id desc, name asc",
+					table.where("id != 15", :id => 11..20).
+						select(:a, :b, 'c cc').
+						order('id desc', 'name asc').sql
+
 			assert_raise(ArgumentError) { table.order }
 			assert_raise(ArgumentError) { table.order.where }
 			assert_raise(ArgumentError) { table.where.order }

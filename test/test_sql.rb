@@ -47,7 +47,11 @@ class TestSQL < Test::Unit::TestCase
 		assert_equal "where sysdate = sysdate",       SQL.where(JDBCHelper::SQL('sysdate') => JDBCHelper::SQL('sysdate'))
 		assert_equal "where a in ('aa', 'bb', 'cc')", SQL.where(:a => %w[aa bb cc])
 		assert_equal "where a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
-		assert_equal "where a = 1 or b = 1",          SQL.where("a = 1 or b = 1")
+		assert_equal "where (a = 1 or b = 1)",        SQL.where("a = 1 or b = 1")
+		assert_equal "where (a = 1 or b = 1) and c = 2", SQL.where("a = 1 or b = 1", :c => 2)
+		assert_equal "where c = 2 and (a = 1 or b = 1)", SQL.where({:c => 2}, "a = 1 or b = 1")
+		assert_equal "where c = 2 and (a = 1 or b = 1) and (e = 2) and f = 3",
+				SQL.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {})
 		assert_equal '', SQL.where(nil)
 		assert_equal '', SQL.where(" ")
 
@@ -55,6 +59,11 @@ class TestSQL < Test::Unit::TestCase
 		assert_raise(NotImplementedError) { SQL.where(:a => Time.now) }
 
 		# Invalid SQL detection
+		assert_raise(ArgumentError) { SQL.where(" 'a--b' -- cde") }
+		assert_raise(ArgumentError) { SQL.where(" 'a--b' ;") }
+		assert_raise(ArgumentError) { SQL.where(" 'a--b' -- cde", :a => 1) }
+		assert_raise(ArgumentError) { SQL.where(" 'a--b' -- cde", :a => 1) }
+		assert_raise(ArgumentError) { SQL.where({:a => 1}, "/* a") }
 		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'a--b' -- cde")) }
 		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'aabbb''dd")) }
 		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(" 'aabbb''dd' /* aaa */")) }

@@ -54,13 +54,14 @@ class TestPerformance < Test::Unit::TestCase
 				end
 			}.real}"
 
-			puts "Inserts with hash (chunk-transactional): #{Benchmark.measure {
+			puts "Inserts with hash (batch & chunk-transactional): #{Benchmark.measure {
 				table = conn.table(@table)
 				(0...@count).each_slice(50) do |slice|
 					conn.transaction do
 						slice.each do |i|
-							table.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
+							table.batch.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
 						end
+						conn.execute_batch
 					end
 				end
 			}.real}"

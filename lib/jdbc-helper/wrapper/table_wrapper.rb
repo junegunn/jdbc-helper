@@ -47,17 +47,17 @@ class TableWrapper < ObjectWrapper
 	alias to_s name
 
 	# Retrieves the count of the table
-	# @param [Hash/String] Filter conditions
+	# @param [List of Hash/String] where Filter conditions
 	# @return [Fixnum] Count of the records.
-	def count where = nil
-		@connection.query(JDBCHelper::SQL.count name, where || @query_where)[0][0].to_i
+	def count *where
+		@connection.query(JDBCHelper::SQL.count name, where.empty? ? @query_where : where)[0][0].to_i
 	end
 
 	# Sees if the table is empty
 	# @param [Hash/String] Filter conditions
 	# @return [boolean]
-	def empty? where = nil
-		count(where) == 0
+	def empty? *where
+		count(*where) == 0
 	end
 
 	# Inserts a record into the table with the given hash
@@ -95,10 +95,10 @@ class TableWrapper < ObjectWrapper
 	end
 
 	# Deletes records matching given condtion
-	# @param [Hash] where Delete filters
+	# @param [List of Hash/String] where Delete filters
 	# @return [Fixnum] Number of affected records
-	def delete where = nil
-		@connection.send @update_method, JDBCHelper::SQL.delete(name, where || @query_where)
+	def delete *where
+		@connection.send @update_method, JDBCHelper::SQL.delete(name, where.empty? ? @query_where : where)
 	end
 
 	# Empties the table.
@@ -136,7 +136,9 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash/String] Filter conditions
 	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
-	def where conditions, &block
+	def where *conditions, &block
+		raise ArgumentError.new("Wrong number of arguments") if conditions.empty?
+
 		obj = self.dup
 		obj.instance_variable_set :@query_where, conditions
 		ret obj, &block

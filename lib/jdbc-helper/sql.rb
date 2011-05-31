@@ -39,7 +39,7 @@ class SQL
 
 	# Generates SQL where cluase with the given conditions.
 	# Parameter can be either Hash of String.
-	def self.where conds
+	def self.where *conds
 		where_clause = where_internal conds
 		where_clause.empty? ? where_clause : check(where_clause)
 	end
@@ -97,6 +97,7 @@ class SQL
 	end
 
 	# FIXME: Naive protection for SQL Injection
+	# TODO: check caching?
 	def self.check expr, is_name = false
 		return nil if expr.nil?
 
@@ -126,43 +127,46 @@ private
 
 	# No check
 	def self.where_internal conds
-		return '' if conds.nil?
+		conds = [conds] unless conds.is_a? Array
+		where_clause = conds.compact.map { |cond| where_unit cond }.reject(&:empty?).join(' and ')
+		where_clause.empty? ? '' : 'where ' + where_clause
+	end
 
-		where = 
-			case conds
-			when String
-				conds.strip
-			when Hash
-				conds.map { |k, v|
-					"#{k} " +
-						case v
-						when NilClass
-							"is null"
-						when NotNilClass
-							"is not null"
-						when Fixnum, Bignum, Float, JDBCHelper::SQL
-							"= #{v}"
-						when Range
-							">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
-						when Array
-							"in (" + 
-							v.map { |e|
-								case e
-								when String
-									"'#{esc e}'"
-								else
-									e
-								end }.join(', ') + ")"
-						when String
-							"= '#{esc v}'"
-						else
-							raise NotImplementedError.new("Unsupported class: #{v.class}")
-						end
-				}.join(' and ')
-			else
-				raise NotImplementedError.new("Parameter to where must be either Hash or String")
-			end
-		where.empty? ? '' : 'where ' + where
+	def self.where_unit conds
+		case conds
+		when String
+			conds = conds.strip
+			conds.empty? ? '' : "(#{conds})"
+		when Hash
+			conds.map { |k, v|
+				"#{k} " +
+					case v
+					when NilClass
+						"is null"
+					when NotNilClass
+						"is not null"
+					when Fixnum, Bignum, Float, JDBCHelper::SQL
+						"= #{v}"
+					when Range
+						">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
+					when Array
+						"in (" + 
+						v.map { |e|
+							case e
+							when String
+								"'#{esc e}'"
+							else
+								e
+							end }.join(', ') + ")"
+					when String
+						"= '#{esc v}'"
+					else
+						raise NotImplementedError.new("Unsupported class: #{v.class}")
+					end
+			}.join(' and ')
+		else
+			raise NotImplementedError.new("Parameter to where must be either Hash or String")
+		end
 	end
 
 	def self.insert_internal cmd, table, data_hash
