@@ -70,15 +70,15 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
-	def insert table
+	def insert table, cnt = 100
 		params = {
 			:alpha => 100, 
 			:beta => JDBCHelper::SQL('0.1 + 0.2'), 
 			:gamma => 'hello world' }
 
-		(1..100).each do |pk|
+		(1..cnt).each do |pk|
 			icnt = table.insert(params.merge(:id => pk))
-			assert_equal icnt, 1
+			assert_equal 1, icnt unless table.batch?
 		end
 	end
 
@@ -228,7 +228,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 			table.select('alpha omega') do |row|
 				cnt += 1
 				assert_equal 100, row.omega
-				assert_equal ['omega'], row.labels
+				assert_equal ['omega'], row.labels.map(&:downcase)
 			end
 			assert_equal 100, cnt
 
@@ -238,8 +238,8 @@ class TestObjectWrapper < Test::Unit::TestCase
 				cnt += 1
 				check_row row
 
-				assert row.id < prev_id
-				prev_id = row.id
+				assert row.id.to_i < prev_id
+				prev_id = row.id.to_i
 			end
 			assert_equal 10, cnt
 
@@ -291,6 +291,39 @@ class TestObjectWrapper < Test::Unit::TestCase
 			assert_equal 10, table.where(:id => (11..20)).update(:beta => 0)
 			assert_equal 20, table.count(:beta => 0)
 			assert_equal 100, table.update(:beta => 1)
+		end
+	end
+
+	def test_batch
+		each_connection do |conn|
+			# Initialize test table
+			create_table conn
+			table = conn.table(@table_name)
+			insert table
+
+			# Duplicated calls are idempotent
+			btable = table.batch
+			assert_equal btable, btable.batch
+
+			# Batch updates
+			table.batch.delete
+			assert_equal 100, table.count
+
+			insert table.batch, 50
+			assert_equal 100, table.count
+
+			table.batch.update(:alpha => JDBCHelper::SQL('alpha * 2'))
+			assert_equal 100, table.select(:alpha).to_a.first.alpha.to_i
+
+			# Independent update inbetween
+			table.delete(:id => 1..10)
+			assert_equal 90, table.count
+
+			# Finally
+			conn.execute_batch
+
+			assert_equal 50, table.count
+			assert_equal 200, table.select(:alpha).to_a.first.alpha.to_i
 		end
 	end
 

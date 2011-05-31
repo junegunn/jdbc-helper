@@ -5,7 +5,6 @@ module JDBCHelper
 # Abstract base class for wrappers for various database objects.
 # @abstract
 # @since 0.2.0
-# @todo Procedure wrapper with input & output params
 class ObjectWrapper
 	# Underlying JDBCHelper::Connection object
 	# @return [JDBCHelper::Connection]

@@ -131,6 +131,9 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
     puts row.apple
   end
 
+  # Build select SQL
+  sql = table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc').sql
+
   # Updates with conditions
   table.update(:a => 'hello', :b => JDBCHelper::SQL('now()'), :where => { :c => 3 })
   # Or equivalently,
@@ -140,6 +143,11 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   table.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
   table.insert_ignore(:a => 10, :b => 20, :c => 30)
   table.replace(:a => 10, :b => 20, :c => 30)
+
+  # Batch updates with batch method
+  table.batch.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
+  table.batch.insert_ignore(:a => 10, :b => 20, :c => 30)
+  conn.execute_batch
 
   # Delete with conditions
   table.delete(:c => 3)

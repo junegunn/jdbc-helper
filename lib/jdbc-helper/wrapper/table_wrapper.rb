@@ -7,18 +7,40 @@ module JDBCHelper
 # @example Usage
 #  # For more complex examples, refer to test/test_object_wrapper.rb
 #
-#  conn.table('test.data').count
-#  conn.table('test.data').empty?
-#  conn.table('test.data').select(:c => 3) do |row|
-#    puts row.a
+#  # Creates a table wrapper
+#  table = conn.table('test.data')
+#
+#  # Counting the records in the table
+#  table.count
+#  table.count(:a => 10)
+#  table.where(:a => 10).count
+#
+#  table.empty?
+#  table.where(:a => 10).empty?
+#
+#  # Selects the table by combining select, where, and order methods
+#  table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc') do |row|
+#    puts row.apple
 #  end
-#  conn.table('test.data').update(:a => 1, :b => 2, :where => { :c => 3 })
-#  conn.table('test.data').insert(:a => 10, :b => 20, :c => 30)
-#  conn.table('test.data').insert_ignore(:a => 10, :b => 20, :c => 30)
-#  conn.table('test.data').insert_replace(:a => 10, :b => 20, :c => 30)
-#  conn.table('test.data').delete(:c => 3)
-#  conn.table('test.data').truncate_table!
-#  conn.table('test.data').drop_table!
+#
+#  # Updates with conditions
+#  table.update(:a => 'hello', :b => JDBCHelper::SQL('now()'), :where => { :c => 3 })
+#  # Or equivalently,
+#  table.where(:c => 3).update(:a => 'hello', :b => JDBCHelper::SQL('now()'))
+#
+#  # Insert into the table
+#  table.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
+#  table.insert_ignore(:a => 10, :b => 20, :c => 30)
+#  table.replace(:a => 10, :b => 20, :c => 30)
+#
+#  # Delete with conditions
+#  table.delete(:c => 3)
+#  # Or equivalently,
+#  table.where(:c => 3).delete
+#
+#  # Truncate or drop table (Cannot be undone)
+#  table.truncate_table!
+#  table.drop_table!
 class TableWrapper < ObjectWrapper
 	# Returns the name of the table
 	# @return [String]
@@ -42,7 +64,7 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def insert data_hash
-		@connection.update(JDBCHelper::SQL.insert name, data_hash)
+		@connection.send @update_method, JDBCHelper::SQL.insert(name, data_hash)
 	end
 
 	# Inserts a record into the table with the given hash.
@@ -51,7 +73,7 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def insert_ignore data_hash
-		@connection.update(JDBCHelper::SQL.insert_ignore name, data_hash)
+		@connection.send @update_method, JDBCHelper::SQL.insert_ignore(name, data_hash)
 	end
 
 	# Replaces a record in the table with the new one with the same unique key.
@@ -59,7 +81,7 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def replace data_hash
-		@connection.update(JDBCHelper::SQL.replace name, data_hash)
+		@connection.send @update_method, JDBCHelper::SQL.replace(name, data_hash)
 	end
 
 	# Executes update with the given hash.
@@ -69,14 +91,14 @@ class TableWrapper < ObjectWrapper
 	# @return [Fixnum] Number of affected records
 	def update data_hash_with_where
 		where = data_hash_with_where.delete(:where) || @query_where
-		@connection.update(JDBCHelper::SQL.update name, data_hash_with_where, where)
+		@connection.send @update_method, JDBCHelper::SQL.update(name, data_hash_with_where, where)
 	end
 
 	# Deletes records matching given condtion
 	# @param [Hash] where Delete filters
 	# @return [Fixnum] Number of affected records
 	def delete where = nil
-		@connection.update(JDBCHelper::SQL.delete name, where || @query_where)
+		@connection.send @update_method, JDBCHelper::SQL.delete(name, where || @query_where)
 	end
 
 	# Empties the table.
@@ -141,6 +163,29 @@ class TableWrapper < ObjectWrapper
 		@connection.enumerate sql, &block
 	end
 
+	# Returns a new TableWrapper object whose subsequent inserts, updates,
+	# and deletes are added to batch for JDBC batch-execution. The actual execution
+	# is deferred until JDBCHelper::Connection#execute_batch method is called.
+	# Self is returned when batch is called more than once.
+	# @return [JDBCHelper::Connection::ResultSetEnumerator]
+	# @since 0.4.0
+	def batch
+		if batch?
+			self
+		else
+			obj = self.dup
+			obj.instance_variable_set :@update_method, :add_batch
+			obj
+		end
+	end
+
+	# Returns if the subsequent updates for this wrapper will be batched
+	# @return [Boolean]
+	# @since 0.4.0
+	def batch?
+		@update_method == :add_batch
+	end
+
 	# Returns the select SQL for this wrapper object
 	# @return [String] Select SQL
 	# @since 0.4.0
@@ -150,6 +195,11 @@ class TableWrapper < ObjectWrapper
 				:select => @query_select, 
 				:where => @query_where,
 				:order => @query_order)
+	end
+
+	def initialize connection, table_name
+		super connection, table_name
+		@update_method = :update
 	end
 private
 	def ret obj, &block
