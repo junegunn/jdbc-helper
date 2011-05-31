@@ -1,3 +1,6 @@
+=== 0.4.1 / 2011/06/01
+* Methods in JDBCHelper::TableWrapper which take where conditions as their arguments are modified to take varible length arguments.
+
 === 0.4.0 / 2011/05/31
 * Rewrote JDBCHelper::TableWrapper interface
 * JDBCHelper::TableWrapper has become Enumerable with new select, where, and order methods
