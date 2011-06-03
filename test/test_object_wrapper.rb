@@ -339,7 +339,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 			table = conn.table(@table_name)
 			insert table
 
-			table.truncate_table!
+			table.truncate!
 			assert table.empty?
 		end
 	end
@@ -348,9 +348,32 @@ class TestObjectWrapper < Test::Unit::TestCase
 		each_connection do |conn|
 			create_table conn
 			table = conn.table(@table_name)
-			table.drop_table!
+			table.drop!
 
 			assert_equal false, drop_table(conn)
+		end
+	end
+
+	def test_sequence
+		each_connection do |conn|
+			# MySQL doesn't support sequences
+			next if @type == :mysql
+
+			seq = conn.sequence(@table_name + '_seq')
+			seq.reset!(100)
+			assert (prev = seq.nextval) >= 100
+			assert_equal prev, seq.currval
+			assert_equal 1, seq.nextval - prev
+
+			seq.reset! 1, 2
+			assert seq.nextval >= 1
+			assert seq.nextval <= 4
+			assert seq.nextval >= 5
+
+			seq.drop!
+			seq.create!(10)
+			assert seq.nextval >= 10
+			seq.drop!
 		end
 	end
 end

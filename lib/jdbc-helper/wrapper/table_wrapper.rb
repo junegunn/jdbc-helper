@@ -103,17 +103,21 @@ class TableWrapper < ObjectWrapper
 
 	# Empties the table.
 	# @note This operation cannot be undone
-	# @return [Fixnum] executeUpdate return value
-	def truncate_table!
+	# @return [JDBCHelper::TableWrapper] Self.
+	def truncate!
 		@connection.update(JDBCHelper::SQL.check "truncate table #{name}")
+		self
 	end
+	alias truncate_table! truncate!
 	
 	# Drops the table.
 	# @note This operation cannot be undone
-	# @return [Fixnum] executeUpdate return value
-	def drop_table!
+	# @return [JDBCHelper::TableWrapper] Self.
+	def drop!
 		@connection.update(JDBCHelper::SQL.check "drop table #{name}")
+		self
 	end
+	alias drop_table! truncate!
 
 	# Select SQL wrapper
 	include Enumerable

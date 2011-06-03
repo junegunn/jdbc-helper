@@ -12,6 +12,7 @@ require 'jdbc-helper/connection/row'
 require 'jdbc-helper/wrapper/object_wrapper'
 require 'jdbc-helper/wrapper/table_wrapper'
 require 'jdbc-helper/wrapper/table_wrapper'
+require 'jdbc-helper/wrapper/sequence_wrapper'
 require 'jdbc-helper/wrapper/function_wrapper'
 require 'jdbc-helper/wrapper/procedure_wrapper'
 
@@ -351,6 +352,14 @@ class Connection
 	# @return [JDBCHelper::TableWrapper]
 	def table table_name
 		JDBCHelper::TableWrapper.new self, table_name
+	end
+
+	# Returns a sequence wrapper for the given name
+	# @since 0.4.2
+	# @param [String/Symbol] sequence_name Name of the sequence to be wrapped
+	# @return [JDBCHelper::SequenceWrapper]
+	def sequence sequence_name
+		JDBCHelper::SequenceWrapper.new self, sequence_name
 	end
 
 	# Returns a function wrapper for the given function name
