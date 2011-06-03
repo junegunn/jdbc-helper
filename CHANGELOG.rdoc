@@ -1,3 +1,7 @@
+=== 0.4.2 / 2011/06/03
+* JDBCHelper::SequenceWrapper added.
+* JDBCHelper::TableWrapper#drop!, JDBCHelper::TableWrapper#truncate!
+
 === 0.4.1 / 2011/06/01
 * Methods in JDBCHelper::TableWrapper which take where conditions as their arguments are modified to take varible length arguments.
 
