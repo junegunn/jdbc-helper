@@ -41,8 +41,7 @@ private
 
 		out_params = {}
 		hash_params.each do | idx, value |
-			# Symbol need to be transformed into string
-
+			# Symbols need to be transformed into string
 			idx_ = idx.is_a?(Symbol) ? idx.to_s : idx
 			case value
 			# OUT parameter

@@ -71,7 +71,7 @@ class TestConnection < Test::Unit::TestCase
 	def test_connect_and_close
 		config.each do | db, conn_info_org |
 			4.times do | i |
-				conn_info = conn_info_org.dup
+				conn_info = conn_info_org.reject { |k,v| k == 'database' }
 
 				# With or without timeout parameter
 				conn_info['timeout'] = 60 if i % 2 == 1

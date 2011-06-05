@@ -99,25 +99,52 @@ class TestObjectWrapper < Test::Unit::TestCase
 	end
 
 	def test_procedure_wrapper
-		each_connection do |conn|
-			create_test_procedure conn, @procedure_name
+		each_connection do |conn, conn_info|
+			[@procedure_name, [conn_info['database'], @procedure_name].join('.')].each do |prname|
+				create_test_procedure_simple conn, prname
 
-			pr = conn.procedure(@procedure_name)
+				pr = conn.procedure(prname)
+				pr.call # should be ok without any arguments
 
-			result = pr.call 'hello', 10, [100, Fixnum], [Time.now, Time], Float, String
-			assert_instance_of Hash, result
-			assert_equal 1000, result[3]
-			assert_equal 'hello', result[6]
+				# Complex case
+				create_test_procedure conn, prname
+				pr.refresh
 
-			if @type != :oracle
+				result = pr.call 'hello', 10, [100, Fixnum], [Time.now, Time], Float, String
+				assert_instance_of Hash, result
+				assert_equal 1000, result[3]
+				assert_equal 'hello', result[6]
+
 				result = pr.call(
-					:i1 => 'hello', :i2 => 10,
-					:io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+					:io1 => [100, Fixnum],
+					'io2' => [Time.now, Time], 
+					:i2 => 10,
+					:i1 => 'hello',
 					:o1 => Float, 'o2' => String)
 				assert_instance_of Hash, result
 				assert_equal 1000, result[:io1]
 				assert_equal 'hello', result['o2']
-			end
+
+				# Test default values
+				pend("Not tested") do
+					if @type != :mysql
+						result = pr.call(
+							:io1 => [100, Fixnum],
+							'io2' => [Time.now, Time], 
+							#:i2 => 10,
+							:i1 => 'hello',
+							:o1 => Float, 'o2' => String)
+						assert_instance_of Hash, result
+						assert_equal 100, result[:io1]
+						assert_equal 'hello', result['o2']
+
+						result = pr.call 'hello', [100, Fixnum], [Time.now, Time], Float, String
+						assert_instance_of Hash, result
+						assert_equal 100, result[3]
+						assert_equal 'hello', result[6]
+					end
+				end
+			end#prname
 		end
 	end
 

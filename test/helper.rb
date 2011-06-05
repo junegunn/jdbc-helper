@@ -22,26 +22,46 @@ module JDBCHelperTestHelper
 		@db_config ||= YAML.load File.read(File.dirname(__FILE__) + '/database.yml')
 	end
 
+	def create_test_procedure_simple conn, name
+		case @type
+		when :mysql
+			conn.update "drop procedure #{name}" rescue nil
+			conn.update("
+				create procedure #{name}()
+				select 1 from dual where 1 != 0")
+		when :oracle
+			conn.update "drop procedure #{name}" rescue nil
+			conn.update "
+				create or replace
+				procedure #{name} as
+				begin
+					null;
+				end;"
+		else
+			raise NotImplementedError.new "Procedure test not implemented for #{@type}"
+		end
+	end
+
 	def create_test_procedure conn, name
 		case @type
 		when :mysql
 			conn.update "drop procedure #{name}" rescue nil
 			conn.update("
 				create procedure #{name} 
-				(IN i1 varchar(100), IN i2 int, 
+				(IN i1 varchar(100), IN i2 int,
 				 INOUT io1 int, INOUT io2 timestamp,
 				 OUT o1 float, OUT o2 varchar(100))
-				select io1 * 10, 0.1, i1 into io1, o1, o2 from dual")
+				select io1 * i2, 0.1, i1 into io1, o1, o2 from dual")
 		when :oracle
 			conn.update "drop procedure #{name}" rescue nil
 			conn.update "
 				create or replace
 				procedure #{name} 
-				(i1 in varchar2, i2 in int,
+				(i1 in varchar2, i2 in int default '1',
 				 io1 in out int, io2 in out date,
 				 o1 out float, o2 out varchar2) as
 				begin
-					  select io1 * 10, 0.1, i1 into io1, o1, o2 from dual;
+					  select io1 * i2, 0.1, i1 into io1, o1, o2 from dual;
 				end;"
 		else
 			raise NotImplementedError.new "Procedure test not implemented for #{@type}"
@@ -59,7 +79,7 @@ module JDBCHelperTestHelper
 
 	def each_connection(&block)
 		config.each do | db, conn_info |
-			conn = JDBCHelper::Connection.new(conn_info)
+			conn = JDBCHelper::Connection.new(conn_info.reject { |k,v| k == 'database'})
 			# Just for quick and dirty testing
 			@type = case conn_info['driver'] || conn_info[:driver]
 					when /mysql/i
