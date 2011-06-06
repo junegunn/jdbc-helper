@@ -100,7 +100,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 	def test_procedure_wrapper
 		each_connection do |conn, conn_info|
-			[@procedure_name, [conn_info['database'], @procedure_name].join('.')].each do |prname|
+			[ 
+				:proc => @procedure_name,
+				:db_proc => [conn_info['database'], @procedure_name].join('.')
+			].each do |mode, prname|
 				create_test_procedure_simple conn, prname
 
 				pr = conn.procedure(prname)
@@ -110,10 +113,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 				create_test_procedure conn, prname
 				pr.refresh
 
-				result = pr.call 'hello', 10, [100, Fixnum], [Time.now, Time], Float, String
+				result = pr.call 'hello', 10, [100, Fixnum], [Time.now, Time], nil, Float, String
 				assert_instance_of Hash, result
 				assert_equal 1000, result[3]
-				assert_equal 'hello', result[6]
+				assert_equal 'hello', result[7]
 
 				result = pr.call(
 					:io1 => [100, Fixnum],
@@ -126,6 +129,9 @@ class TestObjectWrapper < Test::Unit::TestCase
 				assert_equal 'hello', result['o2']
 
 				# Test default values
+				# - MySQL does not support default values
+				# - Oracle JDBC does not fully implement getProcedureColumns
+				#   => Cannot get default values with standard interface => Pending
 				if @type != :mysql
 					pend("Not tested") do
 						result = pr.call(
@@ -138,10 +144,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 						assert_equal 100, result[:io1]
 						assert_equal 'hello', result['o2']
 
-						result = pr.call 'hello', [100, Fixnum], [Time.now, Time], Float, String
+						result = pr.call 'hello', [100, Fixnum], [Time.now, Time], nil, Float, String
 						assert_instance_of Hash, result
 						assert_equal 100, result[3]
-						assert_equal 'hello', result[6]
+						assert_equal 'hello', result[7]
 					end
 				end
 			end#prname

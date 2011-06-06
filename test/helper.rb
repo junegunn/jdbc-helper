@@ -50,8 +50,9 @@ module JDBCHelperTestHelper
 				create procedure #{name} 
 				(IN i1 varchar(100), IN i2 int,
 				 INOUT io1 int, INOUT io2 timestamp,
+				 IN n1 int,
 				 OUT o1 float, OUT o2 varchar(100))
-				select io1 * i2, 0.1, i1 into io1, o1, o2 from dual")
+				select io1 * i2, 0.1, i1 into io1, o1, o2 from dual where n1 is null")
 		when :oracle
 			conn.update "drop procedure #{name}" rescue nil
 			conn.update "
@@ -59,9 +60,10 @@ module JDBCHelperTestHelper
 				procedure #{name} 
 				(i1 in varchar2, i2 in int default '1',
 				 io1 in out int, io2 in out date,
+				 IN n1 int,
 				 o1 out float, o2 out varchar2) as
 				begin
-					  select io1 * i2, 0.1, i1 into io1, o1, o2 from dual;
+					  select io1 * i2, 0.1, i1 into io1, o1, o2 from dual where n1 is null;
 				end;"
 		else
 			raise NotImplementedError.new "Procedure test not implemented for #{@type}"

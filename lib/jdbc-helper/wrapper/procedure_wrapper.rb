@@ -15,7 +15,6 @@ class ProcedureWrapper < ObjectWrapper
 	# @return [Hash]
 	def call(*args)
 		params = build_params args
-		puts "{call #{name}(#{Array.new(@cols.length){'?'}.join ', '})}"
 		cstmt = @connection.prepare_call "{call #{name}(#{Array.new(@cols.length){'?'}.join ', '})}"
 		begin
 			process_result( args, cstmt.call(*params) )
