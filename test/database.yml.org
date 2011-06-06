@@ -5,11 +5,13 @@ mysql:
     database: test
     user: root
     password:
+    timeout: 5
 
 oracle:
     driver: oracle.jdbc.driver.OracleDriver
-    url: jdbc:oracle:thin:@localhost/svc
-    database: test
-    user: testuser
-    password: testpassword
+    url: jdbc:oracle:thin:@10.20.253.105/didev
+    database: wisefn
+    user: wisefn
+    password: wisefndb
+    timeout: 5
 

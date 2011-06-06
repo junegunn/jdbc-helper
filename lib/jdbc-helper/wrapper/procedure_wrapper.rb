@@ -15,7 +15,7 @@ class ProcedureWrapper < ObjectWrapper
 	# @return [Hash]
 	def call(*args)
 		params = build_params args
-		#p params
+		puts "{call #{name}(#{Array.new(@cols.length){'?'}.join ', '})}"
 		cstmt = @connection.prepare_call "{call #{name}(#{Array.new(@cols.length){'?'}.join ', '})}"
 		begin
 			process_result( args, cstmt.call(*params) )
@@ -50,10 +50,12 @@ private
 				]
 			else
 				# schema or catalog? we don't know.
+				# - too inefficient for parameter-less procedures
 				[ lambda { dbmd.getProcedureColumns(nil, package, procedure, nil) },
 				  lambda { dbmd.getProcedureColumns(nil, package_u, procedure_u, nil) },
 				  lambda { dbmd.getProcedureColumns(package, nil, procedure, nil) },
-				  lambda { dbmd.getProcedureColumns(package_u, nil, procedure_u, nil) } ]
+				  lambda { dbmd.getProcedureColumns(package_u, nil, procedure_u, nil) },
+				]
 			end
 
 		cols = []

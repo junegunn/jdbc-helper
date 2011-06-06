@@ -126,8 +126,8 @@ class TestObjectWrapper < Test::Unit::TestCase
 				assert_equal 'hello', result['o2']
 
 				# Test default values
-				pend("Not tested") do
-					if @type != :mysql
+				if @type != :mysql
+					pend("Not tested") do
 						result = pr.call(
 							:io1 => [100, Fixnum],
 							'io2' => [Time.now, Time], 
