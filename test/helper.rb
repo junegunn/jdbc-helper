@@ -60,7 +60,7 @@ module JDBCHelperTestHelper
 				procedure #{name} 
 				(i1 in varchar2, i2 in int default '1',
 				 io1 in out int, io2 in out date,
-				 IN n1 int,
+				 n1 in int,
 				 o1 out float, o2 out varchar2) as
 				begin
 					  select io1 * i2, 0.1, i1 into io1, o1, o2 from dual where n1 is null;

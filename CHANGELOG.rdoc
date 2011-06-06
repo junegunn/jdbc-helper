@@ -1,5 +1,6 @@
-=== 0.4.3 / 2011/06/05
-* JDBCHelper::ProcedureWrapper can now handle Hash parameters for both Oracle and MySQL.
+=== 0.4.3 / 2011/06/06
+* Improved handling of hash parameters for JDBCHelper::ProcedureWrapper. Missing parameters in the given Hash are treated as nulls. And now it works for both Oracle and MySQL.
+* Users are encouraged to update their MySQL JDBC driver to the latest version. Some features of ProcedureWrapper may not work properly on older versions.
 
 === 0.4.2 / 2011/06/03
 * JDBCHelper::SequenceWrapper added.

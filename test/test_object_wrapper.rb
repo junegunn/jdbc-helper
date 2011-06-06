@@ -100,10 +100,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 	def test_procedure_wrapper
 		each_connection do |conn, conn_info|
-			[ 
+			{ 
 				:proc => @procedure_name,
 				:db_proc => [conn_info['database'], @procedure_name].join('.')
-			].each do |mode, prname|
+			}.each do |mode, prname|
 				create_test_procedure_simple conn, prname
 
 				pr = conn.procedure(prname)

@@ -305,22 +305,23 @@ class TestConnection < Test::Unit::TestCase
 			create_test_procedure conn, TEST_PROCEDURE
 
 			# Array parameter
-			cstmt_ord = conn.prepare_call "{call #{TEST_PROCEDURE}(?, ?, ?, ?, ?, ?)}"
-			result = cstmt_ord.call('hello', 10, [100, Fixnum], [Time.now, Time], Float, String)
+			cstmt_ord = conn.prepare_call "{call #{TEST_PROCEDURE}(?, ?, ?, ?, ?, ?, ?)}"
+			result = cstmt_ord.call('hello', 10, [100, Fixnum], [Time.now, Time], nil, Float, String)
 			assert_instance_of Hash, result
 			assert_equal 1000, result[3]
-			assert_equal 'hello', result[6]
+			assert_equal 'hello', result[7]
 
 			# Hash parameter
 			cstmt_name = conn.prepare_call(case @type
 						when :oracle
-							"{call #{TEST_PROCEDURE}(:i1, :i2, :io1, :io2, :o1, :o2)}"
+							"{call #{TEST_PROCEDURE}(:i1, :i2, :io1, :io2, :n1, :o1, :o2)}"
 						else
-							"{call #{TEST_PROCEDURE}(?, ?, ?, ?, ?, ?)}"
+							"{call #{TEST_PROCEDURE}(?, ?, ?, ?, ?, ?, ?)}"
 						end)
 			result = cstmt_name.call(
 				:i1 => 'hello', :i2 => 10,
 				:io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+				:n1 => nil,
 				:o1 => Float, 'o2' => String)
 			assert_instance_of Hash, result
 			assert_equal 1000, result[:io1]
@@ -340,29 +341,40 @@ class TestConnection < Test::Unit::TestCase
 				assert_raise(RuntimeError) { cstmt.call }
 			end
 
-			# pend('mysql raises data truncation error') do
+			# Data truncated for column 'io1' at row 2. WHY?
+			# http://www.herongyang.com/JDBC/MySQL-CallableStatement-INOUT-Parameters.html
 			if @type != :mysql
-				cstmt_ord = conn.prepare_call "{call #{TEST_PROCEDURE}(?, 10, ?, ?, ?, ?)}"
+				cstmt_ord = conn.prepare_call "{call #{TEST_PROCEDURE}('howdy', ?, ?, ?, ?, ?, ?)}"
 				cstmt_name = conn.prepare_call(case @type
 						when :oracle
-							"{call #{TEST_PROCEDURE}(:i1, 10, :io1, :io2, :o1, :o2)}"
+							"{call #{TEST_PROCEDURE}('howdy', :i2, :io1, :io2, :n1, :o1, :o2)}"
 						else
-							"{call #{TEST_PROCEDURE}(?, 10, ?, ?, ?, ?)}"
+							"{call #{TEST_PROCEDURE}('howdy', ?, ?, ?, ?, ?, ?)}"
 						end)
 				# Hash parameter
 				result = cstmt_name.call(
-					:i1 => 'hello',# :i2 => 10,
+					#:i1 => 'hello',
+					:i2 => 10,
 					:io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+					:n1 => nil,
 					:o1 => Float, 'o2' => String)
 				assert_instance_of Hash, result
 				assert_equal 1000, result[:io1]
-				assert_equal 'hello', result['o2']
+				assert_equal 'howdy', result['o2']
 
 				# Array parameter
-				result = cstmt_ord.call('hello', [100, Fixnum], [Time.now, Time], Float, String)
+				result = cstmt_ord.call(10, [100, Fixnum], [Time.now, Time], nil, Float, String)
 				assert_instance_of Hash, result
 				assert_equal 1000, result[2]
-				assert_equal 'hello', result[5]
+				assert_equal 'howdy', result[6]
+
+				# Close
+				[ cstmt_ord, cstmt_name ].each do | cstmt |
+					assert_equal false, cstmt.closed?
+					cstmt.close
+					assert_equal true, cstmt.closed?
+					assert_raise(RuntimeError) { cstmt.call }
+				end
 			end
 		end
 	end
