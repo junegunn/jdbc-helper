@@ -174,10 +174,16 @@ class TestObjectWrapper < Test::Unit::TestCase
 			# Count
 			assert_equal 100, table.count
 			assert_equal 100, table.count(:alpha => 100)
+			assert_equal 1, table.where(:alpha => 100).count(:id => 1) # scoped
+			assert_equal 0, table.where(:alpha => 200).count(:id => 1) # scoped
 			assert_equal 0, table.count(:beta => nil)
 
 			assert_equal 100, table.where(:alpha => 100).count
 			assert_equal 0, table.where(:beta => nil).count
+			assert_equal 40, table.where('id >= 11', 'id <= 50').count
+			assert_equal 40, table.where('id >= 11').count('id <= 50')
+			assert_equal 40, table.where('id >= 11').where('id <= 50').count
+			assert_equal 40, table.where('id >= 11').where('id <= 50').where('1 = 1').count
 			assert_equal 0, table.where(:alpha => 100).count(:beta => nil)
 
 			assert_equal true, table.empty?(:beta => nil)
@@ -327,8 +333,9 @@ class TestObjectWrapper < Test::Unit::TestCase
 			insert table
 
 			assert_equal 10, table.update(:beta => 0, :where => { :id => (1..10) })
+			assert_equal 2, table.where(:id => (55..56)).update(:beta => 0, :where => { :id => (51..60) })
 			assert_equal 10, table.where(:id => (11..20)).update(:beta => 0)
-			assert_equal 20, table.count(:beta => 0)
+			assert_equal 22, table.count(:beta => 0)
 			assert_equal 100, table.update(:beta => 1)
 		end
 	end

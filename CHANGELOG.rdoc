@@ -1,3 +1,7 @@
+=== 0.4.4 / 2011/06/08
+* Where conditions have become accumulative, which means you can chain multiple JDBCHelper::TableWrapper#where methods to further limit the scope.
+  users = conn.table(:users).where(:status => 1).where(:age => 20..30).to_a
+
 === 0.4.3 / 2011/06/06
 * Improved handling of hash parameters for JDBCHelper::ProcedureWrapper. Missing parameters in the given Hash are treated as nulls. And now it works for both Oracle and MySQL.
 * Users are encouraged to update their MySQL JDBC driver to the latest version. Some features of ProcedureWrapper may not work properly on older versions.

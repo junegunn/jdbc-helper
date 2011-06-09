@@ -50,7 +50,7 @@ class TableWrapper < ObjectWrapper
 	# @param [List of Hash/String] where Filter conditions
 	# @return [Fixnum] Count of the records.
 	def count *where
-		@connection.query(JDBCHelper::SQL.count name, where.empty? ? @query_where : where)[0][0].to_i
+		@connection.query(JDBCHelper::SQL.count name, merge_where(self, where))[0][0].to_i
 	end
 
 	# Sees if the table is empty
@@ -90,7 +90,9 @@ class TableWrapper < ObjectWrapper
 	#   :where element of the given hash can (usually should) point to another Hash representing update filters.
 	# @return [Fixnum] Number of affected records
 	def update data_hash_with_where
-		where = data_hash_with_where.delete(:where) || @query_where
+		where_ext = data_hash_with_where.delete(:where)
+		where_ext = [where_ext] unless where_ext.is_a? Array
+		where = merge_where(self, where_ext.compact)
 		@connection.send @update_method, JDBCHelper::SQL.update(name, data_hash_with_where, where)
 	end
 
@@ -98,7 +100,8 @@ class TableWrapper < ObjectWrapper
 	# @param [List of Hash/String] where Delete filters
 	# @return [Fixnum] Number of affected records
 	def delete *where
-		@connection.send @update_method, JDBCHelper::SQL.delete(name, where.empty? ? @query_where : where)
+		where = merge_where(self, where)
+		@connection.send @update_method, JDBCHelper::SQL.delete(name, where)
 	end
 
 	# Empties the table.
@@ -137,14 +140,14 @@ class TableWrapper < ObjectWrapper
 	# Returns a new TableWrapper object which can be used to execute a select
 	# statement for the table with the specified filter conditions.
 	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [Hash/String] Filter conditions
+	# @param [List of Hash/String] Filter conditions
 	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
 	def where *conditions, &block
 		raise ArgumentError.new("Wrong number of arguments") if conditions.empty?
 
 		obj = self.dup
-		obj.instance_variable_set :@query_where, conditions
+		merge_where(obj, conditions, true)
 		ret obj, &block
 	end
 
@@ -214,6 +217,12 @@ private
 		else
 			obj
 		end
+	end
+
+	def merge_where obj, where, apply = false
+		merged = (obj.instance_variable_get(:@query_where) || []) + (where || [])
+		obj.instance_variable_set :@query_where, merged if apply
+		merged
 	end
 end#TableWrapper
 end#JDBCHelper
