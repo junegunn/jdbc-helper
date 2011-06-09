@@ -176,6 +176,13 @@ Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
   conn.procedure(:update_and_fetch_something).call(
 		  :a => 100, :b => ["value", String], :c => Fixnum)
 
+=== Using sequence wrappers (since 0.4.2)
+  seq = conn.sequence(:my_seq)
+  next = seq.nextval
+  curr = seq.currval
+  seq.reset!
+  seq.reset! 100
+
 == Contributing to jdbc-helper
 
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
