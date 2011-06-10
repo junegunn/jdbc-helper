@@ -7,16 +7,18 @@ batch updates, prepared statements and transactions.
 As the name implies, this gem only works on JRuby.
 
 == Installation
-=== Prerequisites
-Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
- export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java.jar
-
 === Install gem
  gem install jdbc-helper
 
+=== Setting up CLASSPATH
+Add the appropriate JDBC drivers to the CLASSPATH.
+ export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java-5.1.16-bin.jar:~/lib/ojdbc6.jar
+
+=== In Ruby
+ require 'jdbc-helper'
+
 == Examples
 === Connecting to a database
- require 'jdbc-helper'
 
  # :driver and :url must be given
  conn = JDBCHelper::Connection.new(
