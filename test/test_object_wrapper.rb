@@ -72,12 +72,15 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 	def insert table, cnt = 100
 		params = {
-			:alpha => 100, 
+			:alpha => 100,
 			:beta => JDBCHelper::SQL('0.1 + 0.2'), 
-			:gamma => 'hello world' }
+		}
 
 		(1..cnt).each do |pk|
-			icnt = table.insert(params.merge(:id => pk))
+			icnt = table.
+					default(:gamma => 'hello world').
+					default(:alpha => 200).
+					insert(params.merge(:id => pk))
 			assert_equal 1, icnt unless table.batch?
 		end
 	end
@@ -334,7 +337,13 @@ class TestObjectWrapper < Test::Unit::TestCase
 
 			assert_equal 10, table.update(:beta => 0, :where => { :id => (1..10) })
 			assert_equal 2, table.where(:id => (55..56)).update(:beta => 0, :where => { :id => (51..60) })
-			assert_equal 10, table.where(:id => (11..20)).update(:beta => 0)
+			assert_equal 10, table.where(:id => (11..20)).update(:beta => 1)
+
+			with_default = table.default(:beta => 0)
+			assert_equal 5, with_default.where(:id => (11..15)).update
+			assert_equal 5, with_default.where(:id => (16..20)).update
+			with_default = table.default(:beta => 1)
+			assert_equal 5, with_default.where(:id => (16..20)).update(:beta => 0) # override
 			assert_equal 22, table.count(:beta => 0)
 			assert_equal 100, table.update(:beta => 1)
 		end

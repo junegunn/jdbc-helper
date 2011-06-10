@@ -1,3 +1,6 @@
+=== 0.4.5 / 2011/06/10
+* JDBCHelper::TableWrapper#default method added which allows you to specify common default values for the subsequent inserts and updates.
+
 === 0.4.4 / 2011/06/08
 * Where conditions have become accumulative, which means you can chain multiple JDBCHelper::TableWrapper#where methods to further limit the scope.
   users = conn.table(:users).where(:status => 1).where(:age => 20..30).to_a

@@ -50,7 +50,7 @@ class TableWrapper < ObjectWrapper
 	# @param [List of Hash/String] where Filter conditions
 	# @return [Fixnum] Count of the records.
 	def count *where
-		@connection.query(JDBCHelper::SQL.count name, merge_where(self, where))[0][0].to_i
+		@connection.query(JDBCHelper::SQL.count(name, @query_where + where))[0][0].to_i
 	end
 
 	# Sees if the table is empty
@@ -63,8 +63,8 @@ class TableWrapper < ObjectWrapper
 	# Inserts a record into the table with the given hash
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
-	def insert data_hash
-		@connection.send @update_method, JDBCHelper::SQL.insert(name, data_hash)
+	def insert data_hash = {}
+		@connection.send @update_method, JDBCHelper::SQL.insert(name, @query_default.merge(data_hash))
 	end
 
 	# Inserts a record into the table with the given hash.
@@ -72,16 +72,16 @@ class TableWrapper < ObjectWrapper
 	# @note This is not SQL standard. Only works if the database supports insert ignore syntax.
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
-	def insert_ignore data_hash
-		@connection.send @update_method, JDBCHelper::SQL.insert_ignore(name, data_hash)
+	def insert_ignore data_hash = {}
+		@connection.send @update_method, JDBCHelper::SQL.insert_ignore(name, @query_default.merge(data_hash))
 	end
 
 	# Replaces a record in the table with the new one with the same unique key.
 	# @note This is not SQL standard. Only works if the database supports replace syntax.
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
-	def replace data_hash
-		@connection.send @update_method, JDBCHelper::SQL.replace(name, data_hash)
+	def replace data_hash = {}
+		@connection.send @update_method, JDBCHelper::SQL.replace(name, @query_default.merge(data_hash))
 	end
 
 	# Executes update with the given hash.
@@ -89,19 +89,18 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash_with_where Column values in Hash.
 	#   :where element of the given hash can (usually should) point to another Hash representing update filters.
 	# @return [Fixnum] Number of affected records
-	def update data_hash_with_where
+	def update data_hash_with_where = {}
 		where_ext = data_hash_with_where.delete(:where)
 		where_ext = [where_ext] unless where_ext.is_a? Array
-		where = merge_where(self, where_ext.compact)
-		@connection.send @update_method, JDBCHelper::SQL.update(name, data_hash_with_where, where)
+		@connection.send @update_method, 
+			JDBCHelper::SQL.update(name, @query_default.merge(data_hash_with_where), @query_where + where_ext.compact)
 	end
 
 	# Deletes records matching given condtion
 	# @param [List of Hash/String] where Delete filters
 	# @return [Fixnum] Number of affected records
 	def delete *where
-		where = merge_where(self, where)
-		@connection.send @update_method, JDBCHelper::SQL.delete(name, where)
+		@connection.send @update_method, JDBCHelper::SQL.delete(name, @query_where + where)
 	end
 
 	# Empties the table.
@@ -128,7 +127,7 @@ class TableWrapper < ObjectWrapper
 	# Returns a new TableWrapper object which can be used to execute a select
 	# statement for the table selecting only the specified fields.
 	# If a block is given, executes the select statement and yields each row to the block.
-	# @return [*String/*Symbol] List of fields to select
+	# @param [*String/*Symbol] fields List of fields to select
 	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
 	def select *fields, &block
@@ -140,21 +139,21 @@ class TableWrapper < ObjectWrapper
 	# Returns a new TableWrapper object which can be used to execute a select
 	# statement for the table with the specified filter conditions.
 	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [List of Hash/String] Filter conditions
+	# @param [List of Hash/String] conditions Filter conditions
 	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
 	def where *conditions, &block
 		raise ArgumentError.new("Wrong number of arguments") if conditions.empty?
 
 		obj = self.dup
-		merge_where(obj, conditions, true)
+		obj.instance_variable_set :@query_where, @query_where + conditions
 		ret obj, &block
 	end
 
 	# Returns a new TableWrapper object which can be used to execute a select
 	# statement for the table with the given sorting criteria.
 	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [*String/*Symbol] Sorting criteria
+	# @param [*String/*Symbol] criteria Sorting criteria
 	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
 	def order *criteria, &block
@@ -162,6 +161,19 @@ class TableWrapper < ObjectWrapper
 		obj = self.dup
 		obj.instance_variable_set :@query_order, criteria
 		ret obj, &block
+	end
+
+	# Returns a new TableWrapper object with default values, which will be applied to
+	# the subsequent inserts and updates.
+	# @param [Hash] data_hash Default values
+	# @return [JDBCHelper::TableWrapper]
+	# @since 0.4.5
+	def default data_hash
+		raise ArgumentError.new("Hash required") unless data_hash.kind_of? Hash
+
+		obj = self.dup
+		obj.instance_variable_set :@query_default, @query_default.merge(data_hash)
+		obj
 	end
 
 	# Executes a select SQL for the table and returns an Enumerable object,
@@ -209,6 +221,8 @@ class TableWrapper < ObjectWrapper
 	def initialize connection, table_name
 		super connection, table_name
 		@update_method = :update
+		@query_default = {}
+		@query_where = []
 	end
 private
 	def ret obj, &block
@@ -217,12 +231,6 @@ private
 		else
 			obj
 		end
-	end
-
-	def merge_where obj, where, apply = false
-		merged = (obj.instance_variable_get(:@query_where) || []) + (where || [])
-		obj.instance_variable_set :@query_where, merged if apply
-		merged
 	end
 end#TableWrapper
 end#JDBCHelper
