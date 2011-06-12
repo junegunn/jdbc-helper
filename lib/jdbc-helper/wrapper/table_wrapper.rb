@@ -119,7 +119,7 @@ class TableWrapper < ObjectWrapper
 		@connection.update(JDBCHelper::SQL.check "drop table #{name}")
 		self
 	end
-	alias drop_table! truncate!
+	alias drop_table! drop!
 
 	# Select SQL wrapper
 	include Enumerable
