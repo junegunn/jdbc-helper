@@ -1,3 +1,8 @@
+=== 0.4.6 / 2011/06/20
+* Bug fix: Invalid alias for JDBCHelper::TableWrapper#drop!
+* Bug fix: JDBCHelper::Connection#initialize modifies its input Hash
+* Added attr_readers for url and driver to JDBCHelper::Connection
+
 === 0.4.5 / 2011/06/10
 * JDBCHelper::TableWrapper#default method added which allows you to specify common default values for the subsequent inserts and updates.
 

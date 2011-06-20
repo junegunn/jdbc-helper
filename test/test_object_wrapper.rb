@@ -398,7 +398,11 @@ class TestObjectWrapper < Test::Unit::TestCase
 			create_table conn
 			table = conn.table(@table_name)
 			table.drop!
+			assert_equal false, drop_table(conn)
 
+			create_table conn
+			table = conn.table(@table_name)
+			table.drop_table! #alias
 			assert_equal false, drop_table(conn)
 		end
 	end

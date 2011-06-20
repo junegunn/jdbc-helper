@@ -83,6 +83,9 @@ class TestConnection < Test::Unit::TestCase
 
 				conn = JDBCHelper::Connection.new(conn_info)
 				assert_equal(conn.closed?, false)
+				assert_equal(conn.driver, conn_info[:driver] || conn_info['driver'])
+				assert_equal(conn.url, conn_info[:url] || conn_info['url'])
+
 				conn.close
 				assert_equal(conn.closed?, true)
 				[ :query, :update, :add_batch, :prepare ].each do | met |

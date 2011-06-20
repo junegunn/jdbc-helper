@@ -119,6 +119,14 @@ class Connection
 	# @return [Hash] Accumulated statistics of each type of operation
 	attr_reader :stats
 
+	# JDBC URL of the connection
+	# @return [String]
+	attr_reader :url
+
+	# JDBC driver of the connection
+	# @return [String]
+	attr_reader :driver
+
 	# Returns the underlying JDBC Connection object.
 	# Only use this when you really need to access it directly.
 	def jdbc_conn
@@ -135,7 +143,10 @@ class Connection
 	# If a block is given, the connection is automatically closed after executing the block.
 	# @param [Hash] args
 	def initialize(args = {})
-		# String-tolerance..
+		# Subsequent deletes should not affect the input
+		args = args.dup
+
+		# String/Symbol
 		%w[driver url user password timeout].each do | strk |
 			args[strk.to_sym] = args.delete strk if args.has_key? strk
 		end
@@ -143,8 +154,11 @@ class Connection
 		raise ArgumentError.new("driver not given") unless args.has_key? :driver
 		raise ArgumentError.new("url not given") unless args.has_key? :url
 
+		@driver = args.delete :driver
+		@url = args.delete :url
+
 		begin
-			Java::JavaClass.for_name args[:driver]
+			Java::JavaClass.for_name @driver
 		rescue Exception
 			# TODO
 			raise
@@ -158,7 +172,7 @@ class Connection
 			props.setProperty(key.to_s, args[key]) if args[key]
 		end
 		
-		@conn = JavaSql::DriverManager.get_connection(args[:url], props)
+		@conn = JavaSql::DriverManager.get_connection(@url, props)
 		@spool = StatementPool.send :new, self
 		@bstmt = nil
 
