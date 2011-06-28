@@ -22,16 +22,20 @@ class ParameterizedStatement
 	end
 
 	def set_param(idx, param)
-		if param.nil?
-			@java_obj.set_null idx, java.sql.Types::NULL
-		elsif setter = JDBCHelper::Connection::SETTER_MAP[param.class.to_s]
-			if setter == :setBinaryStream
-				@java_obj.send setter, idx, param.getBinaryStream, param.length
-			elsif setter == :setTimestamp && param.is_a?(Time)
-				@java_obj.send setter, idx, java.sql.Timestamp.new(param.to_i * 1000)
-			else
-				@java_obj.send setter, idx, param
+		if setter = (JDBCHelper::Connection::SETTER_MAP[param.class] || 
+							JDBCHelper::Connection::SETTER_MAP[param.class.to_s])
+			case setter
+			when :setNull
+				return @java_obj.send setter, idx, java.sql.Types::NULL
+			when :setBinaryStream
+				return @java_obj.send setter, idx, param.getBinaryStream, param.length
+			when :setTimestamp
+				if param.kind_of?(Time)
+					return @java_obj.send setter, idx, java.sql.Timestamp.new(param.to_i * 1000)
+				end
 			end
+
+			@java_obj.send setter, idx, param
 		else
 			@java_obj.set_string idx, param.to_s
 		end

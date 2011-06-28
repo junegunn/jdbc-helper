@@ -1,3 +1,6 @@
+=== 0.4.7 / 2011/06/28
+* PreparedStatement performance improvement. Minimized unneccesary to_s call when setting parameters. 10% to 30% improvement observed for usual bulk insertion.
+
 === 0.4.6 / 2011/06/20
 * Bug fix: Invalid alias for JDBCHelper::TableWrapper#drop!
 * Bug fix: JDBCHelper::Connection#initialize modifies its input Hash

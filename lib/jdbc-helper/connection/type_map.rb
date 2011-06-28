@@ -13,16 +13,18 @@ class Connection
 
 	SETTER_MAP =
 	{
-		'String' => :setString,
-		'Fixnum' => :setInt,
-		'Float' => :setDouble,
-		# See there's a caveat. Check out ParameterizedStatement#set_param
-		'Time' => :setTimestamp,
+		Fixnum => :setInt,
+		String => :setString,
+		NilClass => :setNull,
+		Float => :setDouble,
 
-		'Java::JavaSql::Date' => :setDate,
-		'Java::JavaSql::Time' => :setTime,
-		'Java::JavaSql::Timestamp' => :setTimestamp,
-		'Java::JavaSql::Blob' => :setBinaryStream,
+		# See there's a caveat. Check out ParameterizedStatement#set_param
+		Time => :setTimestamp,
+
+		Java::JavaSql::Date => :setDate,
+		Java::JavaSql::Time => :setTime,
+		Java::JavaSql::Timestamp => :setTimestamp,
+		Java::JavaSql::Blob => :setBinaryStream,
 
 		#########
 		# MySQL #
