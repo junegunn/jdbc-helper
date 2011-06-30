@@ -105,6 +105,18 @@ class TestConnection < Test::Unit::TestCase
 		end
 	end
 
+	def test_fetch_size
+		each_connection do | conn |
+			assert_nil conn.fetch_size
+			conn.fetch_size = 10
+			assert_equal 10, conn.fetch_size
+			conn.set_fetch_size 20
+			assert_equal 20, conn.fetch_size
+
+			# No way to confirm whether if this is really working as it's supposed to be.
+		end
+	end
+
 	def test_query_enumerate
 		each_connection do | conn |
 			# Query without a block => Array

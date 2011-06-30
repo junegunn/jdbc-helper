@@ -344,6 +344,13 @@ class Connection
 		@fetch_size = fsz
 		@spool.each { | stmt | stmt.set_fetch_size @fetch_size }
 	end
+	alias fetch_size= set_fetch_size
+
+	# Returns the fetch size of the connection. If not set, nil is returned.
+	# @return [Fixnum]
+	def fetch_size
+		@fetch_size
+	end
 
 	# Closes the connection
 	# @return [NilClass]
