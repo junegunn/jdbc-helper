@@ -181,14 +181,14 @@ Add the appropriate JDBC drivers to the CLASSPATH.
  # Working with IN/INOUT/OUT parameteres
  # Bind by ordinal number
  conn.procedure(:update_and_fetch_something).call(
-		  100,                 # Input parameter 
-		  ["value", String],   # Input/Output parameter
-		  Fixnum               # Output parameter
+          100,                 # Input parameter 
+          ["value", String],   # Input/Output parameter
+          Fixnum               # Output parameter
  )
 
  # Bind by parameter name
  conn.procedure(:update_and_fetch_something).call(
-		  :a => 100, :b => ["value", String], :c => Fixnum)
+          :a => 100, :b => ["value", String], :c => Fixnum)
 
 === Using sequence wrappers (since 0.4.2)
  seq = conn.sequence(:my_seq)
