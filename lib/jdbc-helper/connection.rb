@@ -348,9 +348,7 @@ class Connection
 
 	# Returns the fetch size of the connection. If not set, nil is returned.
 	# @return [Fixnum]
-	def fetch_size
-		@fetch_size
-	end
+	attr_reader :fetch_size
 
 	# Closes the connection
 	# @return [NilClass]

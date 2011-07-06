@@ -182,6 +182,13 @@ class TestConnection < Test::Unit::TestCase
 			sel = conn.prepare get_one_two
 			assert sel.closed? == false
 
+			# Fetch size
+			assert_nil sel.fetch_size
+			sel.fetch_size = 10
+			assert_equal 10, sel.fetch_size
+			sel.set_fetch_size 20
+			assert_equal 20, sel.fetch_size
+
 			# Query without a block => Array
 			query_result = sel.query
 			assert query_result.is_a? Array

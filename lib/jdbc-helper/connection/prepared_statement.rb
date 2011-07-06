@@ -79,7 +79,11 @@ class PreparedStatement < ParameterizedStatement
 
 		@java_obj.set_fetch_size fsz
 	end
+	alias fetch_size= set_fetch_size
 
+	# Returns the fetch size of the prepared statement. If not set, nil is returned.
+	# @return [Fixnum]
+	attr_reader :fetch_size
 private
 	def set_params(params) # :nodoc:
 		params.each_with_index do | param, idx |
