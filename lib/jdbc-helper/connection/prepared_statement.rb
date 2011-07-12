@@ -77,6 +77,7 @@ class PreparedStatement < ParameterizedStatement
 	def set_fetch_size(fsz)
 		check_closed
 
+		@fetch_size = fsz
 		@java_obj.set_fetch_size fsz
 	end
 	alias fetch_size= set_fetch_size

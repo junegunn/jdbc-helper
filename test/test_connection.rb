@@ -81,6 +81,9 @@ class TestConnection < Test::Unit::TestCase
 					conn_info[str_key.to_sym] = conn_info.delete str_key
 				end if i % 2 == 0
 
+				# Integers will be converted to String
+				#conn_info['defaultRowPrefetch'] = 1000
+
 				conn = JDBCHelper::Connection.new(conn_info)
 				assert_equal(conn.closed?, false)
 				assert_equal(conn.driver, conn_info[:driver] || conn_info['driver'])
@@ -183,11 +186,15 @@ class TestConnection < Test::Unit::TestCase
 			assert sel.closed? == false
 
 			# Fetch size
+			assert_nil conn.fetch_size
 			assert_nil sel.fetch_size
-			sel.fetch_size = 10
-			assert_equal 10, sel.fetch_size
+			conn.fetch_size = 100
+			sel.fetch_size  = 10
+			assert_equal 100, conn.fetch_size
+			assert_equal 10,  sel.fetch_size
 			sel.set_fetch_size 20
-			assert_equal 20, sel.fetch_size
+			assert_equal 100, conn.fetch_size
+			assert_equal 20,  sel.fetch_size
 
 			# Query without a block => Array
 			query_result = sel.query

@@ -169,7 +169,7 @@ class Connection
 
 		props = java.util.Properties.new
 		(args.keys - [:url, :driver]).each do | key |
-			props.setProperty(key.to_s, args[key]) if args[key]
+			props.setProperty(key.to_s, args[key].to_s) if args[key]
 		end
 		
 		@conn = JavaSql::DriverManager.get_connection(@url, props)
