@@ -1,3 +1,7 @@
+=== 0.4.8 / 2011/07/12
+* Improved fetch size interface
+* Supports non-string property values in the input parameter for Connection object
+
 === 0.4.7 / 2011/06/28
 * PreparedStatement performance improvement. Minimized unneccesary to_s call when setting parameters. 10% to 30% improvement observed for usual bulk insertion.
 
