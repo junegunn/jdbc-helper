@@ -1,3 +1,6 @@
+=== 0.4.9 / 2011/08/09
+* Oracle NUMBER datatype is retrived as Fixnum or Bignum or String depending on its precision and scale.
+
 === 0.4.8 / 2011/07/12
 * Improved fetch size interface
 * Supports non-string property values in the input parameter for Connection object

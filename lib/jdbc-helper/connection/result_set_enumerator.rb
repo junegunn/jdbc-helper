@@ -65,13 +65,30 @@ private
 		@rset = rset
 		@rsmd = @rset.get_meta_data
 		@num_col = @rsmd.get_column_count
-		@cols_meta = []
 		@getters = []
 		@col_labels = []
 		@col_labels_d = []
 		(1..@num_col).each do | i |
-			@cols_meta << @rsmd.get_column_type(i)
-			@getters << JDBCHelper::Connection::GETTER_MAP.fetch(@cols_meta.last, :get_string)
+			type = @rsmd.get_column_type(i)
+
+			@getters <<
+				case type
+				when java.sql.Types::NUMERIC, java.sql.Types::DECIMAL
+					precision = @rsmd.get_precision(i)
+					scale = @rsmd.get_scale(i)
+
+					# Numbers with fractional parts
+					if scale > 0
+						:getString
+					# Numbers without fractional parts
+					elsif precision < 10
+						:getInt
+					else
+						:getLong
+					end
+				else
+					JDBCHelper::Connection::GETTER_MAP.fetch(type, :get_string)
+				end
 
 			@col_labels << @rsmd.get_column_label(i)
 			@col_labels_d << @col_labels.last.downcase

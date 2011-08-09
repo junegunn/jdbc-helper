@@ -71,13 +71,13 @@ module JDBCHelperTestHelper
 	end
 
 	# This is crazy. But Oracle.
-	def assert_equal *args
-		if args.first.class == Fixnum
-			super(args[0].to_s, args[1].to_s)
-		else
-			super(*args)
-		end
-	end
+	#def assert_equal *args
+		#if args.first.class == Fixnum
+			#super(args[0].to_s, args[1].to_s)
+		#else
+			#super(*args)
+		#end
+	#end
 
 	def each_connection(&block)
 		config.each do | db, conn_info |
