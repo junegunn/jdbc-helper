@@ -77,14 +77,27 @@ private
 					precision = @rsmd.get_precision(i)
 					scale = @rsmd.get_scale(i)
 
-					# Numbers with fractional parts
-					if scale > 0
-						:getString
-					# Numbers without fractional parts
-					elsif precision < 10
-						:getInt
+					if precision > 0 && scale >= 0
+						# Numbers with fractional parts
+						if scale > 0
+							if precision <= 16
+								:getFloat
+							else
+								:getString
+							end
+						# Numbers without fractional parts
+						else
+							if precision <= 9
+								:getInt
+							elsif precision <= 18
+								:getLong
+							else
+								:getString
+							end
+						end
+					# No guarantee
 					else
-						:getLong
+						:getString
 					end
 				else
 					JDBCHelper::Connection::GETTER_MAP.fetch(type, :get_string)

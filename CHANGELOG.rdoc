@@ -1,3 +1,6 @@
+=== 0.4.10 / 2011/08/09
+* Sadly, I found that with Oracle, precision and scale information from ResultSetMetaData is completely unreliable. Going conservative.
+
 === 0.4.9 / 2011/08/09
 * Oracle NUMBER datatype is retrived as Fixnum or Bignum or String depending on its precision and scale.
 
