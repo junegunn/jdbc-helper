@@ -78,7 +78,7 @@ class TestPerformance < Test::Unit::TestCase
 				end
 			}.real}"
 
-			assert_equal @count * 5, conn.table(@table).count
+			assert_equal @count * 6, conn.table(@table).count
 
 			conn.query("select * from #{@table}") do |row|
 				# ...
