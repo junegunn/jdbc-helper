@@ -53,7 +53,7 @@ class SQLPrepared < JDBCHelper::SQL
     w_c, w_b = where_internal(opts.fetch(:where, {}))
     sql = [
       "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}", 
-      w_c,
+      w_c.to_s,
       order(opts.fetch(:order, []).join(', '))
     ].reject(&:empty?).join(' ')
 

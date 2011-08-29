@@ -194,7 +194,13 @@ class TableWrapper < ObjectWrapper
 	# @return [JDBCHelper::Connection::ResultSetEnumerator]
 	# @since 0.4.0
 	def each &block
-		@connection.enumerate sql, &block
+		sql, binds = JDBCHelper::SQLPrepared.select(
+				name, 
+				:select => @query_select, 
+				:where => @query_where,
+				:order => @query_order)
+    pstmt = prepare :select, sql
+    pstmt.enumerate *binds, &block
 	end
 
 	# Returns a new TableWrapper object whose subsequent inserts, updates,
