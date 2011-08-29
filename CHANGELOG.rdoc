@@ -1,10 +1,10 @@
 === 0.5.1 / 2011/08/29
 * Bug fix: TableWrapper objects are cached to prevent proliferation of PreparedStatements.
 
-  # In the previous version, codes like the following generated too many prepared statements.
-  (0..10000).each do |i|
-    db.table(:my_table).count(:id => i)
-  end
+    # In the previous version, codes like the following generated too many prepared statements.
+    (0..10000).each do |i|
+      db.table(:my_table).count(:id => i)
+    end
 
 === 0.5.0 / 2011/08/29
 * TableWrapper internally uses PreparedStatements instead of regular statements for better performance. <b>However, this makes it impossible to serialize batched operations.</b> Thus, you should not use batched statements with TableWrapper when the order of operations is important.
