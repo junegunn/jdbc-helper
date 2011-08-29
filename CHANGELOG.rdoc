@@ -1,5 +1,6 @@
 === 0.5.1 / 2011/08/29
 * Bug fix: TableWrapper objects are cached to prevent proliferation of PreparedStatements.
+
   # In the previous version, codes like the following generated too many prepared statements.
   (0..10000).each do |i|
     db.table(:my_table).count(:id => i)
