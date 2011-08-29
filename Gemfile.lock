@@ -1,14 +1,26 @@
 GEM
   remote: http://rubygems.org/
   specs:
+    coderay (0.9.8)
     git (1.2.5)
     jeweler (1.5.2)
       bundler (~> 1.0.0)
       git (>= 1.2.5)
       rake
+    method_source (0.6.0)
+      ruby_parser (>= 2.0.5)
+    pry (0.9.3)
+      coderay (>= 0.9.8)
+      method_source (>= 0.6.0)
+      ruby_parser (>= 2.0.5)
+      slop (~> 1.9.0)
     rake (0.8.7)
     rcov (0.9.9)
     rcov (0.9.9-java)
+    ruby_parser (2.1.0)
+      sexp_processor (~> 3.0)
+    sexp_processor (3.0.6)
+    slop (1.9.1)
     test-unit (2.3.0)
 
 PLATFORMS
@@ -18,5 +30,6 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 1.0.0)
   jeweler (~> 1.5.2)
+  pry
   rcov
   test-unit (>= 2.3.0)

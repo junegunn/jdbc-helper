@@ -16,7 +16,6 @@ class TestSQL < Test::Unit::TestCase
 		assert_equal "'sysdate'",         SQL.value('sysdate')
 		assert_equal "'A''s'",            SQL.value("A's")
 		assert_equal "sysdate",           SQL.value(JDBCHelper::SQL('sysdate'))
-
 	end
 
 	def test_order
@@ -71,6 +70,29 @@ class TestSQL < Test::Unit::TestCase
 		assert_raise(ArgumentError) { SQL.where(:a => JDBCHelper::SQL(' aab`bb``  ')) }
 	end
 
+  def test_where_prepared
+		assert_equal ["where a = ?", [1]],                  SQLPrepared.where(:a => 1)
+		assert_equal ["where a = ?", [1.2]],               SQLPrepared.where(:a => 1.2)
+		assert_equal ["where a = ?", [9999999999999999999]], SQLPrepared.where(:a => 9999999999999999999)
+		assert_equal ["where a >= ? and a <= ?", [1,2]],      SQLPrepared.where(:a => 1..2)
+		assert_equal ["where a >= ? and a < ?", [1,2]],       SQLPrepared.where(:a => 1...2)
+		assert_equal ["where a = ?", ["A's"]],            SQLPrepared.where(:a => "A's")
+		assert_equal ["where a is null", []],             SQLPrepared.where(:a => nil)
+		assert_equal ["where a is not null", []],          SQLPrepared.where(:a => SQL.not_nil)
+		assert_equal ["where a is not null", []],         SQLPrepared.where(:a => SQL.not_null)
+		assert_equal ["where a = sysdate", []],           SQLPrepared.where(:a => JDBCHelper::SQL('sysdate'))
+		assert_equal ["where sysdate = sysdate", []],     SQLPrepared.where(JDBCHelper::SQL('sysdate') => JDBCHelper::SQL('sysdate'))
+		assert_equal ["where a in ('aa', 'bb', 'cc')", []], SQLPrepared.where(:a => %w[aa bb cc])
+		assert_equal ["where a = ? and b = ?", [1, "A's"]],   SQLPrepared.where(:a => 1, :b => "A's")
+		assert_equal ["where (a = 1 or b = 1)", []],        SQLPrepared.where("a = 1 or b = 1")
+		assert_equal ["where (a = 1 or b = 1) and c = ?", [2]], SQLPrepared.where("a = 1 or b = 1", :c => 2)
+		assert_equal ["where c = ? and (a = 1 or b = 1)", [2]], SQLPrepared.where({:c => 2}, "a = 1 or b = 1")
+		assert_equal ["where c = ? and (a = 1 or b = 1) and (e = 2) and f = ?", [2, 3]],
+				SQLPrepared.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {})
+		assert_equal [nil, []], SQLPrepared.where(nil)
+		assert_equal [nil, []], SQLPrepared.where(" ")
+  end
+
 	def test_select
 		assert_equal "select * from a.b", SQL.select('a.b')
 		assert_equal "select aa, bb from a.b where a is not null",
@@ -86,11 +108,17 @@ class TestSQL < Test::Unit::TestCase
 	def test_count
 		assert_equal "select count(*) from a.b", SQL.count('a.b')
 		assert_equal "select count(*) from a.b where a is not null", SQL.count('a.b', :a => SQL.not_nil)
+
+		assert_equal ["select count(*) from a.b", []], SQLPrepared.count('a.b')
+		assert_equal ["select count(*) from a.b where a = ?", [1]], SQLPrepared.count('a.b', :a => 1)
 	end
 
 	def test_delete
 		assert_equal "delete from a.b", SQL.delete('a.b')
 		assert_equal "delete from a.b where a is not null", SQL.delete('a.b', :a => SQL.not_nil)
+
+		assert_equal ["delete from a.b", []], SQLPrepared.delete('a.b')
+		assert_equal ["delete from a.b where a = ?", [1]], SQLPrepared.delete('a.b', :a => 1)
 	end
 
 	def test_update
@@ -99,11 +127,33 @@ class TestSQL < Test::Unit::TestCase
 
 		assert_equal "update a.b set a = 1, b = 'A''s', c = now() where a is not null", 
 			SQL.update('a.b', {:a => 1, :b => "A's", :c => JDBCHelper::SQL('now()')}, { :a => SQL.not_nil })
+
+		assert_equal ["update a.b set a = ?, b = ?, c = now()", [1, "A's"]],
+			SQLPrepared.update('a.b', {:a => 1, :b => "A's", :c => JDBCHelper::SQL('now()')}, {})
+
+		assert_equal ["update a.b set a = ?, b = ?, c = now() where a = ?", [1, "A's", 2]],
+			SQLPrepared.update('a.b', {:a => 1, :b => "A's", :c => JDBCHelper::SQL('now()')}, { :a => 2 })
 	end
 
 	def test_insert
 		assert_equal "insert into a.b (a, b, c) values (1, 'A''s', null)",
 			SQL.insert('a.b', :a => 1, :b => "A's", :c => nil)
+
+		assert_equal ["insert into a.b (a, b, c) values (?, ?, ?)", [1, "A's", nil]],
+			SQLPrepared.insert('a.b', :a => 1, :b => "A's", :c => nil)
 	end
+
+  def test_sql_equality
+    assert_equal "a = b", JDBCHelper.SQL('a = b').to_s
+    assert_equal JDBCHelper.SQL('a = b'), JDBCHelper.SQL('a = b')
+
+    # type conversion across ==, but not across eql (TODO TBD)
+    assert JDBCHelper.SQL('a = b') == (JDBCHelper.SQL('a = b'))
+    assert JDBCHelper.SQL('a = b') == 'a = b'
+    assert       JDBCHelper.SQL('a = b').eql?(JDBCHelper.SQL('a = b'))
+    assert_false JDBCHelper.SQL('a = b').eql?('a = b')
+
+    assert JDBCHelper.SQL('a = b') != JDBCHelper.SQL('a = c')
+  end
 end
 

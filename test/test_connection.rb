@@ -68,7 +68,7 @@ class TestConnection < Test::Unit::TestCase
 
 	# ---------------------------------------------------------------
 
-	def test_connect_and_close
+	def test_connect_clone_and_close
 		config.each do | db, conn_info_org |
 			4.times do | i |
 				conn_info = conn_info_org.reject { |k,v| k == 'database' }
@@ -89,6 +89,9 @@ class TestConnection < Test::Unit::TestCase
 				assert_equal(conn.driver, conn_info[:driver] || conn_info['driver'])
 				assert_equal(conn.url, conn_info[:url] || conn_info['url'])
 
+        conn.fetch_size = 100
+        assert_equal 100, conn.fetch_size
+
 				conn.close
 				assert_equal(conn.closed?, true)
 				[ :query, :update, :add_batch, :prepare ].each do | met |
@@ -98,10 +101,23 @@ class TestConnection < Test::Unit::TestCase
 					assert_raise(RuntimeError) { conn.send met }
 				end
 
+        new_conn = conn.clone
+        assert new_conn.java_obj != conn.java_obj
+				assert new_conn.closed? == false
+        assert_equal 100, new_conn.fetch_size
+        new_conn.close
+
 				# initialize with execution block
 				conn = JDBCHelper::Connection.new(conn_info) do | c |
+          c2 = c.clone
+          assert c2.java_obj != c.java_obj
+
 					c.query('select 1 from dual')
+					c2.query('select 1 from dual')
 					assert_equal c.closed?, false
+
+          c2.close
+					assert c2.closed?
 				end
 				assert conn.closed?
 			end
@@ -155,6 +171,8 @@ class TestConnection < Test::Unit::TestCase
 			iq = lambda do | i |
 				"insert into #{TEST_TABLE} values (#{i}, 'A')"
 			end
+      ins1 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count}, 'B')"
+      ins2 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count * 2}, 'C')"
 
 			# update
 			assert_equal 1, conn.update(iq.call 0)
@@ -165,17 +183,24 @@ class TestConnection < Test::Unit::TestCase
 
 			count.times do | p |
 				conn.add_batch iq.call(p)
+        ins1.add_batch p
+        ins2.add_batch p
 			end
 			conn.execute_batch
-			assert_equal count, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+			assert_equal count * 3, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
 
 			# add_batch clear_batch
 			reset_test_table conn
 
 			count.times do | p |
 				conn.add_batch iq.call(p)
+        ins1.add_batch p
+        ins2.add_batch p
 			end
 			conn.clear_batch
+      # Already cleared, no effect
+      ins1.execute_batch
+      ins2.execute_batch
 			assert_equal 0, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
 		end
 	end
@@ -184,6 +209,7 @@ class TestConnection < Test::Unit::TestCase
 		each_connection do | conn |
 			sel = conn.prepare get_one_two
 			assert sel.closed? == false
+      assert_equal conn.prepared_statements.first, sel
 
 			# Fetch size
 			assert_nil conn.fetch_size
@@ -232,6 +258,7 @@ class TestConnection < Test::Unit::TestCase
 			reset_test_table conn
 			ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
 			assert_equal 2, ins.parameter_count
+      assert_equal conn.prepared_statements.first, ins
 
 			count = 100
 
@@ -240,31 +267,49 @@ class TestConnection < Test::Unit::TestCase
 			assert_equal 1, ins.update(0, 'A')
 			assert_equal 1, conn.prev_stat.success_count
 			ins.close
+      assert_equal 0, conn.prepared_statements.length
 
 			# add_batch execute_batch
-			reset_test_table conn
-			ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
+      2.times do |iter|
+        reset_test_table conn
+        ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
+        assert_equal conn.prepared_statements.first, ins
 
-			count.times do | p |
-				ins.add_batch(p + 1, 'A')
-			end
-			ins.execute_batch
-			assert_equal count, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
-			ins.close
+        count.times do | p |
+          ins.add_batch(p + 1, 'A')
+        end
+        if iter == 0
+          ins.execute_batch
+        else
+          conn.execute_batch
+        end
+        assert_equal count, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+        ins.close
+        assert_equal 0, conn.prepared_statements.length
+      end
 
 			# add_batch clear_batch
 			reset_test_table conn
 			ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
+      assert_equal conn.prepared_statements.first, ins
 
-			count.times do | p |
-				ins.add_batch(p + 1, 'A')
-			end
-			ins.clear_batch
-			assert_equal 0, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+      # clear_batch
+      2.times do |iter|
+        count.times do | p |
+          ins.add_batch(p + 1, 'A')
+        end
+        if iter == 0
+          ins.clear_batch
+        else
+          conn.clear_batch
+        end
+        assert_equal 0, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+      end
 
 			# close closed?
 			assert ins.closed? == false
 			ins.close
+      assert_equal 0, conn.prepared_statements.length
 			assert ins.closed?
 			[ :query, :update, :add_batch, :execute_batch, :clear_batch ].each do | met |
 				assert_raise(RuntimeError) { ins.send met }

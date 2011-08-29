@@ -19,6 +19,13 @@ class PreparedStatement < ParameterizedStatement
 		@pmd.get_parameter_count
 	end
 
+	# @return [NilClass]
+	def close
+    @conn.send(:close_pstmt, self)
+		@java_obj.close
+		@java_obj = nil
+	end
+
 	# @return [Fixnum]
 	def update(*params)
 		check_closed

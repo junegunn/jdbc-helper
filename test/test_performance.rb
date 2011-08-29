@@ -7,7 +7,7 @@ class TestPerformance < Test::Unit::TestCase
 	def setup
 		@table = 'tmp_jdbc_helper'
 		@range = 'aaa'..'aaz'
-		@count = 100#00 # Increase this for performance measurement
+		@count = 10000 # Increase this for performance measurement
 	end
 
 	def teardown
@@ -23,6 +23,17 @@ class TestPerformance < Test::Unit::TestCase
 			puts "Normal inserts: #{Benchmark.measure {
 				@count.times do |i|
 					conn.update "insert into #{@table} values (#{@range.map{rand @count}.join ','})"
+				end
+			}.real}"
+
+			puts "Normal inserts (batch & chuck-transactional): #{Benchmark.measure {
+				(0...@count).each_slice(50) do |slice|
+					conn.transaction do
+						slice.each do |i|
+              conn.add_batch "insert into #{@table} values (#{@range.map{rand @count}.join ','})"
+						end
+						conn.execute_batch
+					end
 				end
 			}.real}"
 
@@ -56,10 +67,11 @@ class TestPerformance < Test::Unit::TestCase
 
 			puts "Inserts with hash (batch & chunk-transactional): #{Benchmark.measure {
 				table = conn.table(@table)
+        btable = table.batch
 				(0...@count).each_slice(50) do |slice|
 					conn.transaction do
 						slice.each do |i|
-							table.batch.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
+							btable.insert @range.inject({}) { |hash, key| hash[key] = rand; hash }
 						end
 						conn.execute_batch
 					end

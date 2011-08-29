@@ -1,3 +1,9 @@
+=== 0.5.0 / 2011/08/29
+* TableWrapper internally uses PreparedStatements instead of regular statements for better performance. <b>However, this makes it impossible to serialize batched operations.</b> Thus, you should not use batched statements with TableWrapper when the order of operations is important.
+* TableWrapper#close closes cached PreparedStatements.
+* Connection#execute_batch and Connection#clear_batch have been modified to execute or clear every PreparedStatment of the Connection.
+* Connection overrides clone method to create another connection to the same database.
+
 === 0.4.10 / 2011/08/09
 * Sadly, I found that with Oracle, precision and scale information from ResultSetMetaData is completely unreliable. Going conservative.
 

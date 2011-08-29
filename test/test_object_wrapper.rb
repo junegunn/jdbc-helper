@@ -363,21 +363,24 @@ class TestObjectWrapper < Test::Unit::TestCase
 			# Batch updates
 			table.batch.delete
 			assert_equal 100, table.count
+      conn.execute_batch
+			assert_equal 0, table.count
 
 			insert table.batch, 50
-			assert_equal 100, table.count
+			assert_equal 0, table.count
+      conn.execute_batch
+			assert_equal 50, table.count
 
 			table.batch.update(:alpha => JDBCHelper::SQL('alpha * 2'))
 			assert_equal 100, table.select(:alpha).to_a.first.alpha.to_i
 
 			# Independent update inbetween
 			table.delete(:id => 1..10)
-			assert_equal 90, table.count
+			assert_equal 40, table.count
 
 			# Finally
 			conn.execute_batch
 
-			assert_equal 50, table.count
 			assert_equal 200, table.select(:alpha).to_a.first.alpha.to_i
 		end
 	end
@@ -429,5 +432,49 @@ class TestObjectWrapper < Test::Unit::TestCase
 			seq.drop!
 		end
 	end
+
+  def test_prepared_statements
+		each_connection do |conn|
+			create_table conn
+
+      # No duplicate preparations
+      t = conn.table(@table_name)
+      t.count(:id => 1)
+      t.count('1 = 0')
+      bt = t.batch
+
+      assert_equal 2, t.prepared_statements[:count].length
+      assert_equal 2, bt.prepared_statements[:count].length
+
+      t.count(:id => 2)
+      t.count('2 = 0')
+      bt.count('3 = 0')
+      assert_equal 4, t.prepared_statements[:count].length
+      assert_equal 4, bt.prepared_statements[:count].length
+
+      t.count(:id => 3)
+      t.batch.count('4 = 0')
+      assert_equal 5, t.prepared_statements[:count].length
+      assert_equal 5, bt.prepared_statements[:count].length
+      assert_equal 5, t.batch.prepared_statements[:count].length
+      assert_equal 5, bt.batch.prepared_statements[:count].length
+
+      t.close
+      assert_equal 0, t.prepared_statements[:count].length
+      assert_equal 0, bt.prepared_statements[:count].length
+      assert_equal 0, t.batch.prepared_statements[:count].length
+      assert_equal 0, bt.batch.prepared_statements[:count].length
+
+      t.batch.batch.batch.count(:id => 1)
+      assert_equal 1, t.prepared_statements[:count].length
+      assert_equal 1, bt.prepared_statements[:count].length
+      assert_equal 1, bt.batch.prepared_statements[:count].length
+      assert_equal 1, t.batch.where('1 = 2').select(:a, :b).prepared_statements[:count].length
+
+      # Should be OK
+      bt.close
+      t.batch.close
+    end
+  end
 end
 

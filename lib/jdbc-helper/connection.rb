@@ -144,7 +144,8 @@ class Connection
 	# @param [Hash] args
 	def initialize(args = {})
 		# Subsequent deletes should not affect the input
-		args = args.dup
+    @args = args.dup
+		args = @args.dup
 
 		# String/Symbol
 		%w[driver url user password timeout].each do | strk |
@@ -179,6 +180,8 @@ class Connection
 		@stats = Hash.new { | h, k | h[k] = Stat.new(k, 0, 0, 0) }
 		@prev_stat = Stat.new(nil, 0, 0, 0)
 
+    @pstmts = []
+
 		if block_given?
 			begin
 				yield self
@@ -188,14 +191,29 @@ class Connection
 		end
 	end
 
+  # Creates another connection with the same parameters as this Connection.
+  # @return [JDBCHelper::Connection]
+  def clone
+    nc = JDBCHelper::Connection.new @args
+    nc.fetch_size = @fetch_size if @fetch_size
+    nc
+  end
+
 	# Creates a prepared statement, which is also an encapsulation of Java PreparedStatement object
 	# @param [String] qstr SQL string
 	def prepare(qstr)
 		check_closed
 
-		PreparedStatement.send(:new, self, qstr,
+		pstmt = PreparedStatement.send(:new, self, qstr,
 				measure_exec(:prepare) { @conn.prepare_statement(qstr) })
+    @pstmts << pstmt
+    pstmt
 	end
+
+  # @return [Array] Prepared statements currently opened for this connection
+  def prepared_statements
+    @pstmts
+  end
 
 	# Creates a callable statement.
 	# @param [String] qstr SQL string
@@ -311,27 +329,36 @@ class Connection
 		@bstmt.add_batch qstr
 	end
 
-	# Executes batched statements. No effect when no statment is added
+	# Executes batched statements including prepared statements. No effect when no statment is added
 	# @return [NilClass]
 	def execute_batch
 		check_closed
 
-		return unless @bstmt
-		ret = measure_exec(:execute_batch) { @bstmt.execute_batch }
-		@spool.give @bstmt
-		@bstmt = nil
-		ret
+    if @bstmt
+      measure_exec(:execute_batch) { @bstmt.execute_batch }
+      @spool.give @bstmt
+      @bstmt = nil
+    end
+
+    @pstmts.each do |stmt|
+      measure_exec(:execute_batch) { stmt.execute_batch }
+    end
 	end
 
-	# Clears the batched statements
+	# Clears the batched statements including prepared statements.
 	# @return [NilClass]
 	def clear_batch
 		check_closed
 
-		return unless @bstmt
-		@bstmt.clear_batch
-		@spool.give @bstmt
-		@bstmt = nil
+    if @bstmt
+      @bstmt.clear_batch
+      @spool.give @bstmt
+      @bstmt = nil
+    end
+
+    @pstmts.each do |stmt|
+      measure_exec(:execute_batch) { stmt.clear_batch }
+    end
 	end
 
 	# Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
@@ -457,6 +484,10 @@ private
 			enum.close
 		end
 	end
+
+  def close_pstmt pstmt
+    @pstmts.delete pstmt
+  end
 
 	def update_stat(type, elapsed, success_count, fail_count) # :nodoc:
 		@prev_stat.type = type

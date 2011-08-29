@@ -50,7 +50,9 @@ class TableWrapper < ObjectWrapper
 	# @param [List of Hash/String] where Filter conditions
 	# @return [Fixnum] Count of the records.
 	def count *where
-		@connection.query(JDBCHelper::SQL.count(name, @query_where + where))[0][0].to_i
+		sql, binds = JDBCHelper::SQLPrepared.count(name, @query_where + where)
+    pstmt = prepare :count, sql
+    pstmt.query(*binds)[0][0].to_i
 	end
 
 	# Sees if the table is empty
@@ -64,7 +66,9 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def insert data_hash = {}
-		@connection.send @update_method, JDBCHelper::SQL.insert(name, @query_default.merge(data_hash))
+    sql, binds = JDBCHelper::SQLPrepared.insert(name, @query_default.merge(data_hash))
+    pstmt = prepare :insert, sql
+    pstmt.send @update_method, *binds
 	end
 
 	# Inserts a record into the table with the given hash.
@@ -73,7 +77,9 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def insert_ignore data_hash = {}
-		@connection.send @update_method, JDBCHelper::SQL.insert_ignore(name, @query_default.merge(data_hash))
+    sql, binds = JDBCHelper::SQLPrepared.insert_ignore(name, @query_default.merge(data_hash))
+    pstmt = prepare :insert, sql
+    pstmt.send @update_method, *binds
 	end
 
 	# Replaces a record in the table with the new one with the same unique key.
@@ -81,7 +87,9 @@ class TableWrapper < ObjectWrapper
 	# @param [Hash] data_hash Column values in Hash
 	# @return [Fixnum] Number of affected records
 	def replace data_hash = {}
-		@connection.send @update_method, JDBCHelper::SQL.replace(name, @query_default.merge(data_hash))
+    sql, binds = JDBCHelper::SQLPrepared.replace(name, @query_default.merge(data_hash))
+    pstmt = prepare :insert, sql
+    pstmt.send @update_method, *binds
 	end
 
 	# Executes update with the given hash.
@@ -92,15 +100,20 @@ class TableWrapper < ObjectWrapper
 	def update data_hash_with_where = {}
 		where_ext = data_hash_with_where.delete(:where)
 		where_ext = [where_ext] unless where_ext.is_a? Array
-		@connection.send @update_method, 
-			JDBCHelper::SQL.update(name, @query_default.merge(data_hash_with_where), @query_where + where_ext.compact)
+    sql, binds = JDBCHelper::SQLPrepared.update(name, 
+                    @query_default.merge(data_hash_with_where),
+                    @query_where + where_ext.compact)
+    pstmt = prepare :update, sql
+    pstmt.send @update_method, *binds
 	end
 
 	# Deletes records matching given condtion
 	# @param [List of Hash/String] where Delete filters
 	# @return [Fixnum] Number of affected records
 	def delete *where
-		@connection.send @update_method, JDBCHelper::SQL.delete(name, @query_where + where)
+		sql, binds = JDBCHelper::SQLPrepared.delete(name, @query_where + where)
+    pstmt = prepare :delete, sql
+    pstmt.send @update_method, *binds
 	end
 
 	# Empties the table.
@@ -188,12 +201,13 @@ class TableWrapper < ObjectWrapper
 	# and deletes are added to batch for JDBC batch-execution. The actual execution
 	# is deferred until JDBCHelper::Connection#execute_batch method is called.
 	# Self is returned when batch is called more than once.
-	# @return [JDBCHelper::Connection::ResultSetEnumerator]
+	# @return [JDBCHelper::TableWrapper]
 	# @since 0.4.0
 	def batch
 		if batch?
 			self
 		else
+      # dup makes @pstmts to be shared
 			obj = self.dup
 			obj.instance_variable_set :@update_method, :add_batch
 			obj
@@ -223,8 +237,37 @@ class TableWrapper < ObjectWrapper
 		@update_method = :update
 		@query_default = {}
 		@query_where = []
+    @pstmts = {
+      :select => {},
+      :insert => {},
+      :delete => {},
+      :count => {},
+      :update => {}
+    }
 	end
+  
+  # Closes the prepared statements
+  # @since 0.5.0
+  def close
+    @pstmts.each do |typ, hash|
+      hash.each do |sql, pstmt|
+        pstmt.close if pstmt
+      end
+      @pstmts[typ] = {}
+    end
+  end
+
+  # @return [Hash] Prepared statements for this wrapper
+  # @since 0.5.0
+  def prepared_statements
+    @pstmts
+  end
+
 private
+  def prepare type, sql
+    @pstmts[type][sql] ||= @connection.prepare(JDBCHelper::SQL.check(sql))
+  end
+
 	def ret obj, &block
 		if block_given?
 			obj.each &block

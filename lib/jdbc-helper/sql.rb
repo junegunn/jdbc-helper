@@ -6,8 +6,11 @@ module JDBCHelper
 # Generate SQL snippet, prevents the string from being quoted.
 # @param [String] SQL snippet
 # @return [JDBCHelper::SQL]
-def self.SQL str
+def self.sql str
 	JDBCHelper::SQL.new str
+end
+class << self
+	alias_method :SQL, :sql
 end
 
 # Class representing an SQL snippet. Also has many SQL generator class methods.
@@ -43,6 +46,9 @@ class SQL
 		where_clause = where_internal conds
 		where_clause.empty? ? where_clause : check(where_clause)
 	end
+
+  def self.where_prepared *conds
+  end
 
 	# Generates SQL order by cluase with the given conditions.
 	def self.order *criteria
@@ -120,7 +126,15 @@ class SQL
 		@expr
 	end
 
-private
+  def == other
+    self.to_s == other.to_s
+  end
+	
+  def eql? other
+    self.class == other.class && self.to_s == other.to_s
+  end
+	
+protected
 	def self.esc str
 		str.gsub("'", "''")
 	end
@@ -177,7 +191,7 @@ private
 	def initialize str
 		@expr = JDBCHelper::SQL.check str
 	end
-	
+
 	# Class to represent "(IS) NOT NULL" expression in SQL
 	class NotNilClass
 		# Returns the singleton object of NotNilClass
