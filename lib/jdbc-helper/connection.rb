@@ -181,6 +181,8 @@ class Connection
 		@prev_stat = Stat.new(nil, 0, 0, 0)
 
     @pstmts = []
+    
+    @table_wrappers = {}
 
 		if block_given?
 			begin
@@ -397,7 +399,7 @@ class Connection
 	# @param [String/Symbol] table_name Name of the table to be wrapped
 	# @return [JDBCHelper::TableWrapper]
 	def table table_name
-		JDBCHelper::TableWrapper.new self, table_name
+    @table_wrappers[table_name] ||= JDBCHelper::TableWrapper.new self, table_name
 	end
 
 	# Returns a sequence wrapper for the given name

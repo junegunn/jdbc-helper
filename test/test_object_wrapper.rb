@@ -433,6 +433,31 @@ class TestObjectWrapper < Test::Unit::TestCase
 		end
 	end
 
+  # 0.5.1: Too many open cursors
+  def test_ora_10000
+		each_connection do |conn|
+			create_table conn
+      insert conn.table(@table_name)
+
+      # Batch-enabled object
+      conn.table(@table_name).batch
+
+      10000.times do
+        # Should not fail
+        t = conn.table(@table_name)
+        t.count(:id => 1)
+
+        assert_equal false, t.batch?
+        t2 = t.batch
+        assert_equal false, t.batch?
+        assert_equal true, t2.batch?
+      end
+
+      # OK
+      assert true
+    end
+  end
+
   def test_prepared_statements
 		each_connection do |conn|
 			create_table conn
