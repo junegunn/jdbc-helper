@@ -1,3 +1,4 @@
+```
     _     _ _                 _          _                 
    (_)   | | |               | |        | |                
     _  __| | |__   ___ ______| |__   ___| |_ __   ___ _ __ 
@@ -6,6 +7,7 @@
    | |\__,_|_.__/ \___|      |_| |_|\___|_| .__/ \___|_|   
   _/ |                                    | |              
  |__/                                     |_|              
+```
 
 # jdbc-helper
 
@@ -23,6 +25,7 @@ gem install jdbc-helper
 
 ### Setting up CLASSPATH
 Add the appropriate JDBC drivers to the CLASSPATH.
+
 ```
 export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java-5.1.16-bin.jar:~/lib/ojdbc6.jar
 ```
