@@ -12,96 +12,96 @@ class Connection
 #   rows = pstmt.query(10, 20)
 #   enum = pstmt.enumerate(10, 20)
 class PreparedStatement < ParameterizedStatement
-	# Returns the number of parameters required
-	# @return [Fixnum]
-	def parameter_count
-		@pmd ||= @java_obj.get_parameter_meta_data
-		@pmd.get_parameter_count
-	end
+  # Returns the number of parameters required
+  # @return [Fixnum]
+  def parameter_count
+    @pmd ||= @java_obj.get_parameter_meta_data
+    @pmd.get_parameter_count
+  end
 
-	# @return [NilClass]
-	def close
+  # @return [NilClass]
+  def close
     @conn.send(:close_pstmt, self)
-		@java_obj.close
-		@java_obj = nil
-	end
+    @java_obj.close
+    @java_obj = nil
+  end
 
-	# @return [Fixnum]
-	def update(*params)
-		check_closed
+  # @return [Fixnum]
+  def update(*params)
+    check_closed
 
-		set_params(params)
-		measure_exec(:p_update) { @java_obj.execute_update }
-	end
+    set_params(params)
+    measure_exec(:p_update) { @java_obj.execute_update }
+  end
 
-	# @return [Array] Returns an Array if block is not given
-	def query(*params, &blk)
-		check_closed
+  # @return [Array] Returns an Array if block is not given
+  def query(*params, &blk)
+    check_closed
 
-		set_params(params)
-		# sorry, ignoring privacy
-		@conn.send(:process_and_close_rset,
-				   measure_exec(:p_query) { @java_obj.execute_query }, &blk)
-	end
+    set_params(params)
+    # sorry, ignoring privacy
+    @conn.send(:process_and_close_rset,
+           measure_exec(:p_query) { @java_obj.execute_query }, &blk)
+  end
 
-	# @return [JDBCHelper::Connection::ResultSetEnumerator]
-	def enumerate(*params, &blk)
-		check_closed
+  # @return [JDBCHelper::Connection::ResultSetEnumerator]
+  def enumerate(*params, &blk)
+    check_closed
 
-		return query(*params, &blk) if block_given?
+    return query(*params, &blk) if block_given?
 
-		set_params(params)
-		ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.execute_query })
-	end
+    set_params(params)
+    ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.execute_query })
+  end
 
-	# Adds to the batch
-	# @return [NilClass]
-	def add_batch(*params)
-		check_closed
+  # Adds to the batch
+  # @return [NilClass]
+  def add_batch(*params)
+    check_closed
 
-		set_params(params)
-		@java_obj.add_batch
-	end
-	# Executes the batch
-	def execute_batch
-		check_closed
+    set_params(params)
+    @java_obj.add_batch
+  end
+  # Executes the batch
+  def execute_batch
+    check_closed
 
-		measure_exec(:p_execute_batch) {
-			@java_obj.executeBatch
-		}
-	end
-	# Clears the batch
-	# @return [NilClass]
-	def clear_batch
-		check_closed
+    measure_exec(:p_execute_batch) {
+      @java_obj.executeBatch
+    }
+  end
+  # Clears the batch
+  # @return [NilClass]
+  def clear_batch
+    check_closed
 
-		@java_obj.clear_batch
-	end
+    @java_obj.clear_batch
+  end
 
-	# Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
-	# This is only a hint. It may no effect at all.
-	# @return [NilClass]
-	def set_fetch_size(fsz)
-		check_closed
+  # Gives the JDBC driver a hint of the number of rows to fetch from the database by a single interaction.
+  # This is only a hint. It may no effect at all.
+  # @return [NilClass]
+  def set_fetch_size(fsz)
+    check_closed
 
-		@fetch_size = fsz
-		@java_obj.set_fetch_size fsz
-	end
-	alias fetch_size= set_fetch_size
+    @fetch_size = fsz
+    @java_obj.set_fetch_size fsz
+  end
+  alias fetch_size= set_fetch_size
 
-	# Returns the fetch size of the prepared statement. If not set, nil is returned.
-	# @return [Fixnum]
-	attr_reader :fetch_size
+  # Returns the fetch size of the prepared statement. If not set, nil is returned.
+  # @return [Fixnum]
+  attr_reader :fetch_size
 private
-	def set_params(params) # :nodoc:
-		params.each_with_index do | param, idx |
-			set_param(idx + 1, param)
-		end
-	end
+  def set_params(params) # :nodoc:
+    params.each_with_index do | param, idx |
+      set_param(idx + 1, param)
+    end
+  end
 
-	def initialize(*args)
-		super(*args)
-	end
+  def initialize(*args)
+    super(*args)
+  end
 end#PreparedStatment
 end#Connection
 end#JDBCHelper

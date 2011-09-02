@@ -1,63 +1,70 @@
-=== 0.5.1 / 2011/08/29
+### 0.5.2 / 2011/09/02
+* ParameterizedStatement#set_param achieves better precision with Time#to_f
+
+### 0.5.1 / 2011/08/29
 * Bug fix: TableWrapper objects are cached to prevent proliferation of PreparedStatements.
 
-    # In the previous version, codes like the following generated too many prepared statements.
-    (0..10000).each do |i|
-      db.table(:my_table).count(:id => i)
-    end
+```ruby
+# In the previous version, codes like the following generated too many prepared statements.
+(0..10000).each do |i|
+  db.table(:my_table).count(:id => i)
+end
+```
 
-=== 0.5.0 / 2011/08/29
+### 0.5.0 / 2011/08/29
 * TableWrapper internally uses PreparedStatements instead of regular statements for better performance. <b>However, this makes it impossible to serialize batched operations.</b> Thus, you should not use batched statements with TableWrapper when the order of operations is important.
 * TableWrapper#close closes cached PreparedStatements.
 * Connection#execute_batch and Connection#clear_batch have been modified to execute or clear every PreparedStatment of the Connection.
 * Connection overrides clone method to create another connection to the same database.
 
-=== 0.4.10 / 2011/08/09
+### 0.4.10 / 2011/08/09
 * Sadly, I found that with Oracle, precision and scale information from ResultSetMetaData is completely unreliable. Going conservative.
 
-=== 0.4.9 / 2011/08/09
+### 0.4.9 / 2011/08/09
 * Oracle NUMBER datatype is retrived as Fixnum or Bignum or String depending on its precision and scale.
 
-=== 0.4.8 / 2011/07/12
+### 0.4.8 / 2011/07/12
 * Improved fetch size interface
 * Supports non-string property values in the input parameter for Connection object
 
-=== 0.4.7 / 2011/06/28
+### 0.4.7 / 2011/06/28
 * PreparedStatement performance improvement. Minimized unneccesary to_s call when setting parameters. 10% to 30% improvement observed for usual bulk insertion.
 
-=== 0.4.6 / 2011/06/20
+### 0.4.6 / 2011/06/20
 * Bug fix: Invalid alias for JDBCHelper::TableWrapper#drop!
 * Bug fix: JDBCHelper::Connection#initialize modifies its input Hash
 * Added attr_readers for url and driver to JDBCHelper::Connection
 
-=== 0.4.5 / 2011/06/10
+### 0.4.5 / 2011/06/10
 * JDBCHelper::TableWrapper#default method added which allows you to specify common default values for the subsequent inserts and updates.
 
-=== 0.4.4 / 2011/06/08
+### 0.4.4 / 2011/06/08
 * Where conditions have become accumulative, which means you can chain multiple JDBCHelper::TableWrapper#where methods to further limit the scope.
-  users = conn.table(:users).where(:status => 1).where(:age => 20..30).to_a
+```ruby
+users = conn.table(:users).where(:status => 1).where(:age => 20..30).to_a
+```
 
-=== 0.4.3 / 2011/06/06
+### 0.4.3 / 2011/06/06
 * Improved handling of hash parameters for JDBCHelper::ProcedureWrapper. Missing parameters in the given Hash are treated as nulls. And now it works for both Oracle and MySQL.
 * Users are encouraged to update their MySQL JDBC driver to the latest version. Some features of ProcedureWrapper may not work properly on older versions.
 
-=== 0.4.2 / 2011/06/03
+### 0.4.2 / 2011/06/03
 * JDBCHelper::SequenceWrapper added.
 * JDBCHelper::TableWrapper#drop!, JDBCHelper::TableWrapper#truncate!
 
-=== 0.4.1 / 2011/06/01
+### 0.4.1 / 2011/06/01
 * Methods in JDBCHelper::TableWrapper which take where conditions as their arguments are modified to take varible length arguments.
 
-=== 0.4.0 / 2011/05/31
+### 0.4.0 / 2011/05/31
 * Rewrote JDBCHelper::TableWrapper interface
 * JDBCHelper::TableWrapper has become Enumerable with new select, where, and order methods
 * JDBCHelper::TableWrapper now supports batch updates
 * WARNING: JDBCHelper::TableWrapper#select and methods in JDBCHelper::SQL are not backward-compatible.
 
-=== 0.3.2 / 2011/05/25
+### 0.3.2 / 2011/05/25
 * JDBCHelper::MySQLConnector.connect and JDBCHelper::OracleConnector.connect can take a block
 
-=== 0.3.0 / 2011/05/21
+### 0.3.0 / 2011/05/21
 * Supports CallableStatement with IN/INOUT/OUT parameters
 * Added JDBCHelper::FunctionWrapper
 * Added JDBCHelper::ProcedureWrapper
@@ -67,20 +74,20 @@
 * Minor bug fixes
 * Tested with MySQL and Oracle
 
-=== 0.2.1 / 2011/05/19
+### 0.2.1 / 2011/05/19
 * JDBCHelper::Connection::Row can now be accessed with Range, Symbol and *[offset, length] index
 
-=== 0.2.0 / 2011/05/19
+### 0.2.0 / 2011/05/19
 * Feature: JDBCHelper::TableWrapper added to reduce the hassle of writing SQLs.
 * YARD documentation
 
-=== 0.1.3 / 2011/04/22
+### 0.1.3 / 2011/04/22
 * Bug fix: setTimestamp now works correctly for java.sql.Timestamp
 * Usability: Ruby Time object is automatically converted to java.sql.Timestamp object if the type of the target column is Timestamp.
 
-=== 0.1.1-0.1.2 / 2011/04/01
+### 0.1.1-0.1.2 / 2011/04/01
 * Yanked bad gem.
 
-=== 0.1.0 / 2011/03/31
+### 0.1.0 / 2011/03/31
 * Created. Based on samdorr-db 0.2.7. samdorr-db will be no longer maintained from now on.
 

@@ -11,4 +11,5 @@ group :development do
   gem "rcov", ">= 0"
   gem "test-unit", ">= 2.3.0"
   gem "pry"
+  #gem "simplecov"
 end

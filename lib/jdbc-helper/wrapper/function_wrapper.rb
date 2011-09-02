@@ -7,19 +7,19 @@ module JDBCHelper
 # @example Usage
 #  conn.function(:coalesce).call(nil, nil, 'king')
 class FunctionWrapper < ObjectWrapper
-	# Returns the name of the function
-	# @return [String]
-	alias to_s name
+  # Returns the name of the function
+  # @return [String]
+  alias to_s name
 
-	# Returns the result of the function call with the given parameters
-	def call(*args)
-		pstmt = @connection.prepare("select #{name}(#{args.map{'?'}.join ','}) from dual")
-		begin
-			pstmt.query(*args)[0][0]
-		ensure
-			pstmt.close
-		end
-	end
+  # Returns the result of the function call with the given parameters
+  def call(*args)
+    pstmt = @connection.prepare("select #{name}(#{args.map{'?'}.join ','}) from dual")
+    begin
+      pstmt.query(*args)[0][0]
+    ensure
+      pstmt.close
+    end
+  end
 end#FunctionWrapper
 end#JDBCHelper
 

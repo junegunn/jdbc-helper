@@ -42,207 +42,207 @@ module JDBCHelper
 #  table.truncate_table!
 #  table.drop_table!
 class TableWrapper < ObjectWrapper
-	# Returns the name of the table
-	# @return [String]
-	alias to_s name
+  # Returns the name of the table
+  # @return [String]
+  alias to_s name
 
-	# Retrieves the count of the table
-	# @param [List of Hash/String] where Filter conditions
-	# @return [Fixnum] Count of the records.
-	def count *where
-		sql, binds = JDBCHelper::SQLPrepared.count(name, @query_where + where)
+  # Retrieves the count of the table
+  # @param [List of Hash/String] where Filter conditions
+  # @return [Fixnum] Count of the records.
+  def count *where
+    sql, binds = JDBCHelper::SQLPrepared.count(name, @query_where + where)
     pstmt = prepare :count, sql
     pstmt.query(*binds)[0][0].to_i
-	end
+  end
 
-	# Sees if the table is empty
-	# @param [Hash/String] Filter conditions
-	# @return [boolean]
-	def empty? *where
-		count(*where) == 0
-	end
+  # Sees if the table is empty
+  # @param [Hash/String] Filter conditions
+  # @return [boolean]
+  def empty? *where
+    count(*where) == 0
+  end
 
-	# Inserts a record into the table with the given hash
-	# @param [Hash] data_hash Column values in Hash
-	# @return [Fixnum] Number of affected records
-	def insert data_hash = {}
+  # Inserts a record into the table with the given hash
+  # @param [Hash] data_hash Column values in Hash
+  # @return [Fixnum] Number of affected records
+  def insert data_hash = {}
     sql, binds = JDBCHelper::SQLPrepared.insert(name, @query_default.merge(data_hash))
     pstmt = prepare :insert, sql
     pstmt.send @update_method, *binds
-	end
+  end
 
-	# Inserts a record into the table with the given hash.
-	# Skip insertion when duplicate record is found.
-	# @note This is not SQL standard. Only works if the database supports insert ignore syntax.
-	# @param [Hash] data_hash Column values in Hash
-	# @return [Fixnum] Number of affected records
-	def insert_ignore data_hash = {}
+  # Inserts a record into the table with the given hash.
+  # Skip insertion when duplicate record is found.
+  # @note This is not SQL standard. Only works if the database supports insert ignore syntax.
+  # @param [Hash] data_hash Column values in Hash
+  # @return [Fixnum] Number of affected records
+  def insert_ignore data_hash = {}
     sql, binds = JDBCHelper::SQLPrepared.insert_ignore(name, @query_default.merge(data_hash))
     pstmt = prepare :insert, sql
     pstmt.send @update_method, *binds
-	end
+  end
 
-	# Replaces a record in the table with the new one with the same unique key.
-	# @note This is not SQL standard. Only works if the database supports replace syntax.
-	# @param [Hash] data_hash Column values in Hash
-	# @return [Fixnum] Number of affected records
-	def replace data_hash = {}
+  # Replaces a record in the table with the new one with the same unique key.
+  # @note This is not SQL standard. Only works if the database supports replace syntax.
+  # @param [Hash] data_hash Column values in Hash
+  # @return [Fixnum] Number of affected records
+  def replace data_hash = {}
     sql, binds = JDBCHelper::SQLPrepared.replace(name, @query_default.merge(data_hash))
     pstmt = prepare :insert, sql
     pstmt.send @update_method, *binds
-	end
+  end
 
-	# Executes update with the given hash.
-	# :where element of the hash is taken out to generate where clause of the update SQL.
-	# @param [Hash] data_hash_with_where Column values in Hash.
-	#   :where element of the given hash can (usually should) point to another Hash representing update filters.
-	# @return [Fixnum] Number of affected records
-	def update data_hash_with_where = {}
-		where_ext = data_hash_with_where.delete(:where)
-		where_ext = [where_ext] unless where_ext.is_a? Array
+  # Executes update with the given hash.
+  # :where element of the hash is taken out to generate where clause of the update SQL.
+  # @param [Hash] data_hash_with_where Column values in Hash.
+  #   :where element of the given hash can (usually should) point to another Hash representing update filters.
+  # @return [Fixnum] Number of affected records
+  def update data_hash_with_where = {}
+    where_ext = data_hash_with_where.delete(:where)
+    where_ext = [where_ext] unless where_ext.is_a? Array
     sql, binds = JDBCHelper::SQLPrepared.update(name, 
                     @query_default.merge(data_hash_with_where),
                     @query_where + where_ext.compact)
     pstmt = prepare :update, sql
     pstmt.send @update_method, *binds
-	end
+  end
 
-	# Deletes records matching given condtion
-	# @param [List of Hash/String] where Delete filters
-	# @return [Fixnum] Number of affected records
-	def delete *where
-		sql, binds = JDBCHelper::SQLPrepared.delete(name, @query_where + where)
+  # Deletes records matching given condtion
+  # @param [List of Hash/String] where Delete filters
+  # @return [Fixnum] Number of affected records
+  def delete *where
+    sql, binds = JDBCHelper::SQLPrepared.delete(name, @query_where + where)
     pstmt = prepare :delete, sql
     pstmt.send @update_method, *binds
-	end
+  end
 
-	# Empties the table.
-	# @note This operation cannot be undone
-	# @return [JDBCHelper::TableWrapper] Self.
-	def truncate!
-		@connection.update(JDBCHelper::SQL.check "truncate table #{name}")
-		self
-	end
-	alias truncate_table! truncate!
-	
-	# Drops the table.
-	# @note This operation cannot be undone
-	# @return [JDBCHelper::TableWrapper] Self.
-	def drop!
-		@connection.update(JDBCHelper::SQL.check "drop table #{name}")
-		self
-	end
-	alias drop_table! drop!
+  # Empties the table.
+  # @note This operation cannot be undone
+  # @return [JDBCHelper::TableWrapper] Self.
+  def truncate!
+    @connection.update(JDBCHelper::SQL.check "truncate table #{name}")
+    self
+  end
+  alias truncate_table! truncate!
+  
+  # Drops the table.
+  # @note This operation cannot be undone
+  # @return [JDBCHelper::TableWrapper] Self.
+  def drop!
+    @connection.update(JDBCHelper::SQL.check "drop table #{name}")
+    self
+  end
+  alias drop_table! drop!
 
-	# Select SQL wrapper
-	include Enumerable
+  # Select SQL wrapper
+  include Enumerable
 
-	# Returns a new TableWrapper object which can be used to execute a select
-	# statement for the table selecting only the specified fields.
-	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [*String/*Symbol] fields List of fields to select
-	# @return [JDBCHelper::TableWrapper]
-	# @since 0.4.0
-	def select *fields, &block
-		obj = self.dup
-		obj.instance_variable_set :@query_select, fields unless fields.empty?
-		ret obj, &block
-	end
+  # Returns a new TableWrapper object which can be used to execute a select
+  # statement for the table selecting only the specified fields.
+  # If a block is given, executes the select statement and yields each row to the block.
+  # @param [*String/*Symbol] fields List of fields to select
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.4.0
+  def select *fields, &block
+    obj = self.dup
+    obj.instance_variable_set :@query_select, fields unless fields.empty?
+    ret obj, &block
+  end
 
-	# Returns a new TableWrapper object which can be used to execute a select
-	# statement for the table with the specified filter conditions.
-	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [List of Hash/String] conditions Filter conditions
-	# @return [JDBCHelper::TableWrapper]
-	# @since 0.4.0
-	def where *conditions, &block
-		raise ArgumentError.new("Wrong number of arguments") if conditions.empty?
+  # Returns a new TableWrapper object which can be used to execute a select
+  # statement for the table with the specified filter conditions.
+  # If a block is given, executes the select statement and yields each row to the block.
+  # @param [List of Hash/String] conditions Filter conditions
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.4.0
+  def where *conditions, &block
+    raise ArgumentError.new("Wrong number of arguments") if conditions.empty?
 
-		obj = self.dup
-		obj.instance_variable_set :@query_where, @query_where + conditions
-		ret obj, &block
-	end
+    obj = self.dup
+    obj.instance_variable_set :@query_where, @query_where + conditions
+    ret obj, &block
+  end
 
-	# Returns a new TableWrapper object which can be used to execute a select
-	# statement for the table with the given sorting criteria.
-	# If a block is given, executes the select statement and yields each row to the block.
-	# @param [*String/*Symbol] criteria Sorting criteria
-	# @return [JDBCHelper::TableWrapper]
-	# @since 0.4.0
-	def order *criteria, &block
-		raise ArgumentError.new("Wrong number of arguments") if criteria.empty?
-		obj = self.dup
-		obj.instance_variable_set :@query_order, criteria
-		ret obj, &block
-	end
+  # Returns a new TableWrapper object which can be used to execute a select
+  # statement for the table with the given sorting criteria.
+  # If a block is given, executes the select statement and yields each row to the block.
+  # @param [*String/*Symbol] criteria Sorting criteria
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.4.0
+  def order *criteria, &block
+    raise ArgumentError.new("Wrong number of arguments") if criteria.empty?
+    obj = self.dup
+    obj.instance_variable_set :@query_order, criteria
+    ret obj, &block
+  end
 
-	# Returns a new TableWrapper object with default values, which will be applied to
-	# the subsequent inserts and updates.
-	# @param [Hash] data_hash Default values
-	# @return [JDBCHelper::TableWrapper]
-	# @since 0.4.5
-	def default data_hash
-		raise ArgumentError.new("Hash required") unless data_hash.kind_of? Hash
+  # Returns a new TableWrapper object with default values, which will be applied to
+  # the subsequent inserts and updates.
+  # @param [Hash] data_hash Default values
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.4.5
+  def default data_hash
+    raise ArgumentError.new("Hash required") unless data_hash.kind_of? Hash
 
-		obj = self.dup
-		obj.instance_variable_set :@query_default, @query_default.merge(data_hash)
-		obj
-	end
+    obj = self.dup
+    obj.instance_variable_set :@query_default, @query_default.merge(data_hash)
+    obj
+  end
 
-	# Executes a select SQL for the table and returns an Enumerable object,
-	# or yields each row if block is given.
-	# @return [JDBCHelper::Connection::ResultSetEnumerator]
-	# @since 0.4.0
-	def each &block
-		sql, binds = JDBCHelper::SQLPrepared.select(
-				name, 
-				:select => @query_select, 
-				:where => @query_where,
-				:order => @query_order)
+  # Executes a select SQL for the table and returns an Enumerable object,
+  # or yields each row if block is given.
+  # @return [JDBCHelper::Connection::ResultSetEnumerator]
+  # @since 0.4.0
+  def each &block
+    sql, binds = JDBCHelper::SQLPrepared.select(
+        name, 
+        :select => @query_select, 
+        :where => @query_where,
+        :order => @query_order)
     pstmt = prepare :select, sql
     pstmt.enumerate *binds, &block
-	end
+  end
 
-	# Returns a new TableWrapper object whose subsequent inserts, updates,
-	# and deletes are added to batch for JDBC batch-execution. The actual execution
-	# is deferred until JDBCHelper::Connection#execute_batch method is called.
-	# Self is returned when batch is called more than once.
-	# @return [JDBCHelper::TableWrapper]
-	# @since 0.4.0
-	def batch
-		if batch?
-			self
-		else
+  # Returns a new TableWrapper object whose subsequent inserts, updates,
+  # and deletes are added to batch for JDBC batch-execution. The actual execution
+  # is deferred until JDBCHelper::Connection#execute_batch method is called.
+  # Self is returned when batch is called more than once.
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.4.0
+  def batch
+    if batch?
+      self
+    else
       # dup makes @pstmts to be shared
-			obj = self.dup
-			obj.instance_variable_set :@update_method, :add_batch
-			obj
-		end
-	end
+      obj = self.dup
+      obj.instance_variable_set :@update_method, :add_batch
+      obj
+    end
+  end
 
-	# Returns if the subsequent updates for this wrapper will be batched
-	# @return [Boolean]
-	# @since 0.4.0
-	def batch?
-		@update_method == :add_batch
-	end
+  # Returns if the subsequent updates for this wrapper will be batched
+  # @return [Boolean]
+  # @since 0.4.0
+  def batch?
+    @update_method == :add_batch
+  end
 
-	# Returns the select SQL for this wrapper object
-	# @return [String] Select SQL
-	# @since 0.4.0
-	def sql
-		JDBCHelper::SQL.select(
-				name, 
-				:select => @query_select, 
-				:where => @query_where,
-				:order => @query_order)
-	end
+  # Returns the select SQL for this wrapper object
+  # @return [String] Select SQL
+  # @since 0.4.0
+  def sql
+    JDBCHelper::SQL.select(
+        name, 
+        :select => @query_select, 
+        :where => @query_where,
+        :order => @query_order)
+  end
 
-	def initialize connection, table_name
-		super connection, table_name
-		@update_method = :update
-		@query_default = {}
-		@query_where = []
+  def initialize connection, table_name
+    super connection, table_name
+    @update_method = :update
+    @query_default = {}
+    @query_where = []
     @pstmts = {
       :select => {},
       :insert => {},
@@ -250,7 +250,7 @@ class TableWrapper < ObjectWrapper
       :count => {},
       :update => {}
     }
-	end
+  end
   
   # Closes the prepared statements
   # @since 0.5.0
@@ -274,13 +274,13 @@ private
     @pstmts[type][sql] ||= @connection.prepare(JDBCHelper::SQL.check(sql))
   end
 
-	def ret obj, &block
-		if block_given?
-			obj.each &block
-		else
-			obj
-		end
-	end
+  def ret obj, &block
+    if block_given?
+      obj.each &block
+    else
+      obj
+    end
+  end
 end#TableWrapper
 end#JDBCHelper
 
