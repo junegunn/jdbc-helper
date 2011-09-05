@@ -162,7 +162,12 @@ class Connection
     Java::JavaClass.for_name @driver
 
     timeout = args.has_key?(:timeout) ? args.delete(:timeout) : Constants::DEFAULT_LOGIN_TIMEOUT
-    java.sql.DriverManager.setLoginTimeout timeout if timeout
+    if timeout
+      if timeout.is_a?(Fixnum) == false || timeout <= 0
+        raise ArgumentError.new("Timeout must be a positive integer")
+      end
+      java.sql.DriverManager.setLoginTimeout timeout
+    end
 
     props = java.util.Properties.new
     (args.keys - [:url, :driver]).each do | key |

@@ -14,6 +14,20 @@ class TestConnectors < Test::Unit::TestCase
       if conn_info['driver'] =~ /mysql/
         host = conn_info['url'].match(%r{//(.*?)/})[1]
         db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
+
+        assert_raise(ArgumentError) {
+          JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db, 0)
+        }
+        assert_raise(ArgumentError) {
+          JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db, -1)
+        }
+        assert_raise(ArgumentError) {
+          JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db, "timeout")
+        }
+        assert_raise(ArgumentError) {
+          JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db, 60, "extra")
+        }
+
         conn = JDBCHelper::MySQLConnector.connect(host, conn_info['user'], conn_info['password'], db)
 
         assert conn.closed? == false
@@ -32,10 +46,13 @@ class TestConnectors < Test::Unit::TestCase
         host = conn_info['url'].match(%r{@(.*?)/})[1]
         svc = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
         conn = JDBCHelper::OracleConnector.connect(host, conn_info['user'], conn_info['password'], svc)
+        conn2 = JDBCHelper::OracleConnector.connect_by_sid(host + ':1521', conn_info['user'], conn_info['password'], svc)
 
-        assert conn.closed? == false
-        conn.close
-        assert conn.closed?
+        [conn, conn2].each do |c|
+          assert c.closed? == false
+          c.close
+          assert c.closed?
+        end
 
         @conn = nil
         ret = JDBCHelper::OracleConnector.connect(host, conn_info['user'], conn_info['password'], svc) do |conn|

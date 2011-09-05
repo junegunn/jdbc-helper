@@ -52,6 +52,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal "where a in ('aa', 'bb', 'cc', 4)", SQL.where(:a => %w[aa bb cc] + [4])
     assert_equal "where a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
     assert_equal "where (a = 1 or b = 1)",        SQL.where("a = 1 or b = 1")
+    assert_equal "where (a = 1 or b = 1)",        SQL.where(JDBCHelper::SQL("a = 1 or b = 1"))
     assert_equal "where (a = 1 or b = 1) and c = 2", SQL.where("a = 1 or b = 1", :c => 2)
     assert_equal "where c = 2 and (a = 1 or b = 1)", SQL.where({:c => 2}, "a = 1 or b = 1")
     assert_equal "where c = 2 and (a = 1 or b = 1) and (e = 2) and f = 3",
@@ -61,6 +62,8 @@ class TestSQL < Test::Unit::TestCase
 
     # Non-primitive datatypes not implemented (TODO?)
     assert_raise(NotImplementedError) { SQL.where(:a => Time.now) }
+    assert_raise(NotImplementedError) { SQL.where(5) }
+    assert_raise(NotImplementedError) { SQL.where(Time.now) }
 
     # Invalid SQL detection
     assert_raise(ArgumentError) { SQL.where(" 'a--b' -- cde") }

@@ -1,3 +1,7 @@
+### 0.6.1 / 2011/09/05
+* Minor fix for an inefficient type conversion
+* More tests. Test coverage over 97%.
+
 ### 0.6.0 / 2011/09/05
 * Datatype handling
  * Proper BLOB handling.

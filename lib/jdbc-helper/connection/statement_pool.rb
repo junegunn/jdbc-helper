@@ -24,8 +24,10 @@ class StatementPool
 
   def take
     if @free.empty?
-      raise RuntimeError.new("Statement nesting level is too deep (likely a bug)") if
-          @occupied.length >= @max_size
+      if @occupied.length >= @max_size
+        raise RuntimeError.new("Statement nesting level is too deep (likely a bug)")
+      end
+
       @occupied << nstmt = @conn.send(:create_statement)
       nstmt
     else

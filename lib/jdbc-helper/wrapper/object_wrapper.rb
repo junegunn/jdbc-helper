@@ -19,8 +19,7 @@ class ObjectWrapper
   # @param [String/Symbol] name Name of the object to be wrapped
   def initialize(conn, name)
     raise NotImplementedError.new(
-      "JDBCHelper::ObjectWrapper is an abstract class") if 
-          self.instance_of? ObjectWrapper
+      "JDBCHelper::ObjectWrapper is an abstract class") if self.instance_of? ObjectWrapper
 
     @connection = conn
     @name = name.to_s

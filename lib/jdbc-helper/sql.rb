@@ -150,8 +150,8 @@ protected
 
   def self.where_unit conds
     case conds
-    when String
-      conds = conds.strip
+    when String, JDBCHelper::SQL
+      conds = conds.to_s.strip
       conds.empty? ? '' : "(#{conds})"
     when Hash
       conds.map { |k, v|

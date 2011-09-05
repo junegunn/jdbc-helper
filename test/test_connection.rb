@@ -65,7 +65,9 @@ class TestConnection < Test::Unit::TestCase
     conn.update "drop table #{TEST_TABLE}" rescue nil
     cnt = conn.update "
       create table #{TEST_TABLE} (
-        a timestamp
+        a timestamp,
+        b date
+        #{", c time" if @type == :mysql}
       )"
     assert_equal 0, cnt
   end
@@ -143,6 +145,21 @@ class TestConnection < Test::Unit::TestCase
       assert_equal 20, conn.fetch_size
 
       # No way to confirm whether if this is really working as it's supposed to be.
+
+      conn.query('select 1 from dual') do |r1|
+        assert_equal 20, conn.fetch_size
+        conn.query('select 1 from dual') do |r2|
+          assert_equal 20, conn.fetch_size
+          conn.query('select 1 from dual') do |r3|
+            assert_equal 20, conn.fetch_size
+            conn.set_fetch_size 30
+            assert_equal 30, conn.fetch_size
+          end
+          assert_equal 30, conn.fetch_size
+        end
+        assert_equal 30, conn.fetch_size
+      end
+      assert_equal 30, conn.fetch_size
     end
   end
 
@@ -214,8 +231,8 @@ class TestConnection < Test::Unit::TestCase
       iq = lambda do | i |
         "insert into #{TEST_TABLE} values (#{i}, 'A')"
       end
-      ins1 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count}, 'B')"
-      ins2 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count * 2}, 'C')"
+      ins1 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count}, ?)"
+      ins2 = conn.prepare "insert into #{TEST_TABLE} values (? + #{count * 2}, ?)"
 
       # update
       assert_equal 1, conn.update(iq.call 0)
@@ -226,19 +243,21 @@ class TestConnection < Test::Unit::TestCase
 
       count.times do | p |
         conn.add_batch iq.call(p)
-        ins1.add_batch p
-        ins2.add_batch p
+        ins1.add_batch p, 'B'.to_java
+        ins2.add_batch p, 'C'
       end
       conn.execute_batch
       assert_equal count * 3, conn.table(TEST_TABLE).count
+      assert conn.table(TEST_TABLE).where("a >= #{count}", "a < #{count * 2}").map(&:b).all? { |e| e == 'B' }
+      assert conn.table(TEST_TABLE).where("a >= #{count * 2}").map(&:b).all? { |e| e == 'C' }
 
       # add_batch clear_batch
       reset_test_table conn
 
       count.times do | p |
         conn.add_batch iq.call(p)
-        ins1.add_batch p
-        ins2.add_batch p
+        ins1.add_batch p, 'B'.to_java
+        ins2.add_batch p, 'C'
       end
       conn.clear_batch
       # Already cleared, no effect
@@ -409,18 +428,43 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_setter_timestamp
+    require 'date'
     each_connection do | conn |
       # Java timestamp
       reset_test_table_ts conn
-      ts = java.sql.Timestamp.new(Time.now.to_i * 1000)
-      conn.prepare("insert into #{TEST_TABLE} values (?)").update(ts)
-      assert_equal ts, conn.query("select * from #{TEST_TABLE}")[0][0]
+      now = Time.now
+      lt = (now.to_f * 1000).to_i
+      ts = java.sql.Timestamp.new(lt)
+      d = java.sql.Date.new( Time.mktime(Date.today.year, Date.today.month, Date.today.day).to_i * 1000 )
+      t = java.sql.Time.new lt
+
+      if @type == :mysql
+        conn.prepare("insert into #{TEST_TABLE} (a, b, c) values (?, ?, ?)").update(ts, d, t)
+        # MySQL doesn't have subsecond precision
+        assert [lt, lt / 1000 * 1000].include?(conn.query("select a from #{TEST_TABLE}")[0][0].getTime)
+        # The JDBC spec states that java.sql.Dates have _no_ time component
+        # http://bugs.mysql.com/bug.php?id=2876
+        assert_equal d.getTime, conn.query("select b from #{TEST_TABLE}")[0][0].getTime
+
+        # http://stackoverflow.com/questions/907170/java-getminutes-and-gethours
+        t2 = conn.query("select c from #{TEST_TABLE}")[0][0]
+        cal = java.util.Calendar.getInstance
+        cal.setTime(t)
+        cal2 = java.util.Calendar.getInstance
+        cal2.setTime(t2)
+        assert_equal now.hour, cal2.get(java.util.Calendar::HOUR_OF_DAY)
+        assert_equal now.min, cal2.get(java.util.Calendar::MINUTE)
+        assert_equal now.sec, cal2.get(java.util.Calendar::SECOND)
+        assert_equal cal.get(java.util.Calendar::HOUR_OF_DAY), cal2.get(java.util.Calendar::HOUR_OF_DAY)
+        assert_equal cal.get(java.util.Calendar::MINUTE), cal2.get(java.util.Calendar::MINUTE)
+        assert_equal cal.get(java.util.Calendar::SECOND), cal2.get(java.util.Calendar::SECOND)
+      end
 
       # Ruby time
       reset_test_table_ts conn
       ts = Time.now
-      conn.prepare("insert into #{TEST_TABLE} values (?)").update(ts)
-      got = conn.query("select * from #{TEST_TABLE}")[0][0]
+      conn.prepare("insert into #{TEST_TABLE} (a) values (?)").update(ts)
+      got = conn.query("select a from #{TEST_TABLE}")[0][0]
       assert [ts.to_i * 1000, (ts.to_f * 1000).to_i].include?(got.getTime)
     end
   end

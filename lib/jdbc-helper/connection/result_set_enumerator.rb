@@ -36,7 +36,7 @@ class ResultSetEnumerator
               case gt
               when :getBigNum
                 v = @rset.getBigDecimal idx+=1
-                @rset.was_null ? nil : BigDecimal.new(v.toPlainString).to_i
+                @rset.was_null ? nil : v.toPlainString.to_i
               when :getBigDecimal
                 v = @rset.getBigDecimal idx+=1
                 @rset.was_null ? nil : BigDecimal.new(v.toPlainString)
@@ -44,8 +44,7 @@ class ResultSetEnumerator
                 v = @rset.send gt, idx+=1
                 @rset.was_null ? nil : v
               end
-            },
-            count += 1)
+            }, count += 1)
       end
     ensure
       close
