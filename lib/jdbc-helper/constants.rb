@@ -6,6 +6,9 @@ module Constants
   # Default login timeout is set to 60 seconds
   DEFAULT_LOGIN_TIMEOUT = 60
 
+  # Maximum nesting level for Statements
+  MAX_STATEMENT_NESTING_LEVEL = 20
+
   # Constants only for Connectors
   module Connector
     JDBC_DRIVER = {

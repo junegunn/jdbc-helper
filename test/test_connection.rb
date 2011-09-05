@@ -29,8 +29,8 @@ class TestConnection < Test::Unit::TestCase
     assert_equal 1, rec[0]
     assert_equal 1, rec['one']
     assert_equal 1, rec[:one]
-    assert_equal ['1'], rec[0...1].map(&:to_s)
-    assert_equal ['1'], rec[0, 1].map(&:to_s)
+    assert_equal [1], rec[0...1]
+    assert_equal [1], rec[0, 1]
 
     assert_equal 'two', rec.two
     assert_equal 'two', rec[1]
@@ -38,12 +38,16 @@ class TestConnection < Test::Unit::TestCase
     assert_equal ['two'], rec[1..-1]
     assert_equal ['two'], rec[1, 1]
 
-    assert_equal ['1', 'two'], rec[0..1].map(&:to_s)
-    assert_equal ['1', 'two'], rec[0..-1].map(&:to_s)
-    assert_equal ['1', 'two'], rec[0, 2].map(&:to_s)
+    assert_equal [1, 'two'], rec[0..1]
+    assert_equal [1, 'two'], rec[0..-1]
+    assert_equal [1, 'two'], rec[0, 2]
+
+    # FIXME: Exponent field
+    assert rec.join('--') =~ /--two$/
 
     assert_raise(NoMethodError) { rec.three }
     assert_raise(NameError) { rec['three'] }
+    assert_raise(NameError) { rec[:three] }
     assert_raise(RangeError) { rec[3] }
   end
 
@@ -67,6 +71,12 @@ class TestConnection < Test::Unit::TestCase
   end
 
   # ---------------------------------------------------------------
+  
+  def test_invalid_driver
+    assert_raise(NameError) {
+      JDBCHelper::Connection.new(:driver => 'xxx', :url => 'localhost')
+    }
+  end
 
   def test_connect_clone_and_close
     config.each do | db, conn_info_org |
@@ -143,6 +153,7 @@ class TestConnection < Test::Unit::TestCase
       assert query_result.is_a? Array
       assert_equal 2, query_result.length
       check_one_two(query_result.first)
+      assert_equal query_result.first, query_result.last
 
       # Query with a block
       count = 0
@@ -160,6 +171,38 @@ class TestConnection < Test::Unit::TestCase
       assert_equal 2, a.length
       check_one_two a.first
       assert enum.closed? == true
+    end
+  end
+
+  def test_enumerate_errors
+    each_connection do |conn|
+      # On error, Statement object must be returned to the StatementPool
+      (JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL * 2).times do |i|
+        conn.enumerate('xxx') rescue nil
+      end
+      assert_equal 'OK', conn.query("select 'OK' from dual")[0][0]
+    end
+  end
+
+  def test_deep_nesting
+    nest = lambda { |str, lev|
+      if lev > 0
+        "conn.query('select 1 from dual') do |r#{lev}|
+           #{nest.call str, lev - 1}
+         end"
+      else
+        str
+      end
+    }
+    (1..(JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL + 1)).each do |level|
+      each_connection do |conn|
+        str = nest.call('assert true', level)
+        if level > JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL
+          assert_raise(RuntimeError) { eval str }
+        else
+          eval str
+        end
+      end
     end
   end
 
@@ -187,7 +230,7 @@ class TestConnection < Test::Unit::TestCase
         ins2.add_batch p
       end
       conn.execute_batch
-      assert_equal count * 3, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+      assert_equal count * 3, conn.table(TEST_TABLE).count
 
       # add_batch clear_batch
       reset_test_table conn
@@ -201,56 +244,65 @@ class TestConnection < Test::Unit::TestCase
       # Already cleared, no effect
       ins1.execute_batch
       ins2.execute_batch
-      assert_equal 0, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+      assert_equal 0, conn.table(TEST_TABLE).count
     end
   end
 
   def test_prepared_query_enumerate
     each_connection do | conn |
-      sel = conn.prepare get_one_two
-      assert sel.closed? == false
-      assert_equal conn.prepared_statements.first, sel
+      2.times do |iter|
+        sel = conn.prepare get_one_two
+        assert sel.closed? == false
+        assert_equal conn.prepared_statements.first, sel
 
-      # Fetch size
-      assert_nil conn.fetch_size
-      assert_nil sel.fetch_size
-      conn.fetch_size = 100
-      sel.fetch_size  = 10
-      assert_equal 100, conn.fetch_size
-      assert_equal 10,  sel.fetch_size
-      sel.set_fetch_size 20
-      assert_equal 100, conn.fetch_size
-      assert_equal 20,  sel.fetch_size
+        # Fetch size
+        if iter == 0
+          assert_nil conn.fetch_size
+          assert_nil sel.fetch_size
+        end
+        conn.fetch_size = 100
+        sel.fetch_size  = 10
+        assert_equal 100, conn.fetch_size
+        assert_equal 10,  sel.fetch_size
+        sel.set_fetch_size 20
+        assert_equal 100, conn.fetch_size
+        assert_equal 20,  sel.fetch_size
 
-      # Query without a block => Array
-      query_result = sel.query
-      assert query_result.is_a? Array
-      assert_equal 2, query_result.length
-      check_one_two(query_result.first)
+        # Query without a block => Array
+        query_result = sel.query
+        assert query_result.is_a? Array
+        assert_equal 2, query_result.length
+        check_one_two(query_result.first)
 
-      # Query with a block
-      count = 0
-      sel.query do | row |
-        check_one_two row
-        count += 1
-      end
-      assert_equal 2, count
+        # Query with a block
+        count = 0
+        sel.query do | row |
+          check_one_two row
+          count += 1
+        end
+        assert_equal 2, count
 
-      # Enumerate
-      enum = sel.enumerate
-      assert enum.is_a? Enumerable
-      assert enum.closed? == false
-      a = enum.to_a
-      assert_equal 2, a.length
-      check_one_two a.first
-      assert enum.closed? == true
+        # Enumerate
+        enum = sel.enumerate
+        assert enum.is_a? Enumerable
+        assert enum.closed? == false
+        a = enum.to_a
+        assert_equal 2, a.length
+        check_one_two a.first
+        assert enum.closed? == true
 
-      sel.close
-      assert sel.closed?
-      [ :query, :update, :add_batch, :execute_batch, :clear_batch ].each do | met |
-        assert_raise(RuntimeError) { sel.send met }
-      end
-    end
+        if iter == 0
+          sel.close
+        else
+          sel.java_obj.close
+        end
+
+        assert sel.closed?
+        [ :query, :update, :add_batch, :execute_batch, :clear_batch ].each do | met |
+          assert_raise(RuntimeError) { sel.send met }
+        end
+      end#times
+    end#each_connection
   end
 
   def test_prepared_update_batch
@@ -273,7 +325,7 @@ class TestConnection < Test::Unit::TestCase
       2.times do |iter|
         reset_test_table conn
         ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
-        assert_equal conn.prepared_statements.first, ins
+        assert_equal conn.prepared_statements.first, ins if iter == 0
 
         count.times do | p |
           ins.add_batch(p + 1, 'A')
@@ -283,15 +335,16 @@ class TestConnection < Test::Unit::TestCase
         else
           conn.execute_batch
         end
-        assert_equal count, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+        assert_equal count, conn.table(TEST_TABLE).count
         ins.close
-        assert_equal 0, conn.prepared_statements.length
+        # 1 for count
+        assert_equal 1, conn.prepared_statements.length
       end
 
       # add_batch clear_batch
       reset_test_table conn
       ins = conn.prepare "insert into #{TEST_TABLE} values (?, ?)"
-      assert_equal conn.prepared_statements.first, ins
+      assert_equal conn.prepared_statements.last, ins # count is first
 
       # clear_batch
       2.times do |iter|
@@ -303,13 +356,14 @@ class TestConnection < Test::Unit::TestCase
         else
           conn.clear_batch
         end
-        assert_equal 0, conn.query("select count(*) from #{TEST_TABLE}")[0][0]
+        assert_equal 0, conn.table(TEST_TABLE).count
       end
 
       # close closed?
       assert ins.closed? == false
       ins.close
-      assert_equal 0, conn.prepared_statements.length
+      # 1 for count
+      assert_equal 1, conn.prepared_statements.length
       assert ins.closed?
       [ :query, :update, :add_batch, :execute_batch, :clear_batch ].each do | met |
         assert_raise(RuntimeError) { ins.send met }
@@ -336,7 +390,7 @@ class TestConnection < Test::Unit::TestCase
           result = conn.query("select count(*), sum(a) from #{TEST_TABLE}").first
 
           assert_equal count, result.first
-          assert_equal sum, result.last.to_i
+          assert_equal sum, result.last
 
           case i
           when 0 then tx.rollback
@@ -349,7 +403,7 @@ class TestConnection < Test::Unit::TestCase
         end
 
         assert_equal (i == 0 ? 0 : count),
-          conn.query("select count(*) from #{TEST_TABLE}").first.first
+          conn.table(TEST_TABLE).count
       end
     end
   end

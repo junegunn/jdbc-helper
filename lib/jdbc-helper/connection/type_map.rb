@@ -11,31 +11,6 @@ class Connection
     Time   => java.sql.Types::TIMESTAMP
   }
 
-  SETTER_MAP =
-  {
-    Fixnum => :setInt,
-    String => :setString,
-    NilClass => :setNull,
-    Float => :setDouble,
-
-    # See there's a caveat. Check out ParameterizedStatement#set_param
-    Time => :setTimestamp,
-
-    Java::JavaSql::Date => :setDate,
-    Java::JavaSql::Time => :setTime,
-    Java::JavaSql::Timestamp => :setTimestamp,
-    Java::JavaSql::Blob => :setBinaryStream,
-
-    #########
-    # MySQL #
-    #########
-    # Only available when MySQL JDBC driver is loaded.
-    # So we use the string representation of the class.
-    'Java::ComMysqlJdbc::Blob' => :setBinaryStream
-
-    # FIXME-MORE
-  } # :nodoc:
-
   GETTER_MAP =
   {
     java.sql.Types::TINYINT => :getInt,
@@ -56,8 +31,8 @@ class Connection
     java.sql.Types::REAL => :getDouble,
     java.sql.Types::FLOAT => :getFloat,
     java.sql.Types::DOUBLE => :getDouble,
-    java.sql.Types::NUMERIC => :getString, # FIXME: get_big_decimal=no inherent jruby support
-    java.sql.Types::DECIMAL => :getString, # FIXME: get_big_decimal
+    #java.sql.Types::NUMERIC => :getBigDecimal,
+    #java.sql.Types::DECIMAL => :getBigDecimal,
 
     java.sql.Types::DATE => :getDate,
     java.sql.Types::TIME => :getTime,

@@ -6,15 +6,6 @@ if RUBY_PLATFORM.match(/java/).nil?
 end
 
 require 'java'
-
-module JavaLang # :nodoc:
-  include_package 'java.lang'
-end
-
-module JavaSql # :nodoc:
-  include_package 'java.sql'
-end
-
 require 'jdbc-helper/sql'
 require 'jdbc-helper/sql_prepared'
 require 'jdbc-helper/constants'

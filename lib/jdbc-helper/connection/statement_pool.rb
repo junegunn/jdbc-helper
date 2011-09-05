@@ -7,7 +7,7 @@ class Connection
 # Not thread-safe. (Sharing a JDBC connection between threads is not the best idea anyway.)
 # @private
 class StatementPool
-  def initialize(conn, max_size = 20)
+  def initialize(conn, max_size = JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL)
     @conn = conn
     @max_size = max_size # TODO
     @free = []
@@ -24,7 +24,7 @@ class StatementPool
 
   def take
     if @free.empty?
-      raise Exception.new("Statement nesting level is too deep (likely a bug)") if
+      raise RuntimeError.new("Statement nesting level is too deep (likely a bug)") if
           @occupied.length >= @max_size
       @occupied << nstmt = @conn.send(:create_statement)
       nstmt
@@ -36,8 +36,8 @@ class StatementPool
   end
 
   def give(stmt)
-    raise Exception.new("Not my statement") unless
-        @occupied.include? stmt
+    return if stmt.nil?
+    raise Exception.new("Not my statement") unless @occupied.include? stmt
 
     @occupied.delete stmt
     @free << stmt

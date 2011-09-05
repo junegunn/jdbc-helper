@@ -1,5 +1,10 @@
-### 0.5.2 / 2011/09/02
-* ParameterizedStatement#set_param achieves better precision with Time#to_f
+### 0.6.0 / 2011/09/05
+* Datatype handling
+ * Proper BLOB handling.
+ * Proper handling of Numeric types.
+  * Numeric value will be returned as Fixnum, Bignum, Float or BigDecimal. (No more Strings!)
+ * ParameterizedStatement#set_param achieves better precision with Time#to_f
+* Increased test coverage
 
 ### 0.5.1 / 2011/08/29
 * Bug fix: TableWrapper objects are cached to prevent proliferation of PreparedStatements.
@@ -40,6 +45,7 @@ end
 
 ### 0.4.4 / 2011/06/08
 * Where conditions have become accumulative, which means you can chain multiple JDBCHelper::TableWrapper#where methods to further limit the scope.
+
 ```ruby
 users = conn.table(:users).where(:status => 1).where(:age => 20..30).to_a
 ```

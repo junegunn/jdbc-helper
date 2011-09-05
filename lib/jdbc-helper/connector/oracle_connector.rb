@@ -30,6 +30,7 @@ class OracleConnector < Connector
   # @param [String] sid
   # @param [Fixnum] timeout
   # @return [JDBCHelper::Connection]
+  # @deprecated
   def self.connect_by_sid(host, user, password, sid, timeout = DEFAULT_LOGIN_TIMEOUT, &block)
     conn = Connection.new(
       :driver   => JDBC_DRIVER[:oracle],

@@ -1,8 +1,7 @@
 require 'rubygems'
 require 'bundler'
-require 'pry'
-#require 'simplecov'
-#SimpleCov.start
+#require 'pry'
+
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e
@@ -70,15 +69,6 @@ module JDBCHelperTestHelper
 				end;"
 		else
 			raise NotImplementedError.new "Procedure test not implemented for #{@type}"
-		end
-	end
-
-	# This is crazy. But Oracle.
-	def assert_equal *args
-		if args.first.class == Fixnum
-			super(args[0].to_s, args[1].to_s)
-		else
-			super(*args)
 		end
 	end
 

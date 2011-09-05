@@ -1,6 +1,8 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
+require 'bigdecimal'
+
 module JDBCHelper
 class Connection
 # Class for enumerating query results.
@@ -31,12 +33,21 @@ class ResultSetEnumerator
             @col_labels,
             @col_labels_d,
             @getters.map { |gt|
-              v = @rset.send gt, idx+=1
-              @rset.was_null ? nil : v
+              case gt
+              when :getBigNum
+                v = @rset.getBigDecimal idx+=1
+                @rset.was_null ? nil : BigDecimal.new(v.toPlainString).to_i
+              when :getBigDecimal
+                v = @rset.getBigDecimal idx+=1
+                @rset.was_null ? nil : BigDecimal.new(v.toPlainString)
+              else
+                v = @rset.send gt, idx+=1
+                @rset.was_null ? nil : v
+              end
             },
             count += 1)
       end
-    ensure      
+    ensure
       close
     end
   end
@@ -80,10 +91,10 @@ private
           if precision > 0 && scale >= 0
             # Numbers with fractional parts
             if scale > 0
-              if precision <= 16
-                :getFloat
+              if precision <= 15
+                :getDouble
               else
-                :getString
+                :getBigDecimal
               end
             # Numbers without fractional parts
             else
@@ -92,12 +103,12 @@ private
               elsif precision <= 18
                 :getLong
               else
-                :getString
+                :getBigNum
               end
             end
           # No guarantee
           else
-            :getString
+            :getBigDecimal
           end
         else
           JDBCHelper::Connection::GETTER_MAP.fetch(type, :get_string)

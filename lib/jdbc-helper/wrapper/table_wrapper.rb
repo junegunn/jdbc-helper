@@ -271,7 +271,10 @@ class TableWrapper < ObjectWrapper
 
 private
   def prepare type, sql
-    @pstmts[type][sql] ||= @connection.prepare(JDBCHelper::SQL.check(sql))
+    sql   = JDBCHelper::SQL.check(sql)
+    pstmt = @pstmts[type][sql] ||= @connection.prepare(sql)
+    pstmt = @pstmts[type][sql]   = @connection.prepare(sql) if pstmt.closed?
+    pstmt
   end
 
   def ret obj, &block

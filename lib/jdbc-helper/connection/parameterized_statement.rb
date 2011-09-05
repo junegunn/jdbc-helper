@@ -22,22 +22,33 @@ class ParameterizedStatement
   end
 
   def set_param(idx, param)
-    if setter = (JDBCHelper::Connection::SETTER_MAP[param.class] || 
-              JDBCHelper::Connection::SETTER_MAP[param.class.to_s])
-      case setter
-      when :setNull
-        return @java_obj.send setter, idx, java.sql.Types::NULL
-      when :setBinaryStream
-        return @java_obj.send setter, idx, param.getBinaryStream, param.length
-      when :setTimestamp
-        if param.kind_of?(Time)
-          return @java_obj.send setter, idx, java.sql.Timestamp.new((param.to_f * 1000).to_i)
-        end
-      end
-
-      @java_obj.send setter, idx, param
+    case param
+    when NilClass
+      @java_obj.setNull idx, java.sql.Types::NULL
+    when Fixnum
+      @java_obj.setLong idx, param
+    when Bignum
+      @java_obj.setString idx, param.to_s # Safer
+    when BigDecimal
+      @java_obj.setBigDecimal idx, param.to_java
+    when String
+      @java_obj.setString idx, param
+    when Float
+      @java_obj.setDouble idx, param
+    when Time
+      @java_obj.setTimestamp idx, java.sql.Timestamp.new((param.to_f * 1000).to_i)
+    when java.sql.Date
+      @java_obj.setDate idx, param
+    when java.sql.Time
+      @java_obj.setTime idx, param
+    when java.sql.Timestamp
+      @java_obj.setTimestamp idx, param
+    when java.sql.Blob
+      @java_obj.setBinaryStream idx, param.getBinaryStream#, param.length
+    when java.io.InputStream
+      @java_obj.setBinaryStream idx, param
     else
-      @java_obj.set_string idx, param.to_s
+      @java_obj.setString idx, param.to_s
     end
   end
 
@@ -49,7 +60,7 @@ class ParameterizedStatement
 
   # @return [Boolean]
   def closed?
-    @java_obj.nil?
+    @java_obj.nil? || @java_obj.isClosed
   end
 
 private

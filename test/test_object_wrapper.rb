@@ -6,6 +6,7 @@ class TestObjectWrapper < Test::Unit::TestCase
   def setup
     @table_name = "tmp_jdbc_helper"
     @procedure_name = "tmp_jdbc_helper_test_proc"
+    @blob = 'XXX'
   end
 
   def teardown
@@ -17,14 +18,23 @@ class TestObjectWrapper < Test::Unit::TestCase
 
   def create_table conn
     drop_table conn
-    conn.update "
+    ddl = "
       create table #{@table_name} (
         id    int primary key,
         alpha int,
         beta  float,
-        gamma varchar(100)
+        gamma varchar(100),
+        delta blob,
+        num_f decimal(15, 5),
+        num_fstr decimal(30, 10),
+        num_int  decimal(9, 0),
+        num_long decimal(18, 0),
+        num_str  decimal(30, 0)
+        #{", num_wtf  number" if @type == :oracle}
       )
     "
+    ddl.gsub('decimal', 'number') if @type == :oracle
+    conn.update ddl
   end
 
   def drop_table conn
@@ -66,21 +76,38 @@ class TestObjectWrapper < Test::Unit::TestCase
       end
 
       # Abstract class
-      assert_raise(Exception) { JDBCHelper::ObjectWrapper.new(conn, 'table') }
+      assert_raise(NotImplementedError) { JDBCHelper::ObjectWrapper.new(conn, 'table') }
     end
   end
 
-  def insert table, cnt = 100
-    params = {
+
+  def insert_params
+    {
       :alpha => 100,
-      :beta => JDBCHelper::SQL('0.1 + 0.2'), 
+      :beta => JDBCHelper::SQL('0.1 + 0.2'),
+      :num_f => 1234567890.12345, # 16 digits
+      :num_fstr => BigDecimal.new("12345678901234567890.12345"),
+      :num_int => 123456789,
+      :num_long => 123456789012345678,
+      :num_str => 123456789012345678901234567890,
+      :num_wtf => 12345.6789
     }
+  end
+
+  def insert table, cnt = 100
+    require 'java'
+
+    params = insert_params.dup
+    params.delete(:num_wtf) unless @type == :oracle
 
     (1..cnt).each do |pk|
       icnt = table.
           default(:gamma => 'hello world').
           default(:alpha => 200).
-          insert(params.merge(:id => pk))
+          insert(params.merge(
+             :id => pk,
+             :delta => java.io.ByteArrayInputStream.new( @blob.to_java_bytes ))
+          )
       assert_equal 1, icnt unless table.batch?
     end
   end
@@ -253,6 +280,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       end
       assert_equal 100, cnt
 
+      # each
       cnt = 0
       table.each do |row|
         cnt += 1
@@ -260,12 +288,14 @@ class TestObjectWrapper < Test::Unit::TestCase
       end
       assert_equal 100, cnt
 
+      # As Enumerable
       cnt = 0
       table.each_slice(10) do |rows|
         cnt += rows.length
       end
       assert_equal 100, cnt
 
+      # Alias
       cnt = 0
       table.select('alpha omega') do |row|
         cnt += 1
@@ -273,6 +303,28 @@ class TestObjectWrapper < Test::Unit::TestCase
         assert_equal ['omega'], row.labels.map(&:downcase)
       end
       assert_equal 100, cnt
+
+      # Lob, Decimals
+      params = insert_params
+      cols = [:delta, :num_f, :num_fstr, :num_int, :num_long, :num_str]
+      cols << :num_wtf if @type == :oracle
+      table.select(*cols) do |row|
+        blob = row.delta
+        assert_equal @blob, blob.getBytes(1, blob.length()).to_a.pack('U*')
+        assert_equal Float,  row.num_f.class
+        assert_equal BigDecimal, row.num_fstr.class
+        assert_equal Fixnum, row.num_int.class
+        assert_equal Fixnum, row.num_long.class
+        assert_equal Bignum, row.num_str.class
+        assert_equal BigDecimal, row.num_wtf.class if @type == :oracle
+
+        assert_equal params[:num_int], row.num_int
+        assert_equal params[:num_long], row.num_long
+        assert_equal params[:num_str], row.num_str
+        assert_equal params[:num_fstr], row.num_fstr
+        assert_equal params[:num_f], row.num_f
+        assert_equal params[:num_wtf], row.num_wtf if @type == :oracle
+      end
 
       cnt = 0
       prev_id = 100
@@ -346,6 +398,18 @@ class TestObjectWrapper < Test::Unit::TestCase
       assert_equal 5, with_default.where(:id => (16..20)).update(:beta => 0) # override
       assert_equal 22, table.count(:beta => 0)
       assert_equal 100, table.update(:beta => 1)
+
+      # Blob-handling
+      first_row = table.select(:delta).first
+      blob = first_row.delta
+
+      table.update(:delta => nil)
+      table.update(:delta => blob)
+
+      table.select('delta') do |row|
+        blob = row.delta
+        assert_equal @blob, blob.getBytes(1, blob.length()).to_a.pack('U*')
+      end
     end
   end
 
@@ -499,6 +563,51 @@ class TestObjectWrapper < Test::Unit::TestCase
       # Should be OK
       bt.close
       t.batch.close
+    end
+  end
+
+  def test_invalidated_prepared_statements
+    each_connection do |conn|
+      create_table conn
+
+      t = conn.table(@table_name)
+      insert t, 100
+      assert_equal 100, t.count
+
+      create_table conn
+      insert t, 100
+      # SHOULD NOT FAIL
+      assert_equal 100, t.count
+    end
+  end
+
+  def test_closed_prepared_statements
+    each_connection do |conn|
+      create_table conn
+
+      t = conn.table(@table_name)
+      insert t, 100
+      assert_equal 100, t.count
+
+      conn.prepared_statements.each { |ps| ps.close }
+
+      # SHOULD NOT FAIL (automatic repreparation)
+      assert_equal 100, t.count
+    end
+  end
+
+  def test_closed_prepared_statements_java
+    each_connection do |conn|
+      create_table conn
+
+      t = conn.table(@table_name)
+      insert t, 100
+      assert_equal 100, t.count
+
+      conn.prepared_statements.each { |ps| ps.java_obj.close }
+
+      # SHOULD NOT FAIL (automatic repreparation)
+      assert_equal 100, t.count
     end
   end
 end

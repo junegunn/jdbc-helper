@@ -158,22 +158,18 @@ class Connection
     @driver = args.delete :driver
     @url = args.delete :url
 
-    begin
-      Java::JavaClass.for_name @driver
-    rescue Exception
-      # TODO
-      raise
-    end
+    # NameError will be thrown for invalid drivers
+    Java::JavaClass.for_name @driver
 
     timeout = args.has_key?(:timeout) ? args.delete(:timeout) : Constants::DEFAULT_LOGIN_TIMEOUT
-    JavaSql::DriverManager.setLoginTimeout timeout if timeout
+    java.sql.DriverManager.setLoginTimeout timeout if timeout
 
     props = java.util.Properties.new
     (args.keys - [:url, :driver]).each do | key |
       props.setProperty(key.to_s, args[key].to_s) if args[key]
     end
     
-    @conn = JavaSql::DriverManager.get_connection(@url, props)
+    @conn = java.sql.DriverManager.get_connection(@url, props)
     @spool = StatementPool.send :new, self
     @bstmt = nil
 

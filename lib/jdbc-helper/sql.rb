@@ -31,6 +31,8 @@ class SQL
       'null'
     when Fixnum, Bignum, Float
       data
+    when BigDecimal
+      data.to_s("F")
     when JDBCHelper::SQL
       data.to_s
     when String
@@ -159,21 +161,12 @@ protected
             "is null"
           when NotNilClass
             "is not null"
-          when Fixnum, Bignum, Float, JDBCHelper::SQL
-            "= #{v}"
+          when Fixnum, Bignum, Float, JDBCHelper::SQL, String
+            "= #{value v}"
           when Range
             ">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
           when Array
-            "in (" + 
-            v.map { |e|
-              case e
-              when String
-                "'#{esc e}'"
-              else
-                e
-              end }.join(', ') + ")"
-          when String
-            "= '#{esc v}'"
+            "in (#{ v.map { |e| value(e) }.join(', ') })"
           else
             raise NotImplementedError.new("Unsupported class: #{v.class}")
           end

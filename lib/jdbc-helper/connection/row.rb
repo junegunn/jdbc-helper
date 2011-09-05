@@ -78,11 +78,6 @@ class Row
     '[' + strs.join(', ') + ']'
   end
 
-  # @return [String]
-  def to_s
-    @values.to_s
-  end
-
   # @return [Array]
   def to_a
     @values
@@ -123,11 +118,7 @@ private
   # Performs better than defining methods
   def method_missing(symb, *args)
     if vidx = @labels_d.index(symb.to_s.downcase)
-      begin
-        @values[vidx]
-      rescue NameError
-        raise NoMethodError.new("undefined method or attribute `#{symb}'")
-      end
+      @values[vidx]
     elsif @values.respond_to?(symb)
       @values.send(symb, *args)
     else

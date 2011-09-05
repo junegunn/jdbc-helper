@@ -13,9 +13,13 @@ class TestSQL < Test::Unit::TestCase
     assert_equal 1,                   SQL.value(1)
     assert_equal 1.2,                 SQL.value(1.2)
     assert_equal 9999999999999999999, SQL.value(9999999999999999999)
+    assert_equal "0.00000000000000000000009999999999999999999", 
+        SQL.value(BigDecimal.new("0.00000000000000000000009999999999999999999"))
     assert_equal "'sysdate'",         SQL.value('sysdate')
     assert_equal "'A''s'",            SQL.value("A's")
     assert_equal "sysdate",           SQL.value(JDBCHelper::SQL('sysdate'))
+
+    assert_raise(NotImplementedError) { SQL.value(Time.now) }
   end
 
   def test_order
@@ -45,6 +49,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal "where a = sysdate",             SQL.where(:a => JDBCHelper::SQL('sysdate'))
     assert_equal "where sysdate = sysdate",       SQL.where(JDBCHelper::SQL('sysdate') => JDBCHelper::SQL('sysdate'))
     assert_equal "where a in ('aa', 'bb', 'cc')", SQL.where(:a => %w[aa bb cc])
+    assert_equal "where a in ('aa', 'bb', 'cc', 4)", SQL.where(:a => %w[aa bb cc] + [4])
     assert_equal "where a = 1 and b = 'A''s'",    SQL.where(:a => 1, :b => "A's")
     assert_equal "where (a = 1 or b = 1)",        SQL.where("a = 1 or b = 1")
     assert_equal "where (a = 1 or b = 1) and c = 2", SQL.where("a = 1 or b = 1", :c => 2)
@@ -83,6 +88,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal ["where a = sysdate", []],           SQLPrepared.where(:a => JDBCHelper::SQL('sysdate'))
     assert_equal ["where sysdate = sysdate", []],     SQLPrepared.where(JDBCHelper::SQL('sysdate') => JDBCHelper::SQL('sysdate'))
     assert_equal ["where a in ('aa', 'bb', 'cc')", []], SQLPrepared.where(:a => %w[aa bb cc])
+    assert_equal ["where a in ('aa', 'bb', 'cc', 4)", []], SQLPrepared.where(:a => %w[aa bb cc] + [4])
     assert_equal ["where a = ? and b = ?", [1, "A's"]],   SQLPrepared.where(:a => 1, :b => "A's")
     assert_equal ["where (a = 1 or b = 1)", []],        SQLPrepared.where("a = 1 or b = 1")
     assert_equal ["where (a = 1 or b = 1) and c = ?", [2]], SQLPrepared.where("a = 1 or b = 1", :c => 2)
@@ -98,7 +104,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal "select aa, bb from a.b where a is not null",
         SQL.select('a.b', :select => %w[aa bb], :where => {:a => SQL.not_nil})
     assert_equal "select aa, bb from a.b where a is not null and b >= 1 and b <= 10 order by cc, dd", 
-        SQL.select('a.b', 
+        SQL.select('a.b',
                :select => %w[aa bb], 
                :where => {:a => SQL.not_null, :b => (1..10)},
                :order => %w[cc dd]
@@ -136,11 +142,13 @@ class TestSQL < Test::Unit::TestCase
   end
 
   def test_insert
-    assert_equal "insert into a.b (a, b, c) values (1, 'A''s', null)",
-      SQL.insert('a.b', :a => 1, :b => "A's", :c => nil)
+    {'insert' => :insert, 'insert ignore' => :insert_ignore, 'replace' => :replace}.each do |op, met|
+      assert_equal "#{op} into a.b (a, b, c) values (1, 'A''s', null)",
+        SQL.send(met, 'a.b', :a => 1, :b => "A's", :c => nil)
 
-    assert_equal ["insert into a.b (a, b, c) values (?, ?, ?)", [1, "A's", nil]],
-      SQLPrepared.insert('a.b', :a => 1, :b => "A's", :c => nil)
+      assert_equal ["#{op} into a.b (a, b, c) values (?, ?, ?)", [1, "A's", nil]],
+        SQLPrepared.send(met, 'a.b', :a => 1, :b => "A's", :c => nil)
+    end
   end
 
   def test_sql_equality

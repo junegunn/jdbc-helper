@@ -60,7 +60,7 @@ private
       rset = ld.call
       default_support = rset.get_meta_data.get_column_count >= 14
       while rset.next
-        next if rset.getString("COLUMN_TYPE") == Java::JavaSql::DatabaseMetaData.procedureColumnReturn
+        next if rset.getString("COLUMN_TYPE") == java.sql.DatabaseMetaData.procedureColumnReturn
 
         cols << rset.getString("COLUMN_NAME").upcase
         # TODO/NOT TESTED
