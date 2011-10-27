@@ -96,6 +96,7 @@ class TestConnection < Test::Unit::TestCase
         # Integers will be converted to String
         #conn_info['defaultRowPrefetch'] = 1000
 
+        conn_info.freeze # Non-modifiable!
         conn = JDBCHelper::Connection.new(conn_info)
         assert_equal(conn.closed?, false)
         assert_equal(conn.driver, conn_info[:driver] || conn_info['driver'])

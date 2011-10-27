@@ -21,7 +21,9 @@ end
 module JDBCHelperTestHelper
 	require 'yaml'
 	def config
-		@db_config ||= YAML.load File.read(File.dirname(__FILE__) + '/database.yml')
+    path = File.dirname(__FILE__) + '/database.yml'
+    path += '.local' if File.exists?(path + '.local')
+		@db_config ||= YAML.load File.read(path)
 	end
 
 	def create_test_procedure_simple conn, name

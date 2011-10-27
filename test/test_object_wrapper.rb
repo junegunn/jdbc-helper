@@ -522,6 +522,28 @@ class TestObjectWrapper < Test::Unit::TestCase
     end
   end
 
+  # Test disabled prepared statements
+  def test_pstmt_disable
+    pend("TODO/TBD") do
+      each_connection do |conn|
+        create_table conn
+        insert conn.table(@table_name)
+
+        # Batch-enabled object
+        conn.table(@table_name).batch
+
+        10000.times do |i|
+          # Should not fail
+          t = conn.table(@table_name)
+          t.count("id = #{i}")
+        end
+
+        # OK
+        assert true
+      end
+    end
+  end
+
   def test_prepared_statements
     each_connection do |conn|
       create_table conn

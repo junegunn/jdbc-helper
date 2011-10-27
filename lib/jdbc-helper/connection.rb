@@ -144,8 +144,8 @@ class Connection
   # @param [Hash] args
   def initialize(args = {})
     # Subsequent deletes should not affect the input
-    @args = args.dup
-    args = @args.dup
+    @args = Marshal.load(Marshal.dump(args))
+    args = Marshal.load(Marshal.dump(args))
 
     # String/Symbol
     %w[driver url user password timeout].each do | strk |

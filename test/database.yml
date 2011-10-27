@@ -5,6 +5,7 @@ mysql:
     database: test
     user: root
     password:
+    timeout: 5
 
 oracle:
     driver: oracle.jdbc.driver.OracleDriver

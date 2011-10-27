@@ -1,3 +1,6 @@
+### 0.6.2 / 2011/10/27
+* Bug fix: JDBCHelper::Connection#initialize *still* modifies its input Hash
+
 ### 0.6.1 / 2011/09/05
 * Minor fix for an inefficient type conversion
 * More tests. Test coverage over 97%.
