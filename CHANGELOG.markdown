@@ -1,5 +1,6 @@
 ### 0.6.3 / 2011/11/09
 * Added flexibility when writing TableWrapper conditions with the new ActiveRecord-like Array-expression.
+
 ```ruby
 table.count(["title != ? or year <= ?", 'N/A', '2011'], :month => (1..3), :day => 10)
 ```
