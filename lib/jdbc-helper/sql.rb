@@ -29,10 +29,10 @@ class SQL
     case data
     when NilClass
       'null'
-    when Fixnum, Bignum, Float
-      data
     when BigDecimal
       data.to_s("F")
+    when Numeric
+      data
     when JDBCHelper::SQL
       data.to_s
     when String
@@ -138,7 +138,7 @@ class SQL
   
 protected
   def self.esc str
-    str.gsub("'", "''")
+    str.to_s.gsub("'", "''")
   end
 
   # No check
@@ -161,7 +161,7 @@ protected
             "is null"
           when NotNilClass
             "is not null"
-          when Fixnum, Bignum, Float, JDBCHelper::SQL, String
+          when Numeric, JDBCHelper::SQL, String
             "= #{value v}"
           when Range
             ">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
@@ -171,6 +171,18 @@ protected
             raise NotImplementedError.new("Unsupported class: #{v.class}")
           end
       }.join(' and ')
+    when Array
+      if conds.empty?
+        ''
+      else
+        base = conds.first.to_s
+        params = conds[1..-1] || []
+        '(' +
+        base.gsub('?') {
+          param = params.shift 
+          param ? value(param) : '?'
+        } + ')'
+      end
     else
       raise NotImplementedError.new("Parameter to where must be either Hash or String")
     end

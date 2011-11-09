@@ -134,6 +134,13 @@ class SQLPrepared < JDBCHelper::SQL
                      "= ?"
                    end
                }.join(' and ')
+             when Array
+               if conds.empty?
+                 ''
+               else
+                 binds += conds[1..-1] if conds.length > 1
+                 "(#{conds.first})" 
+               end
              else
                raise NotImplementedError.new("Parameter to where must be either Hash or String")
              end

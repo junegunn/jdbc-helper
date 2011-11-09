@@ -38,6 +38,8 @@ class TestSQL < Test::Unit::TestCase
 
   def test_where
     assert_equal "where a = 1",                   SQL.where(:a => 1)
+    assert_equal "where a = 12345678901234567890.1234567890123456789", 
+                                                  SQL.where(:a => BigDecimal.new("12345678901234567890.1234567890123456789"))
     assert_equal "where a = 1.2",                 SQL.where(:a => 1.2)
     assert_equal "where a = 9999999999999999999", SQL.where(:a => 9999999999999999999)
     assert_equal "where a >= 1 and a <= 2",       SQL.where(:a => 1..2)
@@ -55,8 +57,9 @@ class TestSQL < Test::Unit::TestCase
     assert_equal "where (a = 1 or b = 1)",        SQL.where(JDBCHelper::SQL("a = 1 or b = 1"))
     assert_equal "where (a = 1 or b = 1) and c = 2", SQL.where("a = 1 or b = 1", :c => 2)
     assert_equal "where c = 2 and (a = 1 or b = 1)", SQL.where({:c => 2}, "a = 1 or b = 1")
-    assert_equal "where c = 2 and (a = 1 or b = 1) and (e = 2) and f = 3",
-        SQL.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {})
+    assert_equal "where c = 2 and (a = 1 or b = 1) and (e = 2) and f = 3 and (abc not like % || 'abc???' || % or def != 100 and ghi = '??') and (1 = 1)",
+        SQL.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {},
+                  ["abc not like % || ? || % or def != ? and ghi = '??'", 'abc???', 100], [], ['1 = 1'])
     assert_equal '', SQL.where(nil)
     assert_equal '', SQL.where(" ")
 
@@ -98,6 +101,9 @@ class TestSQL < Test::Unit::TestCase
     assert_equal ["where c = ? and (a = 1 or b = 1)", [2]], SQLPrepared.where({:c => 2}, "a = 1 or b = 1")
     assert_equal ["where c = ? and (a = 1 or b = 1) and (e = 2) and f = ?", [2, 3]],
         SQLPrepared.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {})
+    assert_equal ["where c = ? and (a = 1 or b = 1) and (e = 2) and f = ? and (abc not like % || ? || % or def != ?) and (1 = 1)", [2, 3, 'abc', 100]],
+        SQLPrepared.where({:c => 2}, "a = 1 or b = 1", nil, "", "e = 2", nil, {:f => 3}, {},
+                  ["abc not like % || ? || % or def != ?", 'abc', 100], [], ['1 = 1'])
     assert_equal [nil, []], SQLPrepared.where(nil)
     assert_equal [nil, []], SQLPrepared.where(" ")
   end

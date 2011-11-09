@@ -204,6 +204,26 @@ table.truncate!
 table.drop!
 ```
 
+#### Invalid use of dynamic conditions
+TableWrapper object internally creates JDBC PreparedStatements.
+If you dynamically build many condition-strings as follows, 
+it would soon fail because there will be too many open PreparedStatements.
+```ruby
+10000.times do |idx|
+  table.count("id = #{idx}")
+end
+```
+Correct ways of doing the same would be as follows.
+```ruby
+10000.times do |idx|
+  # 1. with Hash
+  table.count('id' => idx)
+
+  # 2. with Array
+  table.count(["id = ?", idx])
+end
+```
+
 ### Using function wrappers (since 0.2.2)
 ```ruby
 conn.function(:mod).call 5, 3

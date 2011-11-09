@@ -1,6 +1,8 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
+require 'insensitive_hash'
+
 require 'jdbc-helper/connection/type_map'
 require 'jdbc-helper/connection/parameterized_statement'
 require 'jdbc-helper/connection/prepared_statement'
@@ -145,12 +147,7 @@ class Connection
   def initialize(args = {})
     # Subsequent deletes should not affect the input
     @args = Marshal.load(Marshal.dump(args))
-    args = Marshal.load(Marshal.dump(args))
-
-    # String/Symbol
-    %w[driver url user password timeout].each do | strk |
-      args[strk.to_sym] = args.delete strk if args.has_key? strk
-    end
+    args = Marshal.load(Marshal.dump(args)).insensitive
 
     raise ArgumentError.new("driver not given") unless args.has_key? :driver
     raise ArgumentError.new("url not given") unless args.has_key? :url
@@ -170,7 +167,7 @@ class Connection
     end
 
     props = java.util.Properties.new
-    (args.keys - [:url, :driver]).each do | key |
+    args.keys.each do |key|
       props.setProperty(key.to_s, args[key].to_s) if args[key]
     end
     

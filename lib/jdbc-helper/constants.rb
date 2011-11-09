@@ -19,7 +19,8 @@ module Constants
     DEFAULT_PARAMETERS = {
       :mysql => {
         'zeroDateTimeBehavior' => 'convertToNull',
-        'rewriteBatchedStatements' => 'true',
+        # Removed from 0.6.3: This can have a performance hit when batch size is large
+        # 'rewriteBatchedStatements' => 'true',
         'useServerPrepStmts' => 'true',
         'useCursorFetch' => 'true'
       }

@@ -2,6 +2,7 @@ GEM
   remote: http://rubygems.org/
   specs:
     git (1.2.5)
+    insensitive_hash (0.0.3)
     jeweler (1.5.2)
       bundler (~> 1.0.0)
       git (>= 1.2.5)
@@ -17,6 +18,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.0.0)
+  insensitive_hash (>= 0.0.3)
   jeweler (~> 1.5.2)
   rcov
   test-unit (>= 2.3.0)

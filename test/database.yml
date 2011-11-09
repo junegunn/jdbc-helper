@@ -6,6 +6,7 @@ mysql:
     user: root
     password:
     timeout: 5
+    useServerPrepStmts: true
 
 oracle:
     driver: oracle.jdbc.driver.OracleDriver
