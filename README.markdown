@@ -205,15 +205,19 @@ table.drop!
 ```
 
 #### Invalid use of dynamic conditions
+
 TableWrapper object internally creates JDBC PreparedStatements.
-If you dynamically build many condition-strings as follows, 
+If you dynamically build many condition-strings as the following example, 
 it would soon fail because there will be too many open PreparedStatements.
+
 ```ruby
 10000.times do |idx|
   table.count("id = #{idx}")
 end
 ```
+
 Correct ways of doing the same would be as follows.
+
 ```ruby
 10000.times do |idx|
   # 1. with Hash
