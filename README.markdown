@@ -154,6 +154,7 @@ p_upd.close
 ### Using table wrappers (since 0.2.0)
 ```ruby
 # For more complex examples, refer to test/test_object_wrapper.rb
+SQL = JDBCHelper::SQL
 
 # Creates a table wrapper
 table = conn.table('test.data')
@@ -175,12 +176,10 @@ end
 sql = table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc').sql
 
 # Updates with conditions
-table.update(:a => 'hello', :b => JDBCHelper::SQL('now()'), :where => { :c => 3 })
-# Or equivalently,
-table.where(:c => 3).update(:a => 'hello', :b => JDBCHelper::SQL('now()'))
+table.where(:c => 3).update(:a => 'hello', :b => SQL.expr('now()'))
 
 # Insert into the table
-table.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
+table.insert(:a => 10, :b => 20, :c => SQL.expr('10 + 20'))
 table.insert_ignore(:a => 10, :b => 20, :c => 30)
 table.replace(:a => 10, :b => 20, :c => 30)
 
@@ -190,7 +189,7 @@ with_defaults.insert(:c => 30)
 with_defaults.where('a != 10 or b != 20').update   # sets a => 10, b => 20
 
 # Batch updates with batch method
-table.batch.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
+table.batch.insert(:a => 10, :b => 20, :c => SQL.expr('10 + 20'))
 table.batch.insert_ignore(:a => 10, :b => 20, :c => 30)
 conn.execute_batch
 
@@ -202,6 +201,28 @@ table.where(:c => 3).delete
 # Truncate or drop table (Cannot be undone)
 table.truncate!
 table.drop!
+```
+
+#### Building complex where clauses
+```ruby
+SQL = JDBCHelper::SQL                  # Shortcut. Or you can just include JDBCHelper
+
+table.where(
+  :a => 'abc',                         # a = 'abc'
+  :b => (1..10),                       # and b >= 1 and b <= 10
+  :c => %w[a b c],                     # and c in ('a', 'b', 'c')
+  :d => SQL.expr('sysdate'),           # and d = sysdate
+  :e => SQL.not_null,                  # and e is not null
+  :f => SQL.gt(100),                   # and f > 100
+  :g => SQL.lt(100),                   # and g < 100
+  :h => SQL.like('ABC%'),              # and h like 'ABC%'
+  :i => SQL.not_like('ABC%'),          # and i not like 'ABC%'
+  :j => SQL.le( SQL.expr('sysdate') )  # and j <= sysdate
+).select(
+  SQL.expr('a + b sum')
+).order(
+  SQL.expr('a + b desc')
+)
 ```
 
 #### Invalid use of dynamic conditions

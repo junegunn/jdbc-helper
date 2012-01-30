@@ -5,38 +5,31 @@ module JDBCHelper
 
 # Generate SQL snippet, prevents the string from being quoted.
 # @param [String] SQL snippet
-# @return [JDBCHelper::SQL]
+# @return [JDBCHelper::SQL::Expression]
+# @deprecated Use JDBCHelper::SQL.expr instead
 def self.sql str
-  JDBCHelper::SQL.new str
+  JDBCHelper::SQL::SimpleExpression.new str
 end
 class << self
+  # @deprecated Use JDBCHelper::SQL.expr instead
   alias_method :SQL, :sql
 end
 
 # Class representing an SQL snippet. Also has many SQL generator class methods.
 class SQL
-  # Returns NotNilClass singleton object
-  # @return [JDBCHelper::SQL::NotNilClass]
-  def self.not_nil
-    NotNilClass.singleton
-  end
-  class << self
-    alias not_null not_nil
-  end
-
   # Formats the given data so that it can be injected into SQL
   def self.value data
     case data
-    when NilClass
-      'null'
     when BigDecimal
       data.to_s("F")
     when Numeric
       data
-    when JDBCHelper::SQL
-      data.to_s
-    when String
+    when String, Symbol
       "'#{esc data}'"
+    when NilClass
+      'null'
+    when JDBCHelper::SQL::SimpleExpression
+      data.to_s
     else
       raise NotImplementedError.new("Unsupported datatype: #{data.class}")
     end
@@ -124,18 +117,6 @@ class SQL
     return expr
   end
 
-  def to_s
-    @expr
-  end
-
-  def == other
-    self.to_s == other.to_s
-  end
-  
-  def eql? other
-    self.class == other.class && self.to_s == other.to_s
-  end
-  
 protected
   def self.esc str
     str.to_s.gsub("'", "''")
@@ -150,7 +131,7 @@ protected
 
   def self.where_unit conds
     case conds
-    when String, JDBCHelper::SQL
+    when String, JDBCHelper::SQL::SimpleExpression
       conds = conds.to_s.strip
       conds.empty? ? '' : "(#{conds})"
     when Hash
@@ -159,10 +140,12 @@ protected
           case v
           when NilClass
             "is null"
-          when NotNilClass
-            "is not null"
-          when Numeric, JDBCHelper::SQL, String
+          when Numeric, String, BigDecimal
             "= #{value v}"
+          when JDBCHelper::SQL::SimpleExpression
+            "= #{v.to_s}"
+          when JDBCHelper::SQL::Expression
+            v.to_s
           when Range
             ">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
           when Array
@@ -191,19 +174,6 @@ protected
   def self.insert_internal cmd, table, data_hash
     cols = data_hash.keys
     check "#{cmd} into #{table} (#{cols.join ', '}) values (#{cols.map{|c|value data_hash[c]}.join ', '})"
-  end
-
-  def initialize str
-    @expr = JDBCHelper::SQL.check str
-  end
-
-  # Class to represent "(IS) NOT NULL" expression in SQL
-  class NotNilClass
-    # Returns the singleton object of NotNilClass
-    # @return [NotNilClass]
-    def self.singleton
-      @@singleton ||= NotNilClass.new
-    end
   end
 end#SQL
 end#JDBCHelper

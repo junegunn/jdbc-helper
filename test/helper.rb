@@ -83,6 +83,8 @@ module JDBCHelperTestHelper
 						:mysql
 					when /oracle/i
 						:oracle
+          when /postgres/i
+            :postgres
 					else
 						p conn_info
 						:unknown

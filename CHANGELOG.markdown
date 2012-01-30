@@ -1,3 +1,17 @@
+### 0.7.0 / 2012/01/30
+* Helper methods for generating where clauses for TableWarppers
+ * `JDBCHelper::SQL.expr`
+  * `JDBCHelper::SQL` deprecated in favor or `expr`
+ * `JDBCHelper::SQL.ne`
+ * `JDBCHelper::SQL.gt`
+ * `JDBCHelper::SQL.ge`
+ * `JDBCHelper::SQL.lt`
+ * `JDBCHelper::SQL.le`
+ * `JDBCHelper::SQL.like`
+ * `JDBCHelper::SQL.not_like`
+ * `JDBCHelper::SQL.not_null`
+
+
 ### 0.6.3 / 2011/11/09
 * Added flexibility when writing TableWrapper conditions with the new ActiveRecord-like Array-expression.
 

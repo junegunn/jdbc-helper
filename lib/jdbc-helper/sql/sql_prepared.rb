@@ -36,7 +36,7 @@ class SQLPrepared < JDBCHelper::SQL
     col_binds = []
     sql = ("update #{table} set " + data_hash.map { |k, v|
       case v
-      when JDBCHelper::SQL
+      when JDBCHelper::SQL::SimpleExpression
         "#{k} = #{v}"
       else
         col_binds << v
@@ -101,7 +101,7 @@ class SQLPrepared < JDBCHelper::SQL
     binds = []
 
     clause = case conds
-             when String
+             when String, JDBCHelper::SQL::SimpleExpression
                conds = conds.strip
                conds.empty? ? '' : "(#{conds})"
              when Hash
@@ -110,13 +110,22 @@ class SQLPrepared < JDBCHelper::SQL
                    case v
                    when NilClass
                      "is null"
-                   when NotNilClass
-                     "is not null"
-                   when JDBCHelper::SQL
-                     "= #{v}"
-                   when Fixnum, Bignum, Float
+                   when Numeric
                      binds << v
                      "= ?"
+                   when JDBCHelper::SQL::SimpleExpression
+                     "= #{v.to_s}"
+                   when JDBCHelper::SQL::NotNullExpression
+                     v.to_s
+                   when JDBCHelper::SQL::ParameterizedExpression
+                     e, b = v.to_bind
+                     case b.first
+                     when JDBCHelper::SQL::SimpleExpression
+                       v.to_s
+                     else
+                       binds += b
+                       e
+                     end
                    when Range
                      binds << v.begin << v.end
                      ">= ? and #{k} <#{'=' unless v.exclude_end?} ?"
@@ -125,7 +134,7 @@ class SQLPrepared < JDBCHelper::SQL
                        v.map { |e|
                        case e
                        when String
-                         "'#{esc e}'"
+                         SQL.value e
                        else
                          e.to_s
                        end }.join(', ') + ")"
@@ -151,7 +160,7 @@ class SQLPrepared < JDBCHelper::SQL
     binds = []
     values = data_hash.values.map { |v|
       case v
-      when JDBCHelper::SQL
+      when JDBCHelper::SQL::SimpleExpression
         v
       else
         binds << v

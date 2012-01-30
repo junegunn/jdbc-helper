@@ -11,8 +11,9 @@ class TestConnectors < Test::Unit::TestCase
 
   def test_connectors
     config.each do | db, conn_info |
-      if conn_info['driver'] =~ /mysql/
-        host = conn_info['url'].match(%r{//(.*?)/})[1]
+      case conn_info['driver']
+      when /mysql/
+        host = conn_info['url'].match(%r{//(.*?)/?})[1]
         db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
 
         assert_raise(ArgumentError) {
@@ -42,7 +43,25 @@ class TestConnectors < Test::Unit::TestCase
         end
         assert @conn.closed?
         assert_equal 1, ret
-      elsif conn_info['driver'] =~ /oracle/
+      when /postgres/
+        host = conn_info['url'].match(%r{//(.*?)/?})[1]
+        db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
+
+        conn = JDBCHelper::PostgresConnector.connect(host, conn_info['user'], conn_info['password'], db)
+
+        assert conn.closed? == false
+        conn.close
+        assert conn.closed?
+
+        @conn = nil
+        ret = JDBCHelper::PostgresConnector.connect(host, conn_info['user'], conn_info['password'], db) do |conn|
+          assert conn.closed? == false
+          @conn = conn
+          1
+        end
+        assert @conn.closed?
+        assert_equal 1, ret
+      when /oracle/
         host = conn_info['url'].match(%r{@(.*?)/})[1]
         svc = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
         conn = JDBCHelper::OracleConnector.connect(host, conn_info['user'], conn_info['password'], svc)

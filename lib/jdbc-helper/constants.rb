@@ -13,7 +13,8 @@ module Constants
   module Connector
     JDBC_DRIVER = {
       :oracle => 'oracle.jdbc.driver.OracleDriver',
-      :mysql  => 'com.mysql.jdbc.Driver'
+      :mysql  => 'com.mysql.jdbc.Driver',
+      :postgres => 'org.postgresql.Driver'
     }
 
     DEFAULT_PARAMETERS = {
@@ -23,6 +24,9 @@ module Constants
         # 'rewriteBatchedStatements' => 'true',
         'useServerPrepStmts' => 'true',
         'useCursorFetch' => 'true'
+      },
+      :postgres => {
+        'stringtype' => 'unspecified'
       }
     }
   end#Connector
