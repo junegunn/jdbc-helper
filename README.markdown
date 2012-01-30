@@ -210,14 +210,15 @@ SQL = JDBCHelper::SQL                  # Shortcut. Or you can just include JDBCH
 table.where(
   :a => 'abc',                         # a = 'abc'
   :b => (1..10),                       # and b >= 1 and b <= 10
-  :c => %w[a b c],                     # and c in ('a', 'b', 'c')
-  :d => SQL.expr('sysdate'),           # and d = sysdate
-  :e => SQL.not_null,                  # and e is not null
-  :f => SQL.gt(100),                   # and f > 100
-  :g => SQL.lt(100),                   # and g < 100
-  :h => SQL.like('ABC%'),              # and h like 'ABC%'
-  :i => SQL.not_like('ABC%'),          # and i not like 'ABC%'
-  :j => SQL.le( SQL.expr('sysdate') )  # and j <= sysdate
+  :c => (1...10),                      # and c >= 1 and c < 10
+  :d => %w[a b c],                     # and d in ('a', 'b', 'c')
+  :e => SQL.expr('sysdate'),           # and e = sysdate
+  :f => SQL.not_null,                  # and f is not null
+  :g => SQL.gt(100),                   # and g > 100
+  :h => SQL.lt(100),                   # and h < 100
+  :i => SQL.like('ABC%'),              # and i like 'ABC%'
+  :j => SQL.not_like('ABC%'),          # and j not like 'ABC%'
+  :k => SQL.le( SQL.expr('sysdate') )  # and k <= sysdate
 ).select(
   SQL.expr('a + b sum')
 ).order(

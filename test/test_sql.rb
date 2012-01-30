@@ -38,18 +38,19 @@ class TestSQL < Test::Unit::TestCase
   end
 
   def test_complex_table_wrapper_query
-    assert_equal "select a + b sum from test where a = 1 and b >= 1 and b <= 10 and c in ('a', 'b', 'c') and d = sysdate and e is not null and f > 100 and g < 100 and h like 'ABC%' and i not like 'ABC%' and j <= sysdate order by a + b desc",
+    assert_equal "select a + b sum from test where a = 'hello' and b >= 1 and b <= 10 and c >= 1 and c < 10 and d in ('a', 'b', 'c') and e = sysdate and f is not null and g > 100 and h < 100 and i like 'ABC%' and j not like 'ABC%' and k <= sysdate order by a + b desc",
       JDBCHelper::TableWrapper.new(nil, :test).where(
-        :a => 1,
+        :a => 'hello',
         :b => (1..10),
-        :c => %w[a b c],
-        :d => SQL.expr('sysdate'),
-        :e => SQL.not_null,
-        :f => SQL.gt(100),
-        :g => SQL.lt(100),
-        :h => SQL.like('ABC%'),
-        :i => SQL.not_like('ABC%'),
-        :j => SQL.le( SQL.expr('sysdate') )
+        :c => (1...10),
+        :d => %w[a b c],
+        :e => SQL.expr('sysdate'),
+        :f => SQL.not_null,
+        :g => SQL.gt(100),
+        :h => SQL.lt(100),
+        :i => SQL.like('ABC%'),
+        :j => SQL.not_like('ABC%'),
+        :k => SQL.le( SQL.expr('sysdate') )
       ).select(
         SQL.expr('a + b sum')
       ).order(
