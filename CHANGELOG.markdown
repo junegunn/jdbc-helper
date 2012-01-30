@@ -1,7 +1,7 @@
 ### 0.7.0 / 2012/01/30
 * Helper methods for generating where clauses for TableWarppers
  * `JDBCHelper::SQL.expr`
-  * `JDBCHelper::SQL` deprecated in favor or `expr`
+  * `JDBCHelper::SQL` deprecated in favor of `expr`
  * `JDBCHelper::SQL.ne`
  * `JDBCHelper::SQL.gt`
  * `JDBCHelper::SQL.ge`
