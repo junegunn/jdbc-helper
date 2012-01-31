@@ -213,6 +213,7 @@ table.drop!
 ```ruby
 SQL = JDBCHelper::SQL                  # Shortcut. Or you can just include JDBCHelper
 
+# With Hash
 scope = table.where(
   :a => 'abc',                         # a = 'abc'
   :b => (1..10),                       # and b >= 1 and b <= 10
@@ -226,8 +227,10 @@ scope = table.where(
   :j => SQL.not_like('ABC%'),          # and j not like 'ABC%'
   :k => SQL.le( SQL.expr('sysdate') )  # and k <= sysdate
 )
-
 scope.update(:a => 'xyz')
+
+# With Array
+scope = table.where(["a = ? or b > ?", 'abc', 10])
 ```
 
 #### Invalid use of dynamic conditions
