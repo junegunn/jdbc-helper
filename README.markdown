@@ -57,12 +57,16 @@ conn.close
 
 
 # MySQL shortcut connector
-conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
-conn.close
+JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
 
 # Oracle shortcut connector
-conn = JDBCHelper::OracleConnector.connect(host, user, password, service_name)
-conn.close
+JDBCHelper::OracleConnector.connect(host, user, password, service_name)
+
+# PostgreSQL shortcut connector
+JDBCHelper::PostgresConnector.connect(host, user, password, db)
+ 
+# MS SQL Server shortcut connector
+JDBCHelper::SqlServerConnector.connect(host, user, password, db)
 ```
 
 ### Querying database table
