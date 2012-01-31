@@ -117,7 +117,7 @@ class SQLPrepared < JDBCHelper::SQL
                      "= #{v.to_s}"
                    when JDBCHelper::SQL::NotNullExpression
                      v.to_s
-                   when JDBCHelper::SQL::ParameterizedExpression
+                   when JDBCHelper::SQL::CriterionExpression
                      e, b = v.to_bind
                      case b.first
                      when JDBCHelper::SQL::ScalarExpression

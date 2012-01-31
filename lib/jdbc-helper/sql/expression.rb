@@ -26,35 +26,35 @@ class SQL
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.gt v
-    ParameterizedExpression.new '>', v
+    CriterionExpression.new '>', v
   end
 
   # Less-than expression for where clauses
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.lt v
-    ParameterizedExpression.new '<', v
+    CriterionExpression.new '<', v
   end
 
   # Less-than-or-equal-to expression for where clauses
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.le v
-    ParameterizedExpression.new '<=', v
+    CriterionExpression.new '<=', v
   end
 
   # Greater-than-or-equal-to expression for where clauses
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.ge v
-    ParameterizedExpression.new '>=', v
+    CriterionExpression.new '>=', v
   end
 
   # Not-equal expression for where clauses
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.ne v
-    ParameterizedExpression.new '<>', v
+    CriterionExpression.new '<>', v
   end
 
   # Like expression for where clauses
@@ -62,7 +62,7 @@ class SQL
   # @since 0.7.0
   def self.like v
     raise ArgumentError.new('Like expression must be given as a String') unless v.is_a?(String)
-    ParameterizedExpression.new 'like', v
+    CriterionExpression.new 'like', v
   end
 
   # "Not like" expression for where clauses
@@ -70,7 +70,7 @@ class SQL
   # @since 0.7.0
   def self.not_like v
     raise ArgumentError.new('Like expression must be given as a String') unless v.is_a?(String)
-    ParameterizedExpression.new 'not like', v
+    CriterionExpression.new 'not like', v
   end
 
   # @since 0.7.0
@@ -126,7 +126,7 @@ class SQL
   end
 
   # @since 0.7.0
-  class ParameterizedExpression < Expression
+  class CriterionExpression < Expression
     def initialize operator, param
       @operator = operator
       @param = param
