@@ -44,7 +44,7 @@ class TestConnectors < Test::Unit::TestCase
         assert @conn.closed?
         assert_equal 1, ret
       when /postgres/
-        host = conn_info['url'].match(%r{//(.*?)/?})[1]
+        host = conn_info['url'].match(%r{//([^/?]+)})[1]
         db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
 
         conn = JDBCHelper::PostgresConnector.connect(host, conn_info['user'], conn_info['password'], db)
@@ -55,6 +55,24 @@ class TestConnectors < Test::Unit::TestCase
 
         @conn = nil
         ret = JDBCHelper::PostgresConnector.connect(host, conn_info['user'], conn_info['password'], db) do |conn|
+          assert conn.closed? == false
+          @conn = conn
+          1
+        end
+        assert @conn.closed?
+        assert_equal 1, ret
+      when /sqlserver/
+        host = conn_info['url'].match(%r{//([^;]+)})[1]
+        db = conn_info['url'].match(%r{databaseName=([^;]+)})[1]
+
+        conn = JDBCHelper::SqlServerConnector.connect(host, conn_info['user'], conn_info['password'], db)
+
+        assert conn.closed? == false
+        conn.close
+        assert conn.closed?
+
+        @conn = nil
+        ret = JDBCHelper::SqlServerConnector.connect(host, conn_info['user'], conn_info['password'], db) do |conn|
           assert conn.closed? == false
           @conn = conn
           1

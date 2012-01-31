@@ -8,7 +8,7 @@ module JDBCHelper
 # @return [JDBCHelper::SQL::Expression]
 # @deprecated Use JDBCHelper::SQL.expr instead
 def self.sql str
-  JDBCHelper::SQL::SimpleExpression.new str
+  JDBCHelper::SQL::ScalarExpression.new str
 end
 class << self
   # @deprecated Use JDBCHelper::SQL.expr instead
@@ -28,7 +28,7 @@ class SQL
       "'#{esc data}'"
     when NilClass
       'null'
-    when JDBCHelper::SQL::SimpleExpression
+    when JDBCHelper::SQL::ScalarExpression
       data.to_s
     else
       raise NotImplementedError.new("Unsupported datatype: #{data.class}")
@@ -131,7 +131,7 @@ protected
 
   def self.where_unit conds
     case conds
-    when String, JDBCHelper::SQL::SimpleExpression
+    when String, JDBCHelper::SQL::ScalarExpression
       conds = conds.to_s.strip
       conds.empty? ? '' : "(#{conds})"
     when Hash
@@ -140,10 +140,8 @@ protected
           case v
           when NilClass
             "is null"
-          when Numeric, String, BigDecimal
+          when Numeric, String, JDBCHelper::SQL::ScalarExpression
             "= #{value v}"
-          when JDBCHelper::SQL::SimpleExpression
-            "= #{v.to_s}"
           when JDBCHelper::SQL::Expression
             v.to_s
           when Range

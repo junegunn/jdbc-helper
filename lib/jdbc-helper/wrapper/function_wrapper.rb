@@ -11,9 +11,21 @@ class FunctionWrapper < ObjectWrapper
   # @return [String]
   alias to_s name
 
+  def initialize conn, name
+    super conn, name
+
+    @suffix = 
+      case conn.driver
+      when /oracle/
+        " from dual"
+      else
+        ""
+      end
+  end
+
   # Returns the result of the function call with the given parameters
   def call(*args)
-    pstmt = @connection.prepare("select #{name}(#{args.map{'?'}.join ','}) from dual")
+    pstmt = @connection.prepare("select #{name}(#{args.map{'?'}.join ','})#{@suffix}")
     begin
       pstmt.query(*args)[0][0]
     ensure
@@ -22,5 +34,4 @@ class FunctionWrapper < ObjectWrapper
   end
 end#FunctionWrapper
 end#JDBCHelper
-
 

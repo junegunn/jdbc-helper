@@ -1,7 +1,7 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
-require 'insensitive_hash'
+require 'insensitive_hash/minimal'
 
 require 'jdbc-helper/connection/type_map'
 require 'jdbc-helper/connection/parameterized_statement'
@@ -147,7 +147,7 @@ class Connection
   def initialize(args = {})
     # Subsequent deletes should not affect the input
     @args = Marshal.load(Marshal.dump(args))
-    args = Marshal.load(Marshal.dump(args)).insensitive
+    args = InsensitiveHash.new( Marshal.load(Marshal.dump(args)) )
 
     raise ArgumentError.new("driver not given") unless args.has_key? :driver
     raise ArgumentError.new("url not given") unless args.has_key? :url

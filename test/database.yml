@@ -8,6 +8,12 @@ mysql:
     timeout: 5
     useServerPrepStmts: true
 
+postgres:
+    driver: org.postgresql.Driver
+    url: jdbc:postgresql://localhost/test?stringtype=unspecified
+    database: test
+    timeout: 5
+
 oracle:
     driver: oracle.jdbc.driver.OracleDriver
     url: jdbc:oracle:thin:@localhost/svc
@@ -15,3 +21,8 @@ oracle:
     user: testuser
     password: testpassword
 
+sqlserver:
+  driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  url: jdbc:sqlserver://localhost;databaseName=test;
+  user: test
+  password: test

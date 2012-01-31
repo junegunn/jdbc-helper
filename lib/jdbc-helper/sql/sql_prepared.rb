@@ -36,7 +36,7 @@ class SQLPrepared < JDBCHelper::SQL
     col_binds = []
     sql = ("update #{table} set " + data_hash.map { |k, v|
       case v
-      when JDBCHelper::SQL::SimpleExpression
+      when JDBCHelper::SQL::ScalarExpression
         "#{k} = #{v}"
       else
         col_binds << v
@@ -101,7 +101,7 @@ class SQLPrepared < JDBCHelper::SQL
     binds = []
 
     clause = case conds
-             when String, JDBCHelper::SQL::SimpleExpression
+             when String, JDBCHelper::SQL::ScalarExpression
                conds = conds.strip
                conds.empty? ? '' : "(#{conds})"
              when Hash
@@ -113,14 +113,14 @@ class SQLPrepared < JDBCHelper::SQL
                    when Numeric
                      binds << v
                      "= ?"
-                   when JDBCHelper::SQL::SimpleExpression
+                   when JDBCHelper::SQL::ScalarExpression
                      "= #{v.to_s}"
                    when JDBCHelper::SQL::NotNullExpression
                      v.to_s
                    when JDBCHelper::SQL::ParameterizedExpression
                      e, b = v.to_bind
                      case b.first
-                     when JDBCHelper::SQL::SimpleExpression
+                     when JDBCHelper::SQL::ScalarExpression
                        v.to_s
                      else
                        binds += b
@@ -160,7 +160,7 @@ class SQLPrepared < JDBCHelper::SQL
     binds = []
     values = data_hash.values.map { |v|
       case v
-      when JDBCHelper::SQL::SimpleExpression
+      when JDBCHelper::SQL::ScalarExpression
         v
       else
         binds << v

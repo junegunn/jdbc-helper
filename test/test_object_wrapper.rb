@@ -6,13 +6,41 @@ class TestObjectWrapper < Test::Unit::TestCase
   def setup
     @table_name = "tmp_jdbc_helper"
     @procedure_name = "tmp_jdbc_helper_test_proc"
-    @blob = 'XXX'
+    @blob = 'X' * 1024 # * 1024 # FIXME
   end
 
   def teardown
     each_connection do |conn|
       drop_table conn
       conn.update "drop procedure #{@procedure_name}" rescue nil
+    end
+  end
+
+  def blob_data
+    case @type
+    when :postgres
+      @blob
+    else
+      java.io.ByteArrayInputStream.new( @blob.to_java_bytes )
+    end
+  end
+
+  def get_blob_data is
+    case is
+    when String
+      is
+    when java.io.InputStream
+      br = java.io.BufferedReader.new( java.io.InputStreamReader.new(is, "UTF-8") )
+      output = StringIO.new
+
+      while line = br.readLine
+        output << line
+      end
+
+      output.string
+    else
+      # Blob
+      is.getBytes(1, is.length()).to_a.pack('U*')
     end
   end
 
@@ -24,7 +52,17 @@ class TestObjectWrapper < Test::Unit::TestCase
         alpha int,
         beta  float,
         gamma varchar(100),
-        delta blob,
+        delta #{
+          case @type
+          when :postgres
+            'bytea'
+          when :mysql
+            'longblob'
+          when :sqlserver
+            'varbinary(max)'
+          else
+            'blob'
+          end},
         num_f decimal(15, 5),
         num_fstr decimal(30, 10),
         num_int  decimal(9, 0),
@@ -106,7 +144,7 @@ class TestObjectWrapper < Test::Unit::TestCase
           default(:alpha => 200).
           insert(params.merge(
              :id => pk,
-             :delta => java.io.ByteArrayInputStream.new( @blob.to_java_bytes ))
+             :delta => blob_data)
           )
       assert_equal 1, icnt unless table.batch?
     end
@@ -123,13 +161,16 @@ class TestObjectWrapper < Test::Unit::TestCase
 
   def test_function_wrapper
     each_connection do |conn|
-      assert_equal 2.to_i, conn.function(:mod).call(5, 3).to_i
-      assert_equal 'yeah', conn.function(:coalesce).call(nil, nil, 'yeah', 'no')
+      # SQL Server does not have mod function
+      assert_equal 2.to_i, conn.function(:mod).call(5, 3).to_i unless @type == :sqlserver
+      assert_equal 'yeah', get_blob_data( conn.function(:coalesce).call(nil, nil, 'yeah', 'no') )
     end
   end
 
   def test_procedure_wrapper
     each_connection do |conn, conn_info|
+      next unless [:mysql, :oracle].include?(@type) # TODO
+
       { 
         :proc => @procedure_name,
         :db_proc => [conn_info['database'], @procedure_name].join('.')
@@ -310,7 +351,9 @@ class TestObjectWrapper < Test::Unit::TestCase
       cols << :num_wtf if @type == :oracle
       table.select(*cols) do |row|
         blob = row.delta
-        assert_equal @blob, blob.getBytes(1, blob.length()).to_a.pack('U*')
+        # SQL Server seems to have a bug in getBinaryStream (FIXME)
+        # http://www.herongyang.com/JDBC/SQL-Server-BLOB-getBinaryStream.html
+        assert_equal @blob, get_blob_data(blob) unless @type == :sqlserver
         assert_equal Float,  row.num_f.class
         assert_equal BigDecimal, row.num_fstr.class
         assert_equal Fixnum, row.num_int.class
@@ -400,15 +443,23 @@ class TestObjectWrapper < Test::Unit::TestCase
       assert_equal 100, table.update(:beta => 1)
 
       # Blob-handling
+      # SQL Server seems to have a bug with binary streams (FIXME)
+      next if @type == :sqlserver
+
       first_row = table.select(:delta).first
       blob = first_row.delta
 
       table.update(:delta => nil)
-      table.update(:delta => blob)
+      case @type
+      when :postgres
+        table.update(:delta => get_blob_data(blob))
+      else
+        table.update(:delta => blob)
+      end
 
       table.select('delta') do |row|
         blob = row.delta
-        assert_equal @blob, blob.getBytes(1, blob.length()).to_a.pack('U*')
+        assert_equal @blob, get_blob_data(blob)
       end
     end
   end
@@ -476,8 +527,8 @@ class TestObjectWrapper < Test::Unit::TestCase
 
   def test_sequence
     each_connection do |conn|
-      # MySQL doesn't support sequences
-      next if @type == :mysql
+      # MySQL and SQL Server doesn't support sequences
+      next if [:mysql, :sqlserver].include?(@type)
 
       seq = conn.sequence(@table_name + '_seq')
       seq.reset!(100)
@@ -525,6 +576,8 @@ class TestObjectWrapper < Test::Unit::TestCase
   # Test disabled prepared statements
   def test_pstmt_disable
     pend("TODO/TBD") do
+      assert false # FIXME
+
       each_connection do |conn|
         create_table conn
         insert conn.table(@table_name)

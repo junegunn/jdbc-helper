@@ -18,21 +18,21 @@ class Connection
     java.sql.Types::INTEGER => :getInt,
     java.sql.Types::BIGINT => :getLong,
 
-    java.sql.Types::CHAR => :getString,
-    java.sql.Types::VARCHAR => :getString,
+    java.sql.Types::CHAR        => :getString,
+    java.sql.Types::VARCHAR     => :getString,
     java.sql.Types::LONGVARCHAR => :getString,
     (java.sql.Types::NCHAR        rescue nil) => :getString,
     (java.sql.Types::NVARCHAR     rescue nil) => :getString,
-    (java.sql.Types::LONGNVARCHAR rescue nil) => :getBlob, # FIXME: MySQL
-    java.sql.Types::BINARY => :getString,
-    java.sql.Types::VARBINARY => :getString,
-    java.sql.Types::LONGVARBINARY => :getBlob,  # FIXME: MySQL
+    (java.sql.Types::LONGNVARCHAR rescue nil) => :getString,
+
+    # !! MySQL function returns VARBINARY type
+    java.sql.Types::BINARY        => :getBinaryStream,
+    java.sql.Types::VARBINARY     => :getBinaryStream,
+    java.sql.Types::LONGVARBINARY => :getBinaryStream,
 
     java.sql.Types::REAL => :getDouble,
     java.sql.Types::FLOAT => :getFloat,
     java.sql.Types::DOUBLE => :getDouble,
-    #java.sql.Types::NUMERIC => :getBigDecimal,
-    #java.sql.Types::DECIMAL => :getBigDecimal,
 
     java.sql.Types::DATE => :getDate,
     java.sql.Types::TIME => :getTime,

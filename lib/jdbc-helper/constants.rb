@@ -14,7 +14,8 @@ module Constants
     JDBC_DRIVER = {
       :oracle => 'oracle.jdbc.driver.OracleDriver',
       :mysql  => 'com.mysql.jdbc.Driver',
-      :postgres => 'org.postgresql.Driver'
+      :postgres => 'org.postgresql.Driver',
+      :sqlserver => 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
     }
 
     DEFAULT_PARAMETERS = {
@@ -27,7 +28,8 @@ module Constants
       },
       :postgres => {
         'stringtype' => 'unspecified'
-      }
+      },
+      :sqlserver => {}
     }
   end#Connector
 end#Constants

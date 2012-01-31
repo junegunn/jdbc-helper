@@ -12,10 +12,12 @@
 # jdbc-helper
 
 A JDBC helper for Ruby/Database developers.
-JDBCHelper::Connection object wraps around a JDBC connection and provides much nicer interface to
+JDBCHelper::Connection object wraps around a JDBC connection and provides far nicer interface to
 crucial database operations from primitive selects and updates to more complex ones involving
 batch updates, prepared statements and transactions.
 As the name implies, this gem only works on JRuby.
+
+Tested on MySQL 5.5, Oracle 11g R2, PostgreSQL 9.0.4 and MS SQL Server 2008 R2.
 
 ## Installation
 ### Install gem

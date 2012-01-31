@@ -85,20 +85,43 @@ module JDBCHelperTestHelper
 						:oracle
           when /postgres/i
             :postgres
+          when /sqlserver/i
+            :sqlserver
 					else
 						p conn_info
 						:unknown
 					end
 
+      conn.update 'set global max_allowed_packet = 1073741824' if @type == :mysql
+
 			begin
+        init_dual! conn
+
 				if block.arity == 1
 					yield conn
 				else
 					yield conn, conn_info
 				end
 			ensure
+        conn.update "drop table #{TEST_TABLE}" rescue nil
+        conn.update "drop procedure #{TEST_PROCEDURE}" rescue nil
+        drop_dual! conn
 				conn.close
 			end
 		end
 	end
+
+  def init_dual! conn
+    # Postgres hack
+    drop_dual! rescue nil
+    begin
+      conn.update "create table dual (a int)"
+      conn.update "insert into dual values (0)"
+    rescue Exception => e
+    end
+  end
+
+  def drop_dual! conn
+    conn.update "drop table dual" rescue nil
+  end
 end

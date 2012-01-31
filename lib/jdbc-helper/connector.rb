@@ -17,4 +17,5 @@ end#JDBCHelper
 require 'jdbc-helper/connector/oracle_connector'
 require 'jdbc-helper/connector/mysql_connector'
 require 'jdbc-helper/connector/postgres_connector'
+require 'jdbc-helper/connector/sql_server_connector'
 
