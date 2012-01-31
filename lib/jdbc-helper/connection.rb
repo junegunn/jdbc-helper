@@ -424,6 +424,10 @@ class Connection
     JDBCHelper::ProcedureWrapper.new self, proc_name
   end
 
+  def inspect
+    @args.merge({ :closed? => closed? }).inspect
+  end
+
   # Statistics
   class Stat
     attr_accessor :type, :elapsed, :success_count, :fail_count

@@ -269,6 +269,18 @@ class TableWrapper < ObjectWrapper
     @pstmts
   end
 
+  def inspect
+    {
+      :conn => @connection,
+      :name => name,
+      :sqls => @pstmts.values.map(&:keys).flatten,
+      :where => @query_where,
+      :default => @query_default,
+      :order => @query_order,
+      :batch? => batch?
+    }.inspect
+  end
+
 private
   def prepare type, sql
     sql   = JDBCHelper::SQL.check(sql)
