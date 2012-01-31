@@ -209,7 +209,7 @@ table.drop!
 ```ruby
 SQL = JDBCHelper::SQL                  # Shortcut. Or you can just include JDBCHelper
 
-table.where(
+scope = table.where(
   :a => 'abc',                         # a = 'abc'
   :b => (1..10),                       # and b >= 1 and b <= 10
   :c => (1...10),                      # and c >= 1 and c < 10
@@ -221,11 +221,9 @@ table.where(
   :i => SQL.like('ABC%'),              # and i like 'ABC%'
   :j => SQL.not_like('ABC%'),          # and j not like 'ABC%'
   :k => SQL.le( SQL.expr('sysdate') )  # and k <= sysdate
-).select(
-  SQL.expr('a + b sum')
-).order(
-  SQL.expr('a + b desc')
 )
+
+scope.update(:a => 'xyz')
 ```
 
 #### Invalid use of dynamic conditions
