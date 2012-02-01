@@ -147,7 +147,7 @@ class Connection
   def initialize(args = {})
     # Subsequent deletes should not affect the input
     @args = Marshal.load(Marshal.dump(args))
-    args = InsensitiveHash.new( Marshal.load(Marshal.dump(args)) )
+    args = InsensitiveHash[ Marshal.load(Marshal.dump(args)) ]
 
     raise ArgumentError.new("driver not given") unless args.has_key? :driver
     raise ArgumentError.new("url not given") unless args.has_key? :url
@@ -425,7 +425,7 @@ class Connection
   end
 
   def inspect
-    @args.merge({ :closed? => closed? }).inspect
+    InsensitiveHash[@args].merge({ :closed? => closed? }).delete(:password).inspect
   end
 
   # Statistics
