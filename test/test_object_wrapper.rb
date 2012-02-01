@@ -169,7 +169,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 
   def test_procedure_wrapper
     each_connection do |conn, conn_info|
-      next unless [:mysql, :oracle].include?(@type) # TODO
+      next unless [:mysql, :oracle].include?(@type) # TODO: postgres / sqlserver
 
       { 
         :proc => @procedure_name,
