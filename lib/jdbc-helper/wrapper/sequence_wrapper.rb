@@ -19,12 +19,12 @@ class SequenceWrapper < ObjectWrapper
     super conn, name
 
     case conn.driver
-    when /oracle/
-      @nextval_sql = "select #{name}.nextval from dual"
-      @currval_sql = "select #{name}.currval from dual"
-    else
+    when /postgres/
       @nextval_sql = "select nextval('#{name}')"
       @currval_sql = "select currval('#{name}')"
+    else
+      @nextval_sql = "select #{name}.nextval from dual"
+      @currval_sql = "select #{name}.currval from dual"
     end
   end
 
