@@ -98,9 +98,9 @@ class TableWrapper < ObjectWrapper
   #   :where element of the given hash can (usually should) point to another Hash representing update filters.
   # @return [Fixnum] Number of affected records
   def update data_hash_with_where = {}
-    where_ext = data_hash_with_where.delete(:where)
-    where_ext = [where_ext] unless where_ext.is_a? Array
-    sql, binds = JDBCHelper::SQLPrepared.update(name, 
+    where_ext  = data_hash_with_where.delete(:where)
+    where_ext  = [where_ext] unless where_ext.is_a? Array
+    sql, binds = JDBCHelper::SQLPrepared.update(name,
                     @query_default.merge(data_hash_with_where),
                     @query_where + where_ext.compact)
     pstmt = prepare :update, sql

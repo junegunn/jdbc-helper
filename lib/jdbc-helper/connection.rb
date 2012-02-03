@@ -494,21 +494,21 @@ private
   end
 
   def update_stat(type, elapsed, success_count, fail_count) # :nodoc:
-    @prev_stat.type = type
-    @prev_stat.elapsed = elapsed
+    @prev_stat.type          = type
+    @prev_stat.elapsed       = elapsed
     @prev_stat.success_count = success_count
-    @prev_stat.fail_count = fail_count
+    @prev_stat.fail_count    = fail_count
 
-    accum = @stats[type]
-    accum.elapsed += elapsed
+    accum                = @stats[type]
+    accum.elapsed       += elapsed
     accum.success_count += success_count
-    accum.fail_count += fail_count
+    accum.fail_count    += fail_count
   end
 
   def measure_exec(type)
     begin
-      st = Time.now
-      ret = yield
+      st      = Time.now
+      ret     = yield
       elapsed = Time.now - st
       update_stat(type, elapsed, 1, 0)
     rescue Exception

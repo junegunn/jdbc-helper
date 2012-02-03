@@ -77,9 +77,8 @@ class SQLPrepared < JDBCHelper::SQL
 
   private
   def self.where_internal conds
-    conds = [conds] unless conds.is_a? Array
-
-    binds = []
+    conds   = [conds] unless conds.is_a? Array
+    binds   = []
     clauses = []
     conds.compact.each do |cond| 
       c, b = where_unit cond 
@@ -157,7 +156,7 @@ class SQLPrepared < JDBCHelper::SQL
   end
 
   def self.insert_internal cmd, table, data_hash
-    binds = []
+    binds  = []
     values = data_hash.values.map { |v|
       case v
       when JDBCHelper::SQL::ScalarExpression

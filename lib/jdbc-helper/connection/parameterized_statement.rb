@@ -16,8 +16,8 @@ class ParameterizedStatement
   # @param [JDBCHelper::Connection] conn
   # @param [String] cstmt_str
   def initialize(conn, sql, obj)
-    @conn = conn
-    @sql = sql
+    @conn     = conn
+    @sql      = sql
     @java_obj = obj
   end
 

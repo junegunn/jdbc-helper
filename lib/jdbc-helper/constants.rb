@@ -12,19 +12,20 @@ module Constants
   # Constants only for Connectors
   module Connector
     JDBC_DRIVER = {
-      :oracle => 'oracle.jdbc.driver.OracleDriver',
-      :mysql  => 'com.mysql.jdbc.Driver',
-      :postgres => 'org.postgresql.Driver',
+      :oracle    => 'oracle.jdbc.driver.OracleDriver',
+      :mysql     => 'com.mysql.jdbc.Driver',
+      :postgres  => 'org.postgresql.Driver',
       :sqlserver => 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
     }
 
     DEFAULT_PARAMETERS = {
       :mysql => {
         'zeroDateTimeBehavior' => 'convertToNull',
-        # Removed from 0.6.3: This can have a performance hit when batch size is large
+        # Removed from 0.6.3: 
+        #  This can have a performance hit when batch size is large
         # 'rewriteBatchedStatements' => 'true',
-        'useServerPrepStmts' => 'true',
-        'useCursorFetch' => 'true'
+        'useServerPrepStmts'   => 'true',
+        'useCursorFetch'       => 'true'
       },
       :postgres => {
         'stringtype' => 'unspecified'

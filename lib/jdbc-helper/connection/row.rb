@@ -101,10 +101,10 @@ class Row
 
 private
   def initialize(col_labels, col_labels_d, values, rownum) # :nodoc:
-    @labels = col_labels
+    @labels   = col_labels
     @labels_d = col_labels_d
-    @values = values
-    @rownum = rownum
+    @values   = values
+    @rownum   = rownum
 
     # @labels_d.each do | l |
     #   (class << self; self; end).instance_eval do

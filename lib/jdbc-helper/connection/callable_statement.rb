@@ -19,8 +19,8 @@ class CallableStatement < ParameterizedStatement
 
     result = {}
     out_params.each do |idx, jtype|
-      getter = JDBCHelper::Connection::GETTER_MAP.fetch(jtype, :get_string)
-      value = @java_obj.send(getter, idx.is_a?(Symbol) ? idx.to_s : idx)
+      getter      = JDBCHelper::Connection::GETTER_MAP.fetch(jtype, :get_string)
+      value       = @java_obj.send(getter, idx.is_a?(Symbol) ? idx.to_s : idx)
       result[idx] = @java_obj.was_null ? nil : value
     end
     result

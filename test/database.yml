@@ -1,28 +1,28 @@
 ---
 mysql:
-    driver: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost/test
-    database: test
-    user: root
-    password:
-    timeout: 5
-    useServerPrepStmts: true
+  driver:    com.mysql.jdbc.Driver
+  url:       jdbc:mysql://localhost/test
+  database:  test
+  user:      root
+  password:
+  timeout:   5
+  useServerPrepStmts: true
 
 postgres:
-    driver: org.postgresql.Driver
-    url: jdbc:postgresql://localhost/test?stringtype=unspecified
-    database: test
-    timeout: 5
+  driver:    org.postgresql.Driver
+  url:       jdbc:postgresql://localhost/test?stringtype=unspecified
+  database:  test
+  timeout:   5
 
 oracle:
-    driver: oracle.jdbc.driver.OracleDriver
-    url: jdbc:oracle:thin:@localhost/svc
-    database: test
-    user: testuser
-    password: testpassword
+  driver:    oracle.jdbc.driver.OracleDriver
+  url:       jdbc:oracle:thin:@localhost/svc
+  database:  test
+  user:      testuser
+  password:  testpassword
 
 sqlserver:
-  driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
-  url: jdbc:sqlserver://localhost;databaseName=test;
-  user: test
-  password: test
+  driver:    com.microsoft.sqlserver.jdbc.SQLServerDriver
+  url:       jdbc:sqlserver://localhost;databaseName=test;
+  user:      test
+  password:  test

@@ -8,9 +8,9 @@ class Connection
 # @private
 class StatementPool
   def initialize(conn, max_size = JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL)
-    @conn = conn
+    @conn     = conn
     @max_size = max_size # TODO
-    @free = []
+    @free     = []
     @occupied = []
   end
 
@@ -49,8 +49,8 @@ class StatementPool
     (@free + @occupied).each do | stmt |
       stmt.close
     end
-    @conn = nil
-    @free = []
+    @conn     = nil
+    @free     = []
     @occupied = []
   end
 

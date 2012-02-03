@@ -72,12 +72,12 @@ private
     end
 
     @close_callback = close_callback
-    @rset = rset
-    @rsmd = @rset.get_meta_data
-    @num_col = @rsmd.get_column_count
-    @getters = []
-    @col_labels = []
-    @col_labels_d = []
+    @rset           = rset
+    @rsmd           = @rset.get_meta_data
+    @num_col        = @rsmd.get_column_count
+    @getters        = []
+    @col_labels     = []
+    @col_labels_d   = []
     (1..@num_col).each do | i |
       type = @rsmd.get_column_type(i)
 
