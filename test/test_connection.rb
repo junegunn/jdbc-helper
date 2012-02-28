@@ -72,6 +72,22 @@ class TestConnection < Test::Unit::TestCase
     }
   end
 
+  def test_inspect
+    config.each do | db, conn_info_org |
+      conn_info = conn_info_org.reject { |k,v| k == 'database' }
+      conn = JDBCHelper::Connection.new(conn_info)
+      insp = InsensitiveHash[ eval( conn.inspect.gsub('=>', ' => ') ) ]
+
+      conn_info.each do |k, v|
+        if k == 'password'
+          assert_nil insp[k]
+        else
+          assert_equal v, insp[k]
+        end
+      end
+    end
+  end
+
   def test_connect_clone_and_close
     config.each do | db, conn_info_org |
       4.times do | i |

@@ -1,7 +1,8 @@
-### 0.7.1 / 
+### 0.7.1 / 2012/02/28
 * Modified nextval/currval syntax in JDBCHelper::SequenceWrapper
  * PostgreSQL: nextval('[sequence]')
  * Others: [sequence].nextval
+* Bug fix: JDBCHelper::Connection#inspect returns invalid data
 
 ### 0.7.0 / 2012/01/30
 * Helper methods for generating where clauses for TableWarppers

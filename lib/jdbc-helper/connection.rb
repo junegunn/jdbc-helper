@@ -425,7 +425,9 @@ class Connection
   end
 
   def inspect
-    InsensitiveHash[@args].merge({ :closed? => closed? }).delete(:password).inspect
+    InsensitiveHash[@args].merge({ :closed? => closed? }).tap { |c|
+      c.delete(:password)
+    }.inspect
   end
 
   # Statistics
@@ -433,10 +435,10 @@ class Connection
     attr_accessor :type, :elapsed, :success_count, :fail_count
 
     def initialize(t, e, s, f)
-      self.type = t
-      self.elapsed = e
+      self.type          = t
+      self.elapsed       = e
       self.success_count = s
-      self.fail_count = f
+      self.fail_count    = f
     end
   end
 
