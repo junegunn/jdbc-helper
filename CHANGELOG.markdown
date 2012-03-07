@@ -1,6 +1,14 @@
 ### 0.7.2 / 2012/03/07
 * Added JDBCHelper::Connection#execute, JDBCHelper::PreparedStatement#execute
- * Returns update count as Fixnum or JDBCHelper::Connection::ResultSetEnumerator depending on the given SQL.
+ * Returns update count as Fixnum or JDBCHelper::Connection::ResultSetEnumerator depending on the given statement.
+* Bug fix: Setting nil value for PreparedStatements fails on SQL Server
+ * Modified to refer to ParameterMetaData when calling setNull method
+ * Current version of SQL Server driver has some crazy bugs with PreparedStatements.
+   You may notice that SQL Server complains on a perfectly fine SQL statements
+   only when you try to access the metadata of its wrapping PreparedStatement.
+   For such cases, where we can't refer to ParameterMetaData (and you will see a warning log),
+   setting nulls should still fail.
+
 ### 0.7.1 / 2012/02/28
 * Modified nextval/currval syntax in JDBCHelper::SequenceWrapper
  * PostgreSQL: nextval('[sequence]')

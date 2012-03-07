@@ -573,14 +573,30 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
+  def test_invalid_sql
+    each_connection do | conn |
+      reset_test_table conn
+      assert_raise(NativeException) do
+        conn.query("delete from #{TEST_TABLE}")
+      end
+      omit "Oracle does not throw Exception when " +
+           "select statement given to executeUpdate" if conn.driver =~ /oracle/
+      assert_raise(NativeException) do
+        conn.update("select * from #{TEST_TABLE}")
+      end
+    end
+  end
+
   def test_execute
     each_connection do | conn |
       reset_test_table conn
 
+      rse_class = JDBCHelper::Connection::ResultSetEnumerator 
+
       # Connection#execute
       assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (0, 'A')")
       assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (1, 'A')")
-      assert_equal ResultSetEnumerator, (ret = conn.execute("select * from #{TEST_TABLE}")).class
+      assert_equal rse_class, (ret = conn.execute("select * from #{TEST_TABLE}")).class
       cnt = 0
       ret.each do |row|
         assert_equal 'A', row.b
@@ -596,8 +612,8 @@ class TestConnection < Test::Unit::TestCase
         pstmt_del = conn.prepare "delete from #{TEST_TABLE}"
 
         assert_equal 1, pstmt_ins.execute(0)
-        assert_equal 1, pstmt_ins.execute(0)
-        assert_equal ResultSetEnumerator, (ret = pstmt_sel.execute).class
+        assert_equal 1, pstmt_ins.execute(1)
+        assert_equal rse_class, (ret = pstmt_sel.execute).class
         cnt = 0
         ret.each do |row|
           assert_equal 'A', row.b
@@ -605,7 +621,7 @@ class TestConnection < Test::Unit::TestCase
         end
         assert_equal 2, cnt
         assert_equal 2, pstmt_del.execute
-        assert_equal ResultSetEnumerator, (ret = pstmt_sel.execute).class
+        assert_equal rse_class, (ret = pstmt_sel.execute).class
       ensure
         [pstmt_ins, pstmt_sel, pstmt_del].each do |ps|
           ps.close rescue nil
@@ -614,5 +630,44 @@ class TestConnection < Test::Unit::TestCase
     end
   end
     
+  def test_statement_pool_leakage
+    q = "select * from #{TEST_TABLE}"
+    u = "update #{TEST_TABLE} set a = 1"
+    each_connection do |conn|
+      reset_test_table conn
+      conn.update "insert into #{TEST_TABLE} values (0, 'A')"
+
+      assert_equal 20, 20.times.select {
+        conn.execute(q).close
+        conn.enumerate(q).close
+        conn.query q
+        conn.update u
+
+        conn.execute(q).count == 1
+      }.count
+    end
+  end
+
+  def test_prepared_statement_set_null
+    each_connection do |conn|
+      conn.update "drop table #{TEST_TABLE}" rescue nil
+
+      begin
+        conn.update(
+          case conn.driver
+          when /sqlserver/
+            "create table #{TEST_TABLE} (a int, b varchar(100), c datetime2, d decimal(10, 2))"
+          else
+            "create table #{TEST_TABLE} (a int, b varchar(100), c timestamp, d decimal(10, 2))"
+          end
+        )
+        pstmt = conn.prepare "insert into #{TEST_TABLE} (a, b, c, d) values (?, ?, ?, ?)"
+        pstmt.update nil, nil, nil, nil
+      ensure
+        pstmt.close rescue nil
+        conn.update "drop table #{TEST_TABLE}"
+      end
+    end
+  end
 end
 

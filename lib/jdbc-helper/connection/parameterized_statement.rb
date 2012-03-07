@@ -24,7 +24,7 @@ class ParameterizedStatement
   def set_param(idx, param)
     case param
     when NilClass
-      @java_obj.setNull idx, java.sql.Types::NULL
+      set_null idx, param
     when Fixnum
       @java_obj.setLong idx, param
     when Bignum
@@ -64,6 +64,10 @@ class ParameterizedStatement
   end
 
 private
+  def set_null idx, param
+    @java_obj.setNull idx, java.sql.Types::NULL
+  end
+
   def measure_exec(type, &blk)  # :nodoc:
     @conn.send(:measure_exec, type, &blk)
   end

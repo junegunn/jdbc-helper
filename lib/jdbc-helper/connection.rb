@@ -252,6 +252,29 @@ class Connection
     status == :committed
   end
 
+  # Executes an SQL and returns the count of the update rows or a ResultSetEnumerator object 
+  # depending on the type of the given statement.
+  # If a ResultSetEnumerator is returned, it must be enumerated or closed.
+  # @param [String] qstr SQL string
+  # @return [Fixnum|ResultSetEnumerator]
+  def execute(qstr)
+    check_closed
+
+    stmt = @spool.take
+    begin
+      if measure_exec(:execute) { stmt.execute(qstr) }
+        ResultSetEnumerator.send(:new, stmt.getResultSet) { @spool.give stmt }
+      else
+        rset = stmt.getUpdateCount
+        @spool.give stmt
+        rset
+      end
+    rescue Exception => e
+      @spool.give stmt
+      raise
+    end
+  end
+
   # Executes an update and returns the count of the updated rows.
   # @param [String] qstr SQL string
   # @return [Fixnum] Count of affected records
@@ -283,8 +306,8 @@ class Connection
     check_closed
 
     @spool.with do | stmt |
-      measure_exec(:query) { stmt.execute(qstr) }
-      process_and_close_rset(stmt.get_result_set, &blk)
+      rset = measure_exec(:query) { stmt.execute_query(qstr) }
+      process_and_close_rset(rset, &blk)
     end
   end
 
@@ -309,13 +332,12 @@ class Connection
 
     stmt = @spool.take
     begin
-      measure_exec(:query) { stmt.execute(qstr) }
+      rset = measure_exec(:query) { stmt.execute_query(qstr) }
+      return ResultSetEnumerator.send(:new, rset) { @spool.give stmt }
     rescue Exception
       @spool.give stmt
       raise
     end
-
-    ResultSetEnumerator.send(:new, stmt.get_result_set) { @spool.give stmt }
   end
 
   # Adds a statement to be executed in batch

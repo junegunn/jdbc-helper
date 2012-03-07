@@ -112,6 +112,16 @@ end
 del_count = conn.update("DELETE FROM T")
 ```
 
+### Executing any SQL
+```ruby
+rset = conn.execute("SELECT * FROM T")
+rset.each do |row|
+  # Returned result must be used or closed
+end
+
+del_count = conn.execute("DELETE FROM T")
+```
+
 ### Transaction
 ```ruby
 committed = conn.transaction do |tx|

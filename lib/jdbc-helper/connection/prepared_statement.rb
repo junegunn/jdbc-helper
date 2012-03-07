@@ -1,6 +1,8 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
+require 'logger'
+
 module JDBCHelper
 class Connection
 # An encapsulation of Java PreparedStatment object.
@@ -15,8 +17,7 @@ class PreparedStatement < ParameterizedStatement
   # Returns the number of parameters required
   # @return [Fixnum]
   def parameter_count
-    @pmd ||= @java_obj.get_parameter_meta_data
-    @pmd.get_parameter_count
+    @pmd.getParameterCount
   end
 
   # @return [NilClass]
@@ -24,6 +25,18 @@ class PreparedStatement < ParameterizedStatement
     @conn.send(:close_pstmt, self)
     @java_obj.close
     @java_obj = nil
+  end
+
+  # @return [Fixnum|ResultSetEnumerator]
+  def execute(*params)
+    check_closed
+
+    set_params(params)
+    if measure_exec(:p_execute) { @java_obj.execute }
+      ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.getResultSet })
+    else
+      @java_obj.getUpdateCount
+    end
   end
 
   # @return [Fixnum]
@@ -99,8 +112,23 @@ private
     end
   end
 
+  def set_null idx, param
+    @java_obj.setNull idx, @types ? @types[idx - 1] : java.sql.Types::NULL
+  end
+
   def initialize(*args)
     super(*args)
+
+    begin
+      @pmd   = @java_obj.getParameterMetaData
+      @types = @pmd.getParameterCount.times.map { |idx|
+                    # Oracle does not support getParameterType
+                    @pmd.getParameterType(idx + 1) rescue java.sql.Types::NULL
+                  }
+    rescue Exception => e
+      Logger.new($stderr).warn e.to_s
+      @types = nil
+    end
   end
 end#PreparedStatment
 end#Connection
