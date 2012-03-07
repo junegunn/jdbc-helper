@@ -1,3 +1,6 @@
+### 0.7.2 / 2012/03/07
+* Added JDBCHelper::Connection#execute, JDBCHelper::PreparedStatement#execute
+ * Returns update count as Fixnum or JDBCHelper::Connection::ResultSetEnumerator depending on the given SQL.
 ### 0.7.1 / 2012/02/28
 * Modified nextval/currval syntax in JDBCHelper::SequenceWrapper
  * PostgreSQL: nextval('[sequence]')

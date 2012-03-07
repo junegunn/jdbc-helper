@@ -572,5 +572,47 @@ class TestConnection < Test::Unit::TestCase
       end
     end
   end
+
+  def test_execute
+    each_connection do | conn |
+      reset_test_table conn
+
+      # Connection#execute
+      assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (0, 'A')")
+      assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (1, 'A')")
+      assert_equal ResultSetEnumerator, (ret = conn.execute("select * from #{TEST_TABLE}")).class
+      cnt = 0
+      ret.each do |row|
+        assert_equal 'A', row.b
+        cnt += 1
+      end
+      assert_equal 2, cnt
+      assert_equal 2, conn.execute("delete from #{TEST_TABLE}")
+
+      # PreparedStatment#execute
+      begin
+        pstmt_ins = conn.prepare "insert into #{TEST_TABLE} values (?, 'A')"
+        pstmt_sel = conn.prepare "select * from #{TEST_TABLE}"
+        pstmt_del = conn.prepare "delete from #{TEST_TABLE}"
+
+        assert_equal 1, pstmt_ins.execute(0)
+        assert_equal 1, pstmt_ins.execute(0)
+        assert_equal ResultSetEnumerator, (ret = pstmt_sel.execute).class
+        cnt = 0
+        ret.each do |row|
+          assert_equal 'A', row.b
+          cnt += 1
+        end
+        assert_equal 2, cnt
+        assert_equal 2, pstmt_del.execute
+        assert_equal ResultSetEnumerator, (ret = pstmt_sel.execute).class
+      ensure
+        [pstmt_ins, pstmt_sel, pstmt_del].each do |ps|
+          ps.close rescue nil
+        end
+      end
+    end
+  end
+    
 end
 
