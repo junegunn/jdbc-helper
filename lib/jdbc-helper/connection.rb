@@ -246,7 +246,7 @@ class Connection
     rescue Transaction::Rollback
       status = :rolledback
     ensure
-      @conn.rollback if status == :unknown
+      @conn.rollback if status == :unknown && @conn.get_auto_commit == false
       @conn.set_auto_commit ac
     end
     status == :committed

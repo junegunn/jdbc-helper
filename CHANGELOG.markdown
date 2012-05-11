@@ -1,3 +1,6 @@
+### 0.7.3 / 2012/05/11
+* Fixed occasional error when rolling back transaction: "Can't call rollback when autocommit=true"
+
 ### 0.7.2 / 2012/03/07
 * Added JDBCHelper::Connection#execute, JDBCHelper::PreparedStatement#execute
  * Returns update count as Fixnum or JDBCHelper::Connection::ResultSetEnumerator
