@@ -59,7 +59,7 @@ conn.close
 ### Shortcut connectors
 
 jdbc-helper provides shortcut connectors for the following databases
-so that you don't have to specify lengthy class names and JDBC urls.
+so that you don't have to specify lengthy class names and JDBC URLs.
 
 * MySQL (`JDBCHelper::MySQL`)
 * Oracle (`JDBCHelper::Oracle`)
