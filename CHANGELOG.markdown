@@ -1,3 +1,10 @@
+### 0.7.4 / 2012/07/09
+* Revised Connectors
+ * Use `JDBCHelper::MySQL` instead of `JDBCHelper::MySQLConnector`
+  * Optional `timeout` parameter has been removed. For backward-compatibility, `XXXConnector` still receives timeout parameter, though deprecated.
+* Added Cassandra connector
+ * `JDBCHelper::Cassandra#connect`
+
 ### 0.7.3 / 2012/05/11
 * Fixed occasional error when rolling back transaction: "Can't call rollback when autocommit=true"
 

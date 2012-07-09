@@ -57,16 +57,19 @@ conn.close
 
 
 # MySQL shortcut connector
-JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
+JDBCHelper::MySQL.connect('localhost', 'mysql', '', 'test')
 
 # Oracle shortcut connector
-JDBCHelper::OracleConnector.connect(host, user, password, service_name)
+JDBCHelper::Oracle.connect(host, user, password, service_name)
 
 # PostgreSQL shortcut connector
-JDBCHelper::PostgresConnector.connect(host, user, password, db)
+JDBCHelper::Postgres.connect(host, user, password, db)
  
 # MS SQL Server shortcut connector
-JDBCHelper::SqlServerConnector.connect(host, user, password, db)
+JDBCHelper::SqlServer.connect(host, user, password, db)
+
+# Cassandra CQL3 connector
+JDBCHelper::Cassandra.connect(host, user, password, db)
 ```
 
 ### Querying database table

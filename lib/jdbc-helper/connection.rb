@@ -147,7 +147,7 @@ class Connection
   def initialize(args = {})
     # Subsequent deletes should not affect the input
     @args = Marshal.load(Marshal.dump(args))
-    args = InsensitiveHash[ Marshal.load(Marshal.dump(args)) ]
+    args = InsensitiveHash[ @args ]
 
     raise ArgumentError.new("driver not given") unless args.has_key? :driver
     raise ArgumentError.new("url not given") unless args.has_key? :url
@@ -167,8 +167,8 @@ class Connection
     end
 
     props = java.util.Properties.new
-    args.keys.each do |key|
-      props.setProperty(key.to_s, args[key].to_s) if args[key]
+    args.each do |k, v|
+      props.setProperty(k.to_s, v.to_s) if v
     end
     
     @conn = java.sql.DriverManager.get_connection(@url, props)

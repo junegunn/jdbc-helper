@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bundler'
+require 'insensitive_hash'
 #require 'pry'
 
 begin
@@ -23,7 +24,7 @@ module JDBCHelperTestHelper
 	def config
     path = File.dirname(__FILE__) + '/database.yml'
     path += '.local' if File.exists?(path + '.local')
-		@db_config ||= YAML.load File.read(path)
+		@db_config ||= YAML.load(File.read(path)).insensitive
 	end
 
 	def create_test_procedure_simple conn, name
@@ -76,9 +77,8 @@ module JDBCHelperTestHelper
 
 	def each_connection(&block)
 		config.each do | db, conn_info |
-			conn = JDBCHelper::Connection.new(conn_info.reject { |k,v| k == 'database'})
 			# Just for quick and dirty testing
-			@type = case conn_info['driver'] || conn_info[:driver]
+			@type = case conn_info[:driver]
 					when /mysql/i
 						:mysql
 					when /oracle/i
@@ -88,10 +88,12 @@ module JDBCHelperTestHelper
           when /sqlserver/i
             :sqlserver
 					else
-						p conn_info
 						:unknown
 					end
 
+      next if @type == :unknown
+
+			conn = JDBCHelper::Connection.new(conn_info.reject { |k,v| k == 'database'})
       conn.update 'set global max_allowed_packet = 1073741824' if @type == :mysql
 
 			begin

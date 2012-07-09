@@ -11,26 +11,30 @@ module Constants
 
   # Constants only for Connectors
   module Connector
-    JDBC_DRIVER = {
-      :oracle    => 'oracle.jdbc.driver.OracleDriver',
-      :mysql     => 'com.mysql.jdbc.Driver',
-      :postgres  => 'org.postgresql.Driver',
-      :sqlserver => 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
-    }
-
     DEFAULT_PARAMETERS = {
       :mysql => {
-        'zeroDateTimeBehavior' => 'convertToNull',
-        # Removed from 0.6.3: 
+        :driver               => 'com.mysql.jdbc.Driver',
+        :zeroDateTimeBehavior => 'convertToNull',
+        # Removed from 0.6.3:
         #  This can have a performance hit when batch size is large
-        # 'rewriteBatchedStatements' => 'true',
-        'useServerPrepStmts'   => 'true',
-        'useCursorFetch'       => 'true'
+        # :rewriteBatchedStatements => 'true',
+        :useServerPrepStmts   => 'true',
+        :useCursorFetch       => 'true',
       },
-      :postgres => {
-        'stringtype' => 'unspecified'
+      :oracle       => {
+        :driver     => 'oracle.jdbc.driver.OracleDriver',
       },
-      :sqlserver => {}
+      :postgres     => {
+        :driver     => 'org.postgresql.Driver',
+        :stringtype => 'unspecified',
+      },
+      :sqlserver    => {
+        :driver     => 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
+      },
+      :cassandra    => {
+        :driver     => 'org.apache.cassandra.cql.jdbc.CassandraDriver',
+        :cqlVersion => '3.0.0',
+      }
     }
   end#Connector
 end#Constants

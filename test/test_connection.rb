@@ -74,7 +74,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_inspect
     config.each do | db, conn_info_org |
-      conn_info = conn_info_org.reject { |k,v| k == 'database' }
+      conn_info = conn_info_org.reject { |k,v| k == 'database' }.insensitive
       conn = JDBCHelper::Connection.new(conn_info)
       insp = InsensitiveHash[ eval( conn.inspect.gsub('=>', ' => ') ) ]
 
@@ -91,10 +91,10 @@ class TestConnection < Test::Unit::TestCase
   def test_connect_clone_and_close
     config.each do | db, conn_info_org |
       4.times do | i |
-        conn_info = conn_info_org.reject { |k,v| k == 'database' }
+        conn_info = conn_info_org.reject { |k,v| k == 'database' }.insensitive
 
         # With or without timeout parameter
-        conn_info['timeout'] = 60 if i % 2 == 1
+        conn_info[:timeout] = 60 if i % 2 == 1
 
         # Can connect with hash with symbol keys?
         conn_info.keys.each do | str_key |
@@ -107,8 +107,8 @@ class TestConnection < Test::Unit::TestCase
         conn_info.freeze # Non-modifiable!
         conn = JDBCHelper::Connection.new(conn_info)
         assert_equal(conn.closed?, false)
-        assert_equal(conn.driver, conn_info[:driver] || conn_info['driver'])
-        assert_equal(conn.url, conn_info[:url] || conn_info['url'])
+        assert_equal(conn.driver, conn_info[:driver])
+        assert_equal(conn.url, conn_info[:url])
 
         conn.fetch_size = 100
         assert_equal 100, conn.fetch_size
@@ -135,9 +135,11 @@ class TestConnection < Test::Unit::TestCase
           c2 = c.clone
           assert c2.java_obj != c.java_obj
 
-          c.query('select 1 from dual')
-          c2.query('select 1 from dual')
-          drop_dual! c
+          unless conn_info[:driver] =~ /cassandra/
+            c.query('select 1 from dual')
+            c2.query('select 1 from dual')
+            drop_dual! c
+          end
 
           assert_equal c.closed?, false
 
