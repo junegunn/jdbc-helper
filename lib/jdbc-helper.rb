@@ -1,6 +1,8 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
+require 'jdbc-helper/version'
+
 if RUBY_PLATFORM.match(/java/).nil?
   raise LoadError, 'JRuby is required for JDBC'
 end
