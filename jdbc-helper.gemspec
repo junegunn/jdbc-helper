@@ -17,7 +17,6 @@ Gem::Specification.new do |gem|
 
   gem.add_runtime_dependency 'insensitive_hash', '~> 0.2.4'
   gem.add_development_dependency "bundler", "~> 1.1.4"
-  gem.add_development_dependency "jeweler", "~> 1.8.4"
   gem.add_development_dependency "rcov", "~> 0.9"
   gem.add_development_dependency "test-unit", ">= 2.3.0"
 end
