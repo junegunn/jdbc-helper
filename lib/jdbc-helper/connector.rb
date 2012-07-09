@@ -29,7 +29,7 @@ end#JDBCHelper
 
 require 'jdbc-helper/connector/oracle'
 require 'jdbc-helper/connector/mysql'
-require 'jdbc-helper/connector/postgres'
-require 'jdbc-helper/connector/sql_server'
+require 'jdbc-helper/connector/postgresql'
+require 'jdbc-helper/connector/mssql'
 require 'jdbc-helper/connector/cassandra'
 
