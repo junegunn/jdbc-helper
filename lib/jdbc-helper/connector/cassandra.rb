@@ -4,7 +4,7 @@
 module JDBCHelper
 # Shortcut connector for Cassandra CQL3
 # @since 0.7.4
-class Cassandra
+module Cassandra
   extend Connector
 
   # @param [String] host

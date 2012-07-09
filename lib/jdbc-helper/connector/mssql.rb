@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for MS SQL Server
-class MSSQL
+module MSSQL
   extend Connector
 
   # @param [String] host
@@ -26,7 +26,7 @@ SqlServer = MSSQL
 
 # Backward-compatibility
 # @deprecated
-class SqlServerConnector
+module SqlServerConnector
   extend Connector
   def self.connect(host, user, password, db,
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 

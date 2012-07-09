@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for Oracle
-class Oracle
+module Oracle
   extend Connector
 
   # @param [String] host
@@ -36,7 +36,7 @@ class Oracle
 end#OracleConnector
 
 # @deprecated
-class OracleConnector
+module OracleConnector
   extend Connector
   def self.connect(host, user, password, service_name,
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 

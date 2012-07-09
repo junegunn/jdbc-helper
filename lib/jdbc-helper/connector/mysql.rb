@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for MySQL
-class MySQL
+module MySQL
   extend Connector
 
   # @param [String] host
@@ -22,7 +22,7 @@ class MySQL
 end#MySQLConnector
 
 # @deprecated
-class MySQLConnector
+module MySQLConnector
   extend Connector
   def self.connect(host, user, password, db,
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 

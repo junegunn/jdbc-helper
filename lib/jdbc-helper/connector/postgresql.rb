@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for PostgreSQL
-class PostgreSQL
+module PostgreSQL
   extend Connector
 
   # @param [String] host
@@ -26,7 +26,7 @@ Postgres = PostgreSQL
 
 # Backward-compatibility
 # @deprecated
-class PostgresConnector
+module PostgresConnector
   extend Connector
   def self.connect(host, user, password, db,
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
