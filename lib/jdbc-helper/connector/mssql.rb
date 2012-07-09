@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for MS SQL Server
-class SqlServer
+class MSSQL
   extend Connector
 
   # @param [String] host
@@ -22,7 +22,7 @@ class SqlServer
 end#SqlServer
 
 # Alias
-MSSQL = SqlServer
+SqlServer = MSSQL
 
 # Backward-compatibility
 # @deprecated
@@ -32,7 +32,7 @@ class SqlServerConnector
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
            extra_params = {}, &block)
     check_params extra_params
-    SqlServer.connect(host, user, password, db,
+    MSSQL.connect(host, user, password, db,
                   {:timeout => timeout}.merge(extra_params), &block)
   end
 end

@@ -3,7 +3,7 @@
 
 module JDBCHelper
 # Shortcut connector for PostgreSQL
-class Postgres
+class PostgreSQL
   extend Connector
 
   # @param [String] host
@@ -22,7 +22,7 @@ class Postgres
 end#Postgres
 
 # Alias
-PostgreSQL = Postgres
+Postgres = PostgreSQL
 
 # Backward-compatibility
 # @deprecated
@@ -32,7 +32,7 @@ class PostgresConnector
            timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
            extra_params = {}, &block)
     check_params extra_params
-    Postgres.connect(host, user, password, db,
+    PostgreSQL.connect(host, user, password, db,
                   {:timeout => timeout}.merge(extra_params), &block)
   end
 end
