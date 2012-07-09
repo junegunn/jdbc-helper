@@ -17,7 +17,7 @@ crucial database operations from primitive selects and updates to more complex o
 batch updates, prepared statements and transactions.
 As the name implies, this gem only works on JRuby.
 
-Tested on MySQL 5.5, Oracle 11g R2, PostgreSQL 9.0.4 and MS SQL Server 2008 R2.
+Tested on MySQL 5.5, Oracle 11g R2, PostgreSQL 9.0.4, MS SQL Server 2008 R2 and Cassandra 1.1.1 (CQL3).
 
 ## Installation
 ### Install gem
@@ -52,24 +52,49 @@ conn = JDBCHelper::Connection.new(
              :driver   => 'com.mysql.jdbc.Driver',
              :url      => 'jdbc:mysql://localhost/test',
              :user     => 'mysql',
-             :password => '')
+             :password => password)
 conn.close
+```
 
+### Shortcut connectors
 
+jdbc-helper provides shortcut connectors for the following databases
+so that you don't have to specify lengthy class names and JDBC urls.
+
+* MySQL (`JDBCHelper::MySQL`)
+* Oracle (`JDBCHelper::Oracle`)
+* PostgreSQL (`JDBCHelper::PostgreSQL`)
+* MS SQL Server (`JDBCHelper::MSSQL`)
+* Cassandra (`JDBCHelper::Cassandra`)
+
+```ruby
 # MySQL shortcut connector
-JDBCHelper::MySQL.connect('localhost', 'mysql', '', 'test')
+mc = JDBCHelper::MySQL.connect(host, user, password, db)
 
 # Oracle shortcut connector
-JDBCHelper::Oracle.connect(host, user, password, service_name)
+oc = JDBCHelper::Oracle.connect(host, user, password, service_name)
 
 # PostgreSQL shortcut connector
-JDBCHelper::Postgres.connect(host, user, password, db)
+pc = JDBCHelper::PostgreSQL.connect(host, user, password, db)
  
 # MS SQL Server shortcut connector
-JDBCHelper::SqlServer.connect(host, user, password, db)
+sc = JDBCHelper::MSSQL.connect(host, user, password, db)
 
 # Cassandra CQL3 connector
-JDBCHelper::Cassandra.connect(host, user, password, db)
+cc = JDBCHelper::Cassandra.connect(host, keyspace)
+
+# Extra parameters
+mc = JDBCHelper::MySQL.connect(host, user, password, db,
+       :rewriteBatchedStatements => true)
+
+# With connection timeout of 30 seconds
+mc = JDBCHelper::MySQL.connect(host, user, password, db,
+       :rewriteBatchedStatements => true, :timeout => 30)
+
+# When block is given, connection is automatically closed after the block is executed
+JDBCHelper::Cassandra.connect(host, keyspace) do |cc|
+  # ...
+end
 ```
 
 ### Querying database table
