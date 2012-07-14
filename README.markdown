@@ -249,11 +249,14 @@ table.drop!
 
 #### Building complex where clauses
 ```ruby
-SQL = JDBCHelper::SQL                  # Shortcut. Or you can just include JDBCHelper
+# Shortcut. Or you can just include JDBCHelper
+SQL = JDBCHelper::SQL
 
-# With Hash
+# With any number of Strings, Arrays and Hashes
 scope = table.where(
-  :a => 'abc',                         # a = 'abc'
+  "x <> 'hello'",                      # x <> 'hello'
+  ["y = ? or z > ?", 'abc', 10],       # and (y = 'abc' or z > 10)
+  :a => 'abc',                         # and a = 'abc'
   :b => (1..10),                       # and b >= 1 and b <= 10
   :c => (1...10),                      # and c >= 1 and c < 10
   :d => %w[a b c],                     # and d in ('a', 'b', 'c')
@@ -266,9 +269,6 @@ scope = table.where(
   :k => SQL.le( SQL.expr('sysdate') )  # and k <= sysdate
 )
 scope.update(:a => 'xyz')
-
-# With Array
-scope = table.where(["a = ? or b > ?", 'abc', 10])
 ```
 
 #### Invalid use of dynamic conditions
