@@ -1,6 +1,8 @@
 # encoding: UTF-8
 # Junegunn Choi (junegunn.c@gmail.com)
 
+require 'bigdecimal'
+
 module JDBCHelper
 
 # Generate SQL snippet, prevents the string from being quoted.
