@@ -16,7 +16,7 @@ class << self
 end
 
 # Class representing an SQL snippet. Also has many SQL generator class methods.
-class SQL
+module SQL
   # Formats the given data so that it can be injected into SQL
   def self.value data
     case data

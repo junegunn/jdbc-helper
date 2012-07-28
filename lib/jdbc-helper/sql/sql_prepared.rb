@@ -4,7 +4,7 @@
 module JDBCHelper
 # SQL generator class methods for prepared operations.
 # WARNING: Does not perform SQL.check to minimize performance overhead
-class SQLPrepared < JDBCHelper::SQL
+module SQLPrepared
   # Generates SQL where cluase with the given conditions.
   # Parameter can be either Hash of String.
   def self.where *conds
@@ -54,7 +54,7 @@ class SQLPrepared < JDBCHelper::SQL
     sql = [
       "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}", 
       w_c.to_s,
-      order(opts.fetch(:order, []).join(', '))
+      SQL.order(opts.fetch(:order, []).join(', '))
     ].reject(&:empty?).join(' ')
 
     return sql, w_b

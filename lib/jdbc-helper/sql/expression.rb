@@ -4,7 +4,7 @@
 module JDBCHelper
 # SQL generator class methods for prepared operations.
 # WARNING: Does not perform SQL.check to minimize performance overhead
-class SQL
+module SQL
   # Generate SQL snippet, prevents the string from being quoted.
   # @param [String] SQL snippet
   # @return [JDBCHelper::SQL::Expression]
