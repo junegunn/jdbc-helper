@@ -145,6 +145,11 @@ class Connection
   # If a block is given, the connection is automatically closed after executing the block.
   # @param [Hash] args
   def initialize(args = {})
+    if RUBY_PLATFORM.match(/java/).nil?
+      raise LoadError, 'JRuby is required for JDBC'
+    end
+    require 'java'
+
     # Subsequent deletes should not affect the input
     @args = Marshal.load(Marshal.dump(args))
     args = InsensitiveHash[ @args ]
