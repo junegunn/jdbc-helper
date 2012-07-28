@@ -1,3 +1,6 @@
+### 0.7.5 / 2012/07/28
+* `require 'jdbc-helper/sql'` is allowed in non-Java environments
+
 ### 0.7.4 / 2012/07/09
 * Revised Connectors
  * Use `JDBCHelper::MySQL` instead of `JDBCHelper::MySQLConnector`
