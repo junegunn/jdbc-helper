@@ -1,12 +1,12 @@
 ```
-    _     _ _                 _          _                 
-   (_)   | | |               | |        | |                
-    _  __| | |__   ___ ______| |__   ___| |_ __   ___ _ __ 
+    _     _ _                 _          _
+   (_)   | | |               | |        | |
+    _  __| | |__   ___ ______| |__   ___| |_ __   ___ _ __
    | |/ _` | '_ \ / __|______| '_ \ / _ \ | '_ \ / _ \ '__|
-   | | (_| | |_) | (__       | | | |  __/ | |_) |  __/ |   
-   | |\__,_|_.__/ \___|      |_| |_|\___|_| .__/ \___|_|   
-  _/ |                                    | |              
- |__/                                     |_|              
+   | | (_| | |_) | (__       | | | |  __/ | |_) |  __/ |
+   | |\__,_|_.__/ \___|      |_| |_|\___|_| .__/ \___|_|
+  _/ |                                    | |
+ |__/                                     |_|
 ```
 
 # jdbc-helper
@@ -66,6 +66,7 @@ so that you don't have to specify lengthy class names and JDBC URLs.
 * PostgreSQL (`JDBCHelper::PostgreSQL`)
 * MS SQL Server (`JDBCHelper::MSSQL`)
 * Cassandra (`JDBCHelper::Cassandra`)
+* FileMaker Pro (`JDBCHelper::FileMaker`)
 
 ```ruby
 # MySQL shortcut connector
@@ -76,12 +77,15 @@ oc = JDBCHelper::Oracle.connect(host, user, password, service_name)
 
 # PostgreSQL shortcut connector
 pc = JDBCHelper::PostgreSQL.connect(host, user, password, db)
- 
+
 # MS SQL Server shortcut connector
 sc = JDBCHelper::MSSQL.connect(host, user, password, db)
 
 # Cassandra CQL3 connector
 cc = JDBCHelper::Cassandra.connect(host, keyspace)
+
+# FileMaker Pro shortcut connector
+fmp = JDBCHelper::FileMaker.connect(host, user, password, db)
 
 # Extra parameters
 mc = JDBCHelper::MySQL.connect(host, user, password, db,
@@ -274,7 +278,7 @@ scope.update(:a => 'xyz')
 #### Invalid use of dynamic conditions
 
 TableWrapper object internally creates JDBC PreparedStatements.
-If you dynamically build many condition-strings as the following example, 
+If you dynamically build many condition-strings as the following example,
 it would soon fail because there will be too many open PreparedStatements.
 
 ```ruby
@@ -306,7 +310,7 @@ conn.function(:coalesce).call(nil, nil, 'king')
 # Working with IN/INOUT/OUT parameteres
 # Bind by ordinal number
 conn.procedure(:update_and_fetch_something).call(
-         100,                 # Input parameter 
+         100,                 # Input parameter
          ["value", String],   # Input/Output parameter
          Fixnum               # Output parameter
 )
@@ -339,4 +343,3 @@ seq.reset! 100
 
 Copyright (c) 2011 Junegunn Choi. See LICENSE.txt for
 further details.
-
