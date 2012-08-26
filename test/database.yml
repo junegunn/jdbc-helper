@@ -26,3 +26,10 @@ sqlserver:
   url:       jdbc:sqlserver://localhost;databaseName=test;
   user:      test
   password:  test
+
+filemaker:
+  driver:    com.filemaker.jdbc.Driver
+  url:       jdbc:filemaker://localhost/test
+  database:  test
+  user:      test
+  password:  test
