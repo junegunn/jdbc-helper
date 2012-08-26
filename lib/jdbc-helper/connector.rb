@@ -32,4 +32,4 @@ require 'jdbc-helper/connector/mysql'
 require 'jdbc-helper/connector/postgresql'
 require 'jdbc-helper/connector/mssql'
 require 'jdbc-helper/connector/cassandra'
-
+require 'jdbc-helper/connector/filemaker'

@@ -34,6 +34,9 @@ module Constants
       :cassandra    => {
         :driver     => 'org.apache.cassandra.cql.jdbc.CassandraDriver',
         :cqlVersion => '3.0.0',
+      },
+      :filemaker    => {
+        :driver     => 'com.filemaker.jdbc.Driver'
       }
     }
   end#Connector

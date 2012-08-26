@@ -101,6 +101,14 @@ class TestConnectors < Test::Unit::TestCase
         end
         assert @conn.closed?
         assert_equal 1, ret
+      when /filemaker/
+        host = conn_info['url'].match(%r{//([^/?]+)})[1]
+        db = conn_info['url'].match(%r{/([^/?]*?)(\?.*)?$})[1]
+
+        conn = JDBCHelper::FileMaker.connect(host, conn_info['user'], conn_info['password'], db)
+        assert conn.closed? == false
+        conn.close
+        assert conn.closed?
       end
     end
   end
@@ -199,4 +207,3 @@ class TestConnectors < Test::Unit::TestCase
     end
   end
 end
-
