@@ -1,3 +1,6 @@
+### 0.7.6 / 2012/08/26
+* Added FileMaker Pro connector (statonjr)
+
 ### 0.7.5 / 2012/07/28
 * `require 'jdbc-helper/sql'` is allowed in non-Java environments
 
