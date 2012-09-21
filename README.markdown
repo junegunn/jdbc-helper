@@ -108,10 +108,11 @@ conn.query("SELECT a, b, c FROM T") do |row|
   row.labels
   row.rownum
 
-  row.a, row.b, row.c          # Dot-notation
-  row[0], row[1], row[2]       # Numeric index
-  row['a'], row['b'], row['c'] # String index. Case-insensitive.
-  row[:a], row[:b], row[:c]    # Symbol index. Case-insensitive.
+  a, b, c = row
+  a, b, c = row.a,    row.b,    row.c    # Dot-notation
+  a, b, c = row[0],   row[1],   row[2]   # Numeric index
+  a, b, c = row['a'], row['b'], row['c'] # String index. Case-insensitive.
+  a, b, c = row[:a],  row[:b],  row[:c]  # Symbol index. Case-insensitive.
 
   row[0..-1]                   # Range index. Returns an array of values.
   row[0, 3]                    # Offset and length. Returns an array of values.
