@@ -171,7 +171,7 @@ class TestObjectWrapper < Test::Unit::TestCase
     each_connection do |conn, conn_info|
       next unless [:mysql, :oracle].include?(@type) # TODO: postgres / sqlserver
 
-      { 
+      {
         :proc => @procedure_name,
         :db_proc => [conn_info['database'], @procedure_name].join('.')
       }.each do |mode, prname|
@@ -191,7 +191,7 @@ class TestObjectWrapper < Test::Unit::TestCase
 
         result = pr.call(
           :io1 => [100, Fixnum],
-          'io2' => [Time.now, Time], 
+          'io2' => [Time.now, Time],
           :i2 => 10,
           :i1 => 'hello',
           :o1 => Float, 'o2' => String)
@@ -207,7 +207,7 @@ class TestObjectWrapper < Test::Unit::TestCase
           pend("Not tested") do
             result = pr.call(
               :io1 => [100, Fixnum],
-              'io2' => [Time.now, Time], 
+              'io2' => [Time.now, Time],
               #:i2 => 10,
               :i1 => 'hello',
               :o1 => Float, 'o2' => String)
@@ -270,8 +270,8 @@ class TestObjectWrapper < Test::Unit::TestCase
       table = conn.table(@table_name)
       params = {
         :id => 1,
-        :alpha => 100, 
-        :beta => JDBCHelper::SQL('0.1 + 0.2'), 
+        :alpha => 100,
+        :beta => JDBCHelper::SQL('0.1 + 0.2'),
         :gamma => 'hello world' }
 
       100.times do
@@ -290,7 +290,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       table = conn.table(@table_name)
       params = {
         :id => 1,
-        :beta => JDBCHelper::SQL('0.1 + 0.2'), 
+        :beta => JDBCHelper::SQL('0.1 + 0.2'),
         :gamma => 'hello world' }
 
       100.times do |i|
@@ -683,6 +683,22 @@ class TestObjectWrapper < Test::Unit::TestCase
 
       # SHOULD NOT FAIL (automatic repreparation)
       assert_equal 100, t.count
+    end
+  end
+
+  def test_fetch_size
+    each_connection do |conn|
+      create_table conn
+
+      fsz = 100
+      conn.fetch_size = fsz
+      cnt = cnt2 = 0
+      conn.table(@table_name).fetch_size(fsz) { |row| cnt += 1 }
+      conn.table(@table_name).fetch_size(fsz).each { |row| cnt2 += 1 }
+      assert_equal cnt,  conn.table(@table_name).count
+      assert_equal cnt2, conn.table(@table_name).count
+
+      conn.table(@table_name).fetch_size("No").count
     end
   end
 end

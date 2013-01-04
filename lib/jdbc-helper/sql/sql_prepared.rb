@@ -129,14 +129,7 @@ module SQLPrepared
                      binds << v.begin << v.end
                      ">= ? and #{k} <#{'=' unless v.exclude_end?} ?"
                    when Array
-                     "in (" +
-                       v.map { |e|
-                       case e
-                       when String
-                         SQL.value e
-                       else
-                         e.to_s
-                       end }.join(', ') + ")"
+                     "in (" + v.map { |ie| SQL.value ie }.join(', ') + ")"
                    else
                      binds << v
                      "= ?"

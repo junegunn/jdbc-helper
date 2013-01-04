@@ -174,6 +174,7 @@ class Connection
     @conn = java.sql.DriverManager.get_connection(@url, props)
     @spool = StatementPool.send :new, self
     @bstmt = nil
+    @fetch_size = nil
 
     @stats = Hash.new { | h, k | h[k] = Stat.new(k, 0, 0, 0) }
     @prev_stat = Stat.new(nil, 0, 0, 0)
@@ -206,6 +207,8 @@ class Connection
 
     pstmt = PreparedStatement.send(:new, self, qstr,
         measure_exec(:prepare) { @conn.prepare_statement(qstr) })
+    pstmt.set_fetch_size @fetch_size if @fetch_size
+
     @pstmts << pstmt
     pstmt
   end
@@ -419,7 +422,9 @@ class Connection
   # @param [String/Symbol] table_name Name of the table to be wrapped
   # @return [JDBCHelper::TableWrapper]
   def table table_name
-    @table_wrappers[table_name] ||= JDBCHelper::TableWrapper.new self, table_name
+    table = JDBCHelper::TableWrapper.new(self, table_name)
+    table = table.fetch_size(@fetch_size) if @fetch_size
+    @table_wrappers[table_name] ||= table
   end
 
   # Returns a sequence wrapper for the given name

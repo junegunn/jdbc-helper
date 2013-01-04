@@ -1,3 +1,7 @@
+### 0.7.7 / 2013/01/05
+* `PreparedStatment`s and `TableWrapper`s now inherit the fetch size of the connection
+* Added `JDBCHelper::TableWrapper#fetch_size`
+
 ### 0.7.6 / 2012/08/26
 * Added FileMaker Pro connector (statonjr)
 

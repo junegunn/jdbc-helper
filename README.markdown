@@ -216,8 +216,8 @@ table.where(:a => 10).count
 table.empty?
 table.where(:a => 10).empty?
 
-# Selects the table by combining select, where, and order methods
-table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc') do |row|
+# Selects the table by combining select, where, order and fetch_size methods
+table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc').fetch_size(100).each do |row|
   puts row.apple
 end
 

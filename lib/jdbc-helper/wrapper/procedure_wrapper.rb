@@ -11,6 +11,11 @@ class ProcedureWrapper < ObjectWrapper
   # @return [String]
   alias to_s name
 
+  def initialize conn, name
+    super conn, name
+    @cols = nil
+  end
+
   # Executes the procedure and returns the values of INOUT & OUT parameters in Hash
   # @return [Hash]
   def call(*args)
@@ -124,7 +129,7 @@ private
 
     final = {}
     result.each do |idx, ret|
-      key = input.keys.find { |key| key.to_s.upcase == @cols[idx - 1] }
+      key = input.keys.find { |k| k.to_s.upcase == @cols[idx - 1] }
       final[key] = ret
     end
     final

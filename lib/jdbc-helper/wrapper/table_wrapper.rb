@@ -79,6 +79,7 @@ class TableWrapper < ObjectWrapper
   def insert_ignore data_hash = {}
     sql, binds = JDBCHelper::SQLPrepared.insert_ignore(name, @query_default.merge(data_hash))
     pstmt = prepare :insert, sql
+    pstmt.set_fetch_size @fetch_size if @fetch_size
     pstmt.send @update_method, *binds
   end
 
@@ -181,12 +182,23 @@ class TableWrapper < ObjectWrapper
   # @param [Hash] data_hash Default values
   # @return [JDBCHelper::TableWrapper]
   # @since 0.4.5
-  def default data_hash
+  def default data_hash, &block
     raise ArgumentError.new("Hash required") unless data_hash.kind_of? Hash
 
     obj = self.dup
     obj.instance_variable_set :@query_default, @query_default.merge(data_hash)
-    obj
+    ret obj, &block
+  end
+
+  # Returns a new TableWrapper object with the given fetch size.
+  # If a block is given, executes the select statement and yields each row to the block.
+  # @param [Fixnum] fsz Fetch size
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.7.7
+  def fetch_size fsz, &block
+    obj = self.dup
+    obj.instance_variable_set :@fetch_size, fsz
+    ret obj, &block
   end
 
   # Executes a select SQL for the table and returns an Enumerable object,
@@ -200,7 +212,7 @@ class TableWrapper < ObjectWrapper
         :where => @query_where,
         :order => @query_order)
     pstmt = prepare :select, sql
-    pstmt.enumerate *binds, &block
+    pstmt.enumerate(*binds, &block)
   end
 
   # Returns a new TableWrapper object whose subsequent inserts, updates,
@@ -243,6 +255,8 @@ class TableWrapper < ObjectWrapper
     @update_method = :update
     @query_default = {}
     @query_where = []
+    @query_order = nil
+    @query_select = nil
     @pstmts = {
       :select => {},
       :insert => {},
@@ -250,6 +264,7 @@ class TableWrapper < ObjectWrapper
       :count => {},
       :update => {}
     }
+    @fetch_size = nil
   end
 
   # Closes the prepared statements
@@ -291,7 +306,7 @@ private
 
   def ret obj, &block
     if block_given?
-      obj.each &block
+      obj.each(&block)
     else
       obj
     end

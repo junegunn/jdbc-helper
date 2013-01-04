@@ -65,7 +65,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   # ---------------------------------------------------------------
-  
+
   def test_invalid_driver
     assert_raise(NameError) {
       JDBCHelper::Connection.new(:driver => 'xxx', :url => 'localhost')
@@ -290,14 +290,18 @@ class TestConnection < Test::Unit::TestCase
         assert_equal conn.prepared_statements.first, sel
 
         # Fetch size
-        if iter == 0
-          assert_nil conn.fetch_size
-          assert_nil sel.fetch_size
-        end
+        assert_nil conn.fetch_size if iter == 0
+        assert_nil sel.fetch_size if iter == 0
+
+        fsz = conn.fetch_size
         conn.fetch_size = 100
+        assert_equal 100, conn.fetch_size
+        assert_equal fsz, sel.fetch_size
+
         sel.fetch_size  = 10
         assert_equal 100, conn.fetch_size
         assert_equal 10,  sel.fetch_size
+
         sel.set_fetch_size 20
         assert_equal 100, conn.fetch_size
         assert_equal 20,  sel.fetch_size
@@ -405,7 +409,7 @@ class TestConnection < Test::Unit::TestCase
       end
     end
   end
-  
+
   def test_transaction
     each_connection do | conn |
       reset_test_table conn
@@ -482,7 +486,7 @@ class TestConnection < Test::Unit::TestCase
       conn.prepare("insert into #{TEST_TABLE} (a) values (?)").update(ts)
       got = conn.query("select a from #{TEST_TABLE}")[0][0]
       arr = [
-              ts.to_i * 1000, 
+              ts.to_i * 1000,
               (ts.to_f * 1000).to_i,
               # SQL Server seems to round up the millisecond precision
               (ts.to_f * 1000).to_i / 10 * 10
@@ -516,7 +520,7 @@ class TestConnection < Test::Unit::TestCase
             end)
       result = cstmt_name.call(
         :i1 => 'hello', :i2 => 10,
-        :io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+        :io1 => [100, Fixnum], 'io2' => [Time.now, Time],
         :n1 => nil,
         :o1 => Float, 'o2' => String)
       assert_instance_of Hash, result
@@ -526,7 +530,7 @@ class TestConnection < Test::Unit::TestCase
       # Invalid parameters
       #assert_raise(NativeException) { cstmt_ord.call 1 }
       assert_raise(ArgumentError)   { cstmt_ord.call({}, {}) }
-      assert_raise(NativeException) { cstmt_name.call 1 }
+      assert_raise                  { cstmt_name.call 1 }
       assert_raise(ArgumentError)   { cstmt_name.call({}, {}) }
 
       # Close
@@ -551,7 +555,7 @@ class TestConnection < Test::Unit::TestCase
         result = cstmt_name.call(
           #:i1 => 'hello',
           :i2 => 10,
-          :io1 => [100, Fixnum], 'io2' => [Time.now, Time], 
+          :io1 => [100, Fixnum], 'io2' => [Time.now, Time],
           :n1 => nil,
           :o1 => Float, 'o2' => String)
         assert_instance_of Hash, result
@@ -578,12 +582,12 @@ class TestConnection < Test::Unit::TestCase
   def test_invalid_sql
     each_connection do | conn |
       reset_test_table conn
-      assert_raise(NativeException) do
+      assert_raise do
         conn.query("delete from #{TEST_TABLE}")
       end
       omit "Oracle does not throw Exception when " +
            "select statement given to executeUpdate" if conn.driver =~ /oracle/
-      assert_raise(NativeException) do
+      assert_raise do
         conn.update("select * from #{TEST_TABLE}")
       end
     end
@@ -593,7 +597,7 @@ class TestConnection < Test::Unit::TestCase
     each_connection do | conn |
       reset_test_table conn
 
-      rse_class = JDBCHelper::Connection::ResultSetEnumerator 
+      rse_class = JDBCHelper::Connection::ResultSetEnumerator
 
       # Connection#execute
       assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (0, 'A')")
@@ -631,7 +635,7 @@ class TestConnection < Test::Unit::TestCase
       end
     end
   end
-    
+
   def test_statement_pool_leakage
     q = "select * from #{TEST_TABLE}"
     u = "update #{TEST_TABLE} set a = 1"
