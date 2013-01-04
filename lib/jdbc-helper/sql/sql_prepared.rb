@@ -52,7 +52,7 @@ module SQLPrepared
     opts = opts.reject { |k, v| v.nil? }
     w_c, w_b = where_internal(opts.fetch(:where, {}))
     sql = [
-      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}", 
+      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}",
       w_c.to_s,
       SQL.order(opts.fetch(:order, []).join(', '))
     ].reject(&:empty?).join(' ')
@@ -80,8 +80,8 @@ module SQLPrepared
     conds   = [conds] unless conds.is_a? Array
     binds   = []
     clauses = []
-    conds.compact.each do |cond| 
-      c, b = where_unit cond 
+    conds.compact.each do |cond|
+      c, b = where_unit cond
       next if c.empty?
 
       binds += b
@@ -129,7 +129,7 @@ module SQLPrepared
                      binds << v.begin << v.end
                      ">= ? and #{k} <#{'=' unless v.exclude_end?} ?"
                    when Array
-                     "in (" + 
+                     "in (" +
                        v.map { |e|
                        case e
                        when String
@@ -147,7 +147,7 @@ module SQLPrepared
                  ''
                else
                  binds += conds[1..-1] if conds.length > 1
-                 "(#{conds.first})" 
+                 "(#{conds.first})"
                end
              else
                raise NotImplementedError.new("Parameter to where must be either Hash or String")

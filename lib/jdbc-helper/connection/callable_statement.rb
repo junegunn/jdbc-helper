@@ -9,7 +9,7 @@ class CallableStatement < ParameterizedStatement
   # - IN parameter: value
   # - OUT parameter: class
   # - INOUT parameter: [value, class]
-  #   (Although class can be inferred from the value, 
+  #   (Although class can be inferred from the value,
   #   we still need a way to figure out if it's INOUT parameter)
   def call *params
     check_closed
@@ -28,7 +28,7 @@ class CallableStatement < ParameterizedStatement
 
 private
   def set_params(params) # :nodoc:
-    hash_params = 
+    hash_params =
       if params.first.kind_of? Hash
         raise ArgumentError.new("More than one Hash given") if params.length > 1
         params.first
@@ -56,7 +56,7 @@ private
         jtype = JDBCHelper::Connection::RUBY_SQL_TYPE_MAP[value.last] || java.sql.Types::VARCHAR
         @java_obj.registerOutParameter(idx_, jtype)
         out_params[idx] = jtype
-            
+
       # IN parameter
       else
         set_param(idx_, value)

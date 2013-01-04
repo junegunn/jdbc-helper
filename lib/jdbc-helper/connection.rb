@@ -25,17 +25,17 @@ module JDBCHelper
 # @example Prerequisites
 #  # Add JDBC driver of the DBMS you're willing to use to your CLASSPATH
 #  export CLASSPATH=$CLASSPATH:~/lib/mysql-connector-java.jar
-# 
-# 
+#
+#
 # @example Connecting to a database
-# 
+#
 #  # :driver and :url must be given
 #  conn = JDBCHelper::Connection.new(
 #               :driver => 'com.mysql.jdbc.Driver',
 #               :url    => 'jdbc:mysql://localhost/test')
 #  conn.close
-#  
-#  
+#
+#
 #  # Optional :user and :password
 #  conn = JDBCHelper::Connection.new(
 #               :driver   => 'com.mysql.jdbc.Driver',
@@ -43,12 +43,12 @@ module JDBCHelper
 #               :user     => 'mysql',
 #               :password => '')
 #  conn.close
-#  
-#  
+#
+#
 #  # MySQL shortcut connector
 #  conn = JDBCHelper::MySQLConnector.connect('localhost', 'mysql', '', 'test')
 #  conn.close
-#  
+#
 # @example Querying database table
 #
 #  conn.query("SELECT a, b, c FROM T") do | row |
@@ -59,11 +59,11 @@ module JDBCHelper
 #      puts row[0], row[1], row[2]
 #      puts row['a'], row['b'], row['c']
 #  end
-# 
+#
 #  # Returns an array of rows when block is not given
 #  rows = conn.query("SELECT b FROM T")
 #  uniq_rows = rows.uniq
-# 
+#
 #  # You can even nest queries
 #  conn.query("SELECT a FROM T") do | row1 |
 #      conn.query("SELECT * FROM T_#{row1.a}") do | row2 |
@@ -72,26 +72,26 @@ module JDBCHelper
 #  end
 # @example Updating database table
 #  del_count = conn.update("DELETE FROM T")
-# 
+#
 # @example Transaction
 #  committed = conn.transaction do | tx |
 #      # ...
 #      # Transaction logic here
 #      # ...
-#  
+#
 #      if success
 #          tx.commit
 #      else
 #          tx.rollback
 #      end
 #  end
-# 
+#
 # @example Using batch interface
 #  conn.add_batch("DELETE FROM T");
 #  conn.execute_batch
 #  conn.add_batch("DELETE FROM T");
 #  conn.clear_batch
-#   
+#
 # @example Using prepared statements
 #  p_sel = conn.prepare("SELECT * FROM T WHERE b = ? and c = ?")
 #  p_sel.query(100, 200) do | row |
@@ -170,7 +170,7 @@ class Connection
     args.each do |k, v|
       props.setProperty(k.to_s, v.to_s) if v
     end
-    
+
     @conn = java.sql.DriverManager.get_connection(@url, props)
     @spool = StatementPool.send :new, self
     @bstmt = nil
@@ -179,7 +179,7 @@ class Connection
     @prev_stat = Stat.new(nil, 0, 0, 0)
 
     @pstmts = []
-    
+
     @table_wrappers = {}
 
     if block_given?
@@ -252,7 +252,7 @@ class Connection
     status == :committed
   end
 
-  # Executes an SQL and returns the count of the update rows or a ResultSetEnumerator object 
+  # Executes an SQL and returns the count of the update rows or a ResultSetEnumerator object
   # depending on the type of the given statement.
   # If a ResultSetEnumerator is returned, it must be enumerated or closed.
   # @param [String] qstr SQL string
@@ -479,7 +479,7 @@ private
       @conn.rollback
       raise Rollback
     end
-  private  
+  private
     def initialize(conn) # :nodoc:
       @conn = conn
     end
@@ -541,7 +541,7 @@ private
     end
     ret
   end
-  
+
   def check_closed
     raise RuntimeError.new('Connection already closed') if closed?
   end

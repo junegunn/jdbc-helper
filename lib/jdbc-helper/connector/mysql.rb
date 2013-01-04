@@ -25,7 +25,7 @@ end#MySQLConnector
 module MySQLConnector
   extend Connector
   def self.connect(host, user, password, db,
-           timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
+           timeout = Constants::DEFAULT_LOGIN_TIMEOUT,
            extra_params = {}, &block)
     check_params extra_params
     MySQL.connect(host, user, password, db,

@@ -41,7 +41,7 @@ private
 
     # Alas, metadata lookup can be case-sensitive. e.g. Oracle
     dbmd = @connection.java_obj.get_meta_data
-    lookups = 
+    lookups =
       if schema
         [ lambda { dbmd.getProcedureColumns(package, schema, procedure, nil) },
           lambda { dbmd.getProcedureColumns(package_u, schema_u, procedure_u, nil) } ]

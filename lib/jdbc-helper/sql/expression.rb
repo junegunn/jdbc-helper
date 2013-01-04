@@ -82,7 +82,7 @@ module SQL
     def == other
       self.to_s == other.to_s
     end
-    
+
     def eql? other
       self.class == other.class && self.to_s == other.to_s
     end
@@ -112,7 +112,7 @@ module SQL
     def self.singleton
       @@singleton ||= NotNullExpression.new
     end
-    
+
     def initialize
     end
 

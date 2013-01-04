@@ -14,7 +14,7 @@ class FunctionWrapper < ObjectWrapper
   def initialize conn, name
     super conn, name
 
-    @suffix = 
+    @suffix =
       case conn.driver
       when /oracle/
         " from dual"

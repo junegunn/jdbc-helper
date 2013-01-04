@@ -124,7 +124,7 @@ class TableWrapper < ObjectWrapper
     self
   end
   alias truncate_table! truncate!
-  
+
   # Drops the table.
   # @note This operation cannot be undone
   # @return [JDBCHelper::TableWrapper] Self.
@@ -195,8 +195,8 @@ class TableWrapper < ObjectWrapper
   # @since 0.4.0
   def each &block
     sql, binds = JDBCHelper::SQLPrepared.select(
-        name, 
-        :select => @query_select, 
+        name,
+        :select => @query_select,
         :where => @query_where,
         :order => @query_order)
     pstmt = prepare :select, sql
@@ -232,8 +232,8 @@ class TableWrapper < ObjectWrapper
   # @since 0.4.0
   def sql
     JDBCHelper::SQL.select(
-        name, 
-        :select => @query_select, 
+        name,
+        :select => @query_select,
         :where => @query_where,
         :order => @query_order)
   end
@@ -251,7 +251,7 @@ class TableWrapper < ObjectWrapper
       :update => {}
     }
   end
-  
+
   # Closes the prepared statements
   # @since 0.5.0
   def close

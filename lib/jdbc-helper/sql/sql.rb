@@ -55,7 +55,7 @@ module SQL
 
   # SQL Helpers
   # ===========
-  
+
   # Generates insert SQL with hash
   def self.insert table, data_hash
     insert_internal 'insert', table, data_hash
@@ -83,7 +83,7 @@ module SQL
   def self.select table, opts = {}
     opts = opts.reject { |k, v| v.nil? }
     check [
-      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}", 
+      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}",
       where_internal(opts.fetch(:where, {})),
       order(opts.fetch(:order, []).join(', '))
     ].reject(&:empty?).join(' ')
@@ -162,7 +162,7 @@ protected
         params = conds[1..-1] || []
         '(' +
         base.gsub('?') {
-          param = params.shift 
+          param = params.shift
           param ? value(param) : '?'
         } + ')'
       end

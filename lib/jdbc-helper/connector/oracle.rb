@@ -39,7 +39,7 @@ end#OracleConnector
 module OracleConnector
   extend Connector
   def self.connect(host, user, password, service_name,
-           timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
+           timeout = Constants::DEFAULT_LOGIN_TIMEOUT,
            extra_params = {}, &block)
     check_params extra_params
     Oracle.connect(host, user, password, service_name,
@@ -47,7 +47,7 @@ module OracleConnector
   end
 
   def self.connect_by_sid(host, user, password, sid,
-           timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
+           timeout = Constants::DEFAULT_LOGIN_TIMEOUT,
            extra_params = {}, &block)
     check_params extra_params
     Oracle.connect_by_sid(host, user, password, sid,

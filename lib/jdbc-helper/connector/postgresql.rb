@@ -29,7 +29,7 @@ Postgres = PostgreSQL
 module PostgresConnector
   extend Connector
   def self.connect(host, user, password, db,
-           timeout = Constants::DEFAULT_LOGIN_TIMEOUT, 
+           timeout = Constants::DEFAULT_LOGIN_TIMEOUT,
            extra_params = {}, &block)
     check_params extra_params
     PostgreSQL.connect(host, user, password, db,
