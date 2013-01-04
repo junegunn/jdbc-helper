@@ -89,6 +89,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       # With symbol
       assert_kind_of     JDBCHelper::ObjectWrapper, conn.table(:some_table)
       assert_instance_of JDBCHelper::TableWrapper, conn.table(:some_table)
+      assert_instance_of JDBCHelper::TableWrapper, conn[:some_table]
       assert_kind_of     JDBCHelper::ObjectWrapper, conn.function(:some_func)
       assert_instance_of JDBCHelper::FunctionWrapper, conn.function(:some_func)
       assert_kind_of     JDBCHelper::ObjectWrapper, conn.procedure(:some_proc)

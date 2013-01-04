@@ -426,6 +426,7 @@ class Connection
     table = table.fetch_size(@fetch_size) if @fetch_size
     @table_wrappers[table_name] ||= table
   end
+  alias [] table
 
   # Returns a sequence wrapper for the given name
   # @since 0.4.2
