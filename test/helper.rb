@@ -1,4 +1,9 @@
+$VERBOSE = true
+
 require 'rubygems'
+require 'test-unit'
+require 'simplecov'
+SimpleCov.start
 require 'bundler'
 require 'insensitive_hash'
 #require 'pry'

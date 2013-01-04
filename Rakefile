@@ -14,11 +14,3 @@ Rake::TestTask.new(:performance) do |test|
   test.verbose = true
 end
 
-require 'rcov/rcovtask'
-Rcov::RcovTask.new do |test|
-  test.libs << 'test'
-  test.pattern = 'test/**/test_*.rb'
-  test.rcov_opts << '--exclude rcov'
-  test.verbose = true
-end
-

@@ -15,8 +15,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = JDBCHelper::VERSION
 
-  gem.add_runtime_dependency 'insensitive_hash', '>= 0.2.4', '< 0.4.0'
-  gem.add_development_dependency "bundler", "~> 1.1.4"
-  gem.add_development_dependency "rcov", "~> 0.9"
-  gem.add_development_dependency "test-unit", ">= 2.3.0"
+  gem.add_runtime_dependency 'insensitive_hash', '>= 0.2.4'
+  gem.add_development_dependency "bundler"
+  gem.add_development_dependency "simplecov"
+  gem.add_development_dependency "test-unit"
 end
