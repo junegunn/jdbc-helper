@@ -339,10 +339,10 @@ class TestObjectWrapper < Test::Unit::TestCase
 
       # Alias
       cnt = 0
-      table.select('alpha omega') do |row|
+      table.select('alpha OMega') do |row|
         cnt += 1
         assert_equal 100, row.omega
-        assert_equal ['omega'], row.labels.map(&:downcase)
+        assert_equal ['OMega'], row.labels
       end
       assert_equal 100, cnt
 

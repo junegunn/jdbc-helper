@@ -97,6 +97,11 @@ class Row
     @labels.zip(@values).sort.hash
   end
 
+  # @return [Hash]
+  def to_h
+    Hash[ @labels.zip(@values) ]
+  end
+
   alias :== :eql?
 
 private

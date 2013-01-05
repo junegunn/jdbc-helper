@@ -113,8 +113,9 @@ private
           JDBCHelper::Connection::GETTER_MAP.fetch(type, :get_string)
         end
 
-      @col_labels << @rsmd.get_column_label(i)
-      @col_labels_d << @col_labels.last.downcase
+      label = @rsmd.get_column_label(i)
+      @col_labels << label
+      @col_labels_d << label.downcase
 
     end
 

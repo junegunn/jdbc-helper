@@ -116,6 +116,8 @@ conn.query("SELECT a, b, c FROM T") do |row|
 
   row[0..-1]                   # Range index. Returns an array of values.
   row[0, 3]                    # Offset and length. Returns an array of values.
+
+  row.to_h                     # Row as a Hash
 end
 
 # Returns an array of rows when block is not given

@@ -8,14 +8,25 @@ class TestConnection < Test::Unit::TestCase
 
   def get_one_two
     "
-    select 1 one, 'two' two from dual
+    select 1 One, 'two' tWo from dual
     union all
-    select 1 one, 'two' two from dual
+    select 1 One, 'two' tWo from dual
     "
   end
 
   def check_one_two(rec)
     assert_equal 2, rec.length
+    assert_equal %w[One tWo], rec.labels
+    assert_equal %w[One tWo], rec.keys
+    assert_equal [1, 'two'], rec.values
+
+    assert_equal 2, rec.to_h.length
+    assert_equal 1, rec.to_h[:one]
+    assert_equal 1, rec.to_h[:One]
+    assert_equal 1, rec.to_h['One']
+    assert_equal 'two', rec.to_h[:two]
+    assert_equal 'two', rec.to_h[:Two]
+    assert_equal 'two', rec.to_h['Two']
 
     assert_equal 1, rec.one
     assert_equal 1, rec[0]
