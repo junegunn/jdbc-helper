@@ -202,6 +202,15 @@ p_upd.execute_batch
 p_upd.close
 ```
 
+### Accessing underlying Java object with `java` method
+
+```ruby
+conn.java.setAutoCommit false
+
+pstmt = conn.prepare(sql)
+pstmt.java.getMetaData
+```
+
 ### Using table wrappers (since 0.2.0)
 ```ruby
 # For more complex examples, refer to test/test_object_wrapper.rb
@@ -209,6 +218,8 @@ SQL = JDBCHelper::SQL
 
 # Creates a table wrapper
 table = conn.table('test.data')
+# Or equievalently,
+table = conn['test.data']
 
 # Counting the records in the table
 table.count
@@ -278,27 +289,48 @@ scope = table.where(
 scope.update(:a => 'xyz')
 ```
 
-#### Invalid use of dynamic conditions
+#### Invalid use of plain String conditions
 
-TableWrapper object internally creates JDBC PreparedStatements.
-If you dynamically build many condition-strings as the following example,
-it would soon fail because there will be too many open PreparedStatements.
+A TableWrapper object internally builds SQL strings
+and creates JDBC PreparedStatement object for each distinct SQL.
+
+If you build many number of where-clause Strings as shown in the following code,
+soon there will be too many open PreparedStatements,
+and if the number exceeds the system limit, an error will be thrown.
 
 ```ruby
+table = connection['table']
+
+# Leads to 10000 PreparedStatements !!
 10000.times do |idx|
   table.count("id = #{idx}")
+    # select count(*) from table where id = 0
+    # select count(*) from table where id = 1
+    # select count(*) from table where id = 2
+    # select count(*) from table where id = 3
+    # ...
 end
 ```
 
-Correct ways of doing the same would be as follows.
+In that case, you can `close` the table wrapper to close all the open PreparedStatements.
 
 ```ruby
+table.close
+```
+
+However, you should always prefer using much more efficient Hash or Array expression over plain String,
+so you don't have to worry about the proliferation of PreparedStatements.
+
+```ruby
+# 20000 queries but only a single PreparedStatement
 10000.times do |idx|
   # 1. with Hash
   table.count('id' => idx)
+    # select count(*) from table where id = ?
 
   # 2. with Array
   table.count(["id = ?", idx])
+    # select count(*) from table where id = ?
 end
 ```
 
