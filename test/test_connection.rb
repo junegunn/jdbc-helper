@@ -273,6 +273,7 @@ class TestConnection < Test::Unit::TestCase
         ins2.add_batch p, 'C'
       end
       conn.execute_batch
+      conn.execute_batch # Subsequent call has no effect
       assert_equal count * 3, conn.table(TEST_TABLE).count
       assert conn.table(TEST_TABLE).where("a >= #{count}", "a < #{count * 2}").map(&:b).all? { |e| e == 'B' }
       assert conn.table(TEST_TABLE).where("a >= #{count * 2}").map(&:b).all? { |e| e == 'C' }

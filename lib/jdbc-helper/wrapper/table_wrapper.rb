@@ -239,6 +239,37 @@ class TableWrapper < ObjectWrapper
     @update_method == :add_batch
   end
 
+  # Clear batched operations.
+  # @param [*Symbol] types Types of batched operations to clear.
+  #   If not given, :insert, :update and :delete.
+  # @return [nil]
+  def clear_batch *types
+    types = [:insert, :update, :delete] if types.empty?
+    types.each do |type|
+      raise ArgumentError.new("Invalid type: #{type}") unless @pstmts.has_key?(type)
+      @pstmts[type].values.each(&:clear_batch)
+    end
+    nil
+  end
+
+  # Execute batched operations.
+  # TableWrapper uses multiple PreparedStatements and each of them may have its own homogeneous batched commands.
+  # It is thus not possible for TableWrapper to precisely serialize all the commands when interleaved.
+  # What you can do here is to specify the types of commands (:insert, :update, and :delete) in the order of execution.
+  # The default is to execute deletes first, then updates, and finally inserts.
+  # You can also execute a subset of the three types.
+  # @param [*Symbol] types Types of batched operations to execute in order.
+  #   If not given, :delete, :insert and :update.
+  # @return [nil]
+  def execute_batch *types
+    types = [:delete, :insert, :update] if types.empty?
+    types.each do |type|
+      raise ArgumentError.new("Invalid type: #{type}") unless @pstmts.has_key?(type)
+      @pstmts[type].values.each(&:execute_batch)
+    end
+    nil
+  end
+
   # Returns the select SQL for this wrapper object
   # @return [String] Select SQL
   # @since 0.4.0

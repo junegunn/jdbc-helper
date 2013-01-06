@@ -133,18 +133,18 @@ class TestObjectWrapper < Test::Unit::TestCase
     }
   end
 
-  def insert table, cnt = 100
+  def insert table, cnt = 100, offset = 1
     require 'java'
 
     params = insert_params.dup
     params.delete(:num_wtf) unless @type == :oracle
 
-    (1..cnt).each do |pk|
+    cnt.times do |pk|
       icnt = table.
           default(:gamma => 'hello world').
           default(:alpha => 200).
           insert(params.merge(
-             :id => pk,
+             :id => pk + offset,
              :delta => blob_data)
           )
       assert_equal 1, icnt unless table.batch?
@@ -484,7 +484,19 @@ class TestObjectWrapper < Test::Unit::TestCase
 
       insert table.batch, 50
       assert_equal 0, table.count
-      conn.execute_batch
+      table.execute_batch :delete
+      assert_equal 0, table.count
+      table.execute_batch :update
+      assert_equal 0, table.count
+
+      table.batch.delete
+      table.execute_batch :update, :insert
+      assert_equal 50, table.count
+      table.clear_batch
+
+      insert table.batch, 50
+      assert_equal 50, table.count
+      table.clear_batch
       assert_equal 50, table.count
 
       table.batch.update(:alpha => JDBCHelper::SQL('alpha * 2'))
@@ -494,10 +506,23 @@ class TestObjectWrapper < Test::Unit::TestCase
       table.delete(:id => 1..10)
       assert_equal 40, table.count
 
-      # Finally
-      conn.execute_batch
+      # Finally with TableWrapper#execute_batch
+      insert table.batch, 60, 1000
+      assert_equal 40, table.count
+      table.execute_batch :delete, :update
+      assert_equal 40, table.count
+      table.execute_batch :insert
+      assert_equal 100, table.count
 
       assert_equal 200, table.select(:alpha).to_a.first.alpha.to_i
+
+      # Order of execution
+      table.batch.update(:alpha => JDBCHelper::SQL('alpha * 4'))
+      insert table.batch, 50, 2000
+      table.batch.delete
+      table.execute_batch :delete, :insert, :update
+      assert_equal 50, table.count
+      assert_equal 400, table.select(:alpha).to_a.first.alpha.to_i
     end
   end
 

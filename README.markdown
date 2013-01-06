@@ -253,7 +253,8 @@ with_defaults.where('a != 10 or b != 20').update   # sets a => 10, b => 20
 # Batch updates with batch method
 table.batch.insert(:a => 10, :b => 20, :c => SQL.expr('10 + 20'))
 table.batch.insert_ignore(:a => 10, :b => 20, :c => 30)
-conn.execute_batch
+table.batch.where(:a => 10).update(:a => 20)
+table.execute_batch :insert, :update
 
 # Delete with conditions
 table.delete(:c => 3)
