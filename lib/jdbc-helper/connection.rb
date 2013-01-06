@@ -135,6 +135,7 @@ class Connection
     @conn
   end
   alias java_obj jdbc_conn
+  alias java     jdbc_conn
 
   # Creates a database connection.
   # - `args` hash must include :driver (or "driver") and :url (or "url")
@@ -163,15 +164,15 @@ class Connection
       if timeout.is_a?(Fixnum) == false || timeout <= 0
         raise ArgumentError.new("Timeout must be a positive integer")
       end
-      java.sql.DriverManager.setLoginTimeout timeout
+      Java::java.sql.DriverManager.setLoginTimeout timeout
     end
 
-    props = java.util.Properties.new
+    props = Java::java.util.Properties.new
     args.each do |k, v|
       props.setProperty(k.to_s, v.to_s) if v
     end
 
-    @conn = java.sql.DriverManager.get_connection(@url, props)
+    @conn = Java::java.sql.DriverManager.get_connection(@url, props)
     @spool = StatementPool.send :new, self
     @bstmt = nil
     @fetch_size = nil
@@ -452,6 +453,7 @@ class Connection
     JDBCHelper::ProcedureWrapper.new self, proc_name
   end
 
+  # @return [String]
   def inspect
     InsensitiveHash[@args].merge({ :closed? => closed? }).tap { |c|
       c.delete(:password)

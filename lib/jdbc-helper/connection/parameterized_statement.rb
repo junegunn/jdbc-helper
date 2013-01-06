@@ -12,6 +12,7 @@ class ParameterizedStatement
 
   # Underlying Java object
   attr_reader :java_obj
+  alias java java_obj
 
   # @param [JDBCHelper::Connection] conn
   # @param [String] cstmt_str
@@ -36,16 +37,16 @@ class ParameterizedStatement
     when Float
       @java_obj.setDouble idx, param
     when Time
-      @java_obj.setTimestamp idx, java.sql.Timestamp.new((param.to_f * 1000).to_i)
-    when java.sql.Date
+      @java_obj.setTimestamp idx, Java::java.sql.Timestamp.new((param.to_f * 1000).to_i)
+    when Java::java.sql.Date
       @java_obj.setDate idx, param
-    when java.sql.Time
+    when Java::java.sql.Time
       @java_obj.setTime idx, param
-    when java.sql.Timestamp
+    when Java::java.sql.Timestamp
       @java_obj.setTimestamp idx, param
-    when java.sql.Blob
+    when Java::java.sql.Blob
       @java_obj.setBinaryStream idx, param.getBinaryStream#, param.length
-    when java.io.InputStream
+    when Java::java.io.InputStream
       @java_obj.setBinaryStream idx, param
     else
       @java_obj.setString idx, param.to_s
@@ -65,7 +66,7 @@ class ParameterizedStatement
 
 private
   def set_null idx, param
-    @java_obj.setNull idx, java.sql.Types::NULL
+    @java_obj.setNull idx, Java::java.sql.Types::NULL
   end
 
   def measure_exec(type, &blk)  # :nodoc:

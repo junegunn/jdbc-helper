@@ -113,7 +113,7 @@ private
   end
 
   def set_null idx, param
-    @java_obj.setNull idx, @types ? @types[idx - 1] : java.sql.Types::NULL
+    @java_obj.setNull idx, @types ? @types[idx - 1] : Java::java.sql.Types::NULL
   end
 
   def initialize(*args)
@@ -123,7 +123,7 @@ private
       @pmd   = @java_obj.getParameterMetaData
       @types = @pmd.getParameterCount.times.map { |idx|
                     # Oracle does not support getParameterType
-                    @pmd.getParameterType(idx + 1) rescue java.sql.Types::NULL
+                    @pmd.getParameterType(idx + 1) rescue Java::java.sql.Types::NULL
                   }
     rescue Exception => e
       Logger.new($stderr).warn e.to_s

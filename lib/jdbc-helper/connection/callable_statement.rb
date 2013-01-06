@@ -46,14 +46,14 @@ private
       case value
       # OUT parameter
       when Class
-        jtype = JDBCHelper::Connection::RUBY_SQL_TYPE_MAP[value] || java.sql.Types::VARCHAR
+        jtype = JDBCHelper::Connection::RUBY_SQL_TYPE_MAP[value] || Java::java.sql.Types::VARCHAR
         @java_obj.registerOutParameter(idx_, jtype)
         out_params[idx] = jtype
 
       # INOUT parameter
       when Array
         set_param(idx_, value.first)
-        jtype = JDBCHelper::Connection::RUBY_SQL_TYPE_MAP[value.last] || java.sql.Types::VARCHAR
+        jtype = JDBCHelper::Connection::RUBY_SQL_TYPE_MAP[value.last] || Java::java.sql.Types::VARCHAR
         @java_obj.registerOutParameter(idx_, jtype)
         out_params[idx] = jtype
 
