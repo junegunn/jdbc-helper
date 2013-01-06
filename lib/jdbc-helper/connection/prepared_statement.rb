@@ -32,8 +32,8 @@ class PreparedStatement < ParameterizedStatement
     check_closed
 
     set_params(params)
-    if measure_exec(:p_execute) { @java_obj.execute }
-      ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.getResultSet })
+    if @java_obj.execute
+      ResultSetEnumerator.new(@java_obj.getResultSet)
     else
       @java_obj.getUpdateCount
     end
@@ -44,7 +44,7 @@ class PreparedStatement < ParameterizedStatement
     check_closed
 
     set_params(params)
-    measure_exec(:p_update) { @java_obj.execute_update }
+    @java_obj.execute_update
   end
 
   # @return [Array] Returns an Array if block is not given
@@ -53,8 +53,7 @@ class PreparedStatement < ParameterizedStatement
 
     set_params(params)
     # sorry, ignoring privacy
-    @conn.send(:process_and_close_rset,
-           measure_exec(:p_query) { @java_obj.execute_query }, &blk)
+    @conn.send(:process_and_close_rset, @java_obj.execute_query, &blk)
   end
 
   # @return [JDBCHelper::Connection::ResultSetEnumerator]
@@ -64,7 +63,7 @@ class PreparedStatement < ParameterizedStatement
     return query(*params, &blk) if block_given?
 
     set_params(params)
-    ResultSetEnumerator.new(measure_exec(:p_query) { @java_obj.execute_query })
+    ResultSetEnumerator.new(@java_obj.execute_query)
   end
 
   # Adds to the batch
@@ -75,14 +74,15 @@ class PreparedStatement < ParameterizedStatement
     set_params(params)
     @java_obj.add_batch
   end
+
   # Executes the batch
+  # @return [Fixnum] Sum of all update counts
   def execute_batch
     check_closed
 
-    measure_exec(:p_execute_batch) {
-      @java_obj.executeBatch
-    }
+    @java_obj.executeBatch.inject(:+) || 0
   end
+
   # Clears the batch
   # @return [NilClass]
   def clear_batch

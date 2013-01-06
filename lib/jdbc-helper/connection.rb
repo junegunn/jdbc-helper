@@ -111,16 +111,6 @@ module JDBCHelper
 #  p_upd.execute_batch
 #  p_upd.close
 class Connection
-  # Returns the statistics of the previous operation
-  # @return [JDBCHelper::Connection::Stat] The statistics of the previous operation.
-  def prev_stat
-    @prev_stat.dup
-  end
-
-  # Returns the accumulated statistics of each operation
-  # @return [Hash] Accumulated statistics of each type of operation
-  attr_reader :stats
-
   # JDBC URL of the connection
   # @return [String]
   attr_reader :url
@@ -177,9 +167,6 @@ class Connection
     @bstmt = nil
     @fetch_size = nil
 
-    @stats = Hash.new { | h, k | h[k] = Stat.new(k, 0, 0, 0) }
-    @prev_stat = Stat.new(nil, 0, 0, 0)
-
     @pstmts = []
 
     @table_wrappers = {}
@@ -206,8 +193,7 @@ class Connection
   def prepare(qstr)
     check_closed
 
-    pstmt = PreparedStatement.send(:new, self, qstr,
-        measure_exec(:prepare) { @conn.prepare_statement(qstr) })
+    pstmt = PreparedStatement.send(:new, self, qstr, @conn.prepare_statement(qstr))
     pstmt.set_fetch_size @fetch_size if @fetch_size
 
     @pstmts << pstmt
@@ -224,8 +210,7 @@ class Connection
   def prepare_call(qstr)
     check_closed
 
-    CallableStatement.send(:new, self, qstr,
-        measure_exec(:prepare_call) { @conn.prepare_call qstr })
+    CallableStatement.send(:new, self, qstr, @conn.prepare_call(qstr))
   end
 
   # Executes the given code block as a transaction. Returns true if the transaction is committed.
@@ -266,7 +251,7 @@ class Connection
 
     stmt = @spool.take
     begin
-      if measure_exec(:execute) { stmt.execute(qstr) }
+      if stmt.execute(qstr)
         ResultSetEnumerator.send(:new, stmt.getResultSet) { @spool.give stmt }
       else
         rset = stmt.getUpdateCount
@@ -286,7 +271,7 @@ class Connection
     check_closed
 
     @spool.with do | stmt |
-      ret = measure_exec(:update) { stmt.execute_update(qstr) }
+      ret = stmt.execute_update(qstr)
     end
   end
 
@@ -310,7 +295,7 @@ class Connection
     check_closed
 
     @spool.with do | stmt |
-      rset = measure_exec(:query) { stmt.execute_query(qstr) }
+      rset = stmt.execute_query(qstr)
       process_and_close_rset(rset, &blk)
     end
   end
@@ -336,7 +321,7 @@ class Connection
 
     stmt = @spool.take
     begin
-      rset = measure_exec(:query) { stmt.execute_query(qstr) }
+      rset = stmt.execute_query(qstr)
       return ResultSetEnumerator.send(:new, rset) { @spool.give stmt }
     rescue Exception
       @spool.give stmt
@@ -355,20 +340,24 @@ class Connection
     @bstmt.add_batch qstr
   end
 
-  # Executes batched statements including prepared statements. No effect when no statment is added
-  # @return [NilClass]
+  # Executes batched statements including prepared statements. No effect when no statement is added
+  # @return [Fixnum] Sum of all update counts
   def execute_batch
     check_closed
 
+    cnt = 0
+
     if @bstmt
-      measure_exec(:execute_batch) { @bstmt.execute_batch }
+      cnt += @bstmt.execute_batch.inject(:+) || 0
       @spool.give @bstmt
       @bstmt = nil
     end
 
-    @pstmts.each do |stmt|
-      measure_exec(:execute_batch) { stmt.execute_batch }
+    @pstmts.each do |pstmt|
+      cnt += pstmt.execute_batch
     end
+
+    cnt
   end
 
   # Clears the batched statements including prepared statements.
@@ -383,7 +372,7 @@ class Connection
     end
 
     @pstmts.each do |stmt|
-      measure_exec(:execute_batch) { stmt.clear_batch }
+      stmt.clear_batch
     end
   end
 
@@ -460,18 +449,6 @@ class Connection
     }.inspect
   end
 
-  # Statistics
-  class Stat
-    attr_accessor :type, :elapsed, :success_count, :fail_count
-
-    def initialize(t, e, s, f)
-      self.type          = t
-      self.elapsed       = e
-      self.success_count = s
-      self.fail_count    = f
-    end
-  end
-
 private
   # Transaction object passed to the code block given to transaction method
   class Transaction
@@ -523,31 +500,6 @@ private
 
   def close_pstmt pstmt
     @pstmts.delete pstmt
-  end
-
-  def update_stat(type, elapsed, success_count, fail_count) # :nodoc:
-    @prev_stat.type          = type
-    @prev_stat.elapsed       = elapsed
-    @prev_stat.success_count = success_count
-    @prev_stat.fail_count    = fail_count
-
-    accum                = @stats[type]
-    accum.elapsed       += elapsed
-    accum.success_count += success_count
-    accum.fail_count    += fail_count
-  end
-
-  def measure_exec(type)
-    begin
-      st      = Time.now
-      ret     = yield
-      elapsed = Time.now - st
-      update_stat(type, elapsed, 1, 0)
-    rescue Exception
-      update_stat(type, 0, 0, 1)
-      raise
-    end
-    ret
   end
 
   def check_closed

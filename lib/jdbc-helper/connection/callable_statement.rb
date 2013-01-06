@@ -15,7 +15,7 @@ class CallableStatement < ParameterizedStatement
     check_closed
 
     out_params = set_params(params)
-    measure_exec(:call) { @java_obj.execute }
+    @java_obj.execute
 
     result = {}
     out_params.each do |idx, jtype|

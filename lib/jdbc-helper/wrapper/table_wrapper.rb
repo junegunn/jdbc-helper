@@ -260,14 +260,16 @@ class TableWrapper < ObjectWrapper
   # You can also execute a subset of the three types.
   # @param [*Symbol] types Types of batched operations to execute in order.
   #   If not given, :delete, :insert and :update.
-  # @return [nil]
+  # @return [Hash] Sum of all update counts indexed by operation type
   def execute_batch *types
     types = [:delete, :insert, :update] if types.empty?
-    types.each do |type|
-      raise ArgumentError.new("Invalid type: #{type}") unless @pstmts.has_key?(type)
-      @pstmts[type].values.each(&:execute_batch)
-    end
-    nil
+
+    Hash.new { 0 }.tap { |cnts|
+      types.each do |type|
+        raise ArgumentError.new("Invalid type: #{type}") unless @pstmts.has_key?(type)
+        cnts[type] += @pstmts[type].values.map(&:execute_batch).inject(:+) || 0
+      end
+    }
   end
 
   # Returns the select SQL for this wrapper object

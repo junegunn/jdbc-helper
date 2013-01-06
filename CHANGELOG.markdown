@@ -1,6 +1,10 @@
 ### 0.7.7 / 2013/01/0?
 * `PreparedStatment`s and `TableWrapper`s now inherit the fetch size of the connection
 * Added `JDBCHelper::TableWrapper#fetch_size`
+* Added `JDBCHelper::TableWrapper#execute_batch`
+* Added `JDBCHelper::TableWrapper#clear_batch`
+* `execute_batch` method returns the sum of all update counts
+* Removed undocumented operation statistics
 
 ### 0.7.6 / 2012/08/26
 * Added FileMaker Pro connector (statonjr)

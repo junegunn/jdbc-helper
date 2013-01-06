@@ -262,7 +262,6 @@ class TestConnection < Test::Unit::TestCase
 
       # update
       assert_equal 1, conn.update(iq.call 0)
-      assert_equal 1, conn.prev_stat.success_count
 
       # add_batch execute_batch
       reset_test_table conn
@@ -291,6 +290,14 @@ class TestConnection < Test::Unit::TestCase
       ins1.execute_batch
       ins2.execute_batch
       assert_equal 0, conn.table(TEST_TABLE).count
+
+      # Return values
+      count.times do | p |
+        conn.update iq.call(p)
+      end
+      conn.add_batch("delete from #{TEST_TABLE} where a < 5")
+      conn.add_batch("delete from #{TEST_TABLE} where a < 7")
+      assert_equal 7, conn.execute_batch
     end
   end
 
@@ -368,7 +375,6 @@ class TestConnection < Test::Unit::TestCase
       # update
       assert ins.closed? == false
       assert_equal 1, ins.update(0, 'A')
-      assert_equal 1, conn.prev_stat.success_count
       ins.close
       assert_equal 0, conn.prepared_statements.length
 

@@ -520,7 +520,10 @@ class TestObjectWrapper < Test::Unit::TestCase
       table.batch.update(:alpha => JDBCHelper::SQL('alpha * 4'))
       insert table.batch, 50, 2000
       table.batch.delete
-      table.execute_batch :delete, :insert, :update
+      ret = table.execute_batch :delete, :insert, :update
+      assert_equal 100, ret[:delete]
+      assert_equal 50, ret[:insert]
+      assert_equal 50, ret[:update]
       assert_equal 50, table.count
       assert_equal 400, table.select(:alpha).to_a.first.alpha.to_i
     end

@@ -69,10 +69,6 @@ private
     @java_obj.setNull idx, Java::java.sql.Types::NULL
   end
 
-  def measure_exec(type, &blk)  # :nodoc:
-    @conn.send(:measure_exec, type, &blk)
-  end
-
   def check_closed
     raise RuntimeError.new("Object already closed") if closed?
   end
