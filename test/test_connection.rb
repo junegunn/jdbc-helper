@@ -20,13 +20,13 @@ class TestConnection < Test::Unit::TestCase
     assert_equal %w[One tWo], rec.keys
     assert_equal [1, 'two'], rec.values
 
-    assert_equal 2, rec.to_h.length
-    assert_equal 1, rec.to_h[:one]
-    assert_equal 1, rec.to_h[:One]
-    assert_equal 1, rec.to_h['One']
-    assert_equal 'two', rec.to_h[:two]
-    assert_equal 'two', rec.to_h[:Two]
-    assert_equal 'two', rec.to_h['Two']
+    assert_equal 2,     rec.to_h.length
+    assert_equal nil,   rec.to_h[:one]
+    assert_equal nil,   rec.to_h[:One]
+    assert_equal 1,     rec.to_h['One']
+    assert_equal nil,   rec.to_h[:two]
+    assert_equal nil,   rec.to_h[:tWo]
+    assert_equal 'two', rec.to_h['tWo']
 
     assert_equal 1, rec.one
     assert_equal 1, rec[0]
