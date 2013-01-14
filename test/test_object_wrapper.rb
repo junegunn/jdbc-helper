@@ -342,7 +342,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       table.select('alpha OMega') do |row|
         cnt += 1
         assert_equal 100, row.omega
-        assert_equal ['OMega'], row.labels
+        assert_equal ['omega'], row.labels.map(&:downcase)
       end
       assert_equal 100, cnt
 
@@ -521,9 +521,12 @@ class TestObjectWrapper < Test::Unit::TestCase
       insert table.batch, 50, 2000
       table.batch.delete
       ret = table.execute_batch :delete, :insert, :update
-      assert_equal 100, ret[:delete]
-      assert_equal 50, ret[:insert]
-      assert_equal 50, ret[:update]
+      omit_if(conn.driver =~ /oracle/) do
+        # https://forums.oracle.com/forums/thread.jspa?threadID=532945
+        assert_equal 100, ret[:delete]
+        assert_equal 50, ret[:insert]
+        assert_equal 50, ret[:update]
+      end
       assert_equal 50, table.count
       assert_equal 400, table.select(:alpha).to_a.first.alpha.to_i
     end

@@ -267,7 +267,7 @@ class TableWrapper < ObjectWrapper
     Hash.new { 0 }.tap { |cnts|
       types.each do |type|
         raise ArgumentError.new("Invalid type: #{type}") unless @pstmts.has_key?(type)
-        cnts[type] += @pstmts[type].values.map(&:execute_batch).inject(:+) || 0
+        cnts[type] += @pstmts[type].values.map(&:execute_batch).select { |e| e > 0 }.inject(:+) || 0
       end
     }
   end

@@ -76,11 +76,11 @@ class PreparedStatement < ParameterizedStatement
   end
 
   # Executes the batch
-  # @return [Fixnum] Sum of all update counts
+  # @return [Fixnum] Sum of all successful update counts
   def execute_batch
     check_closed
 
-    @java_obj.executeBatch.inject(:+) || 0
+    @java_obj.executeBatch.select { |e| e > 0 }.inject(:+) || 0
   end
 
   # Clears the batch
