@@ -40,6 +40,9 @@ module Constants
       },
       :filemaker    => {
         :driver     => 'com.filemaker.jdbc.Driver'
+      },
+      :sqlite       => {
+        :driver     => 'org.sqlite.JDBC',
       }
     }
   end#Connector
