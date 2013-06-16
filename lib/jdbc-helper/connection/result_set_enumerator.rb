@@ -90,11 +90,7 @@ private
           if precision > 0 && scale >= 0
             # Numbers with fractional parts
             if scale > 0
-              if precision <= 15
-                :getDouble
-              else
-                :getBigDecimal
-              end
+              :getBigDecimal
             # Numbers without fractional parts
             else
               if precision <= 9
