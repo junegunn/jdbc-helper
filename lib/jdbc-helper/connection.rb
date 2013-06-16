@@ -137,7 +137,7 @@ class Connection
   # @param [Hash] args
   def initialize(args = {})
     # Subsequent deletes should not affect the input
-    @args = Marshal.load(Marshal.dump(args))
+    @args = args
     args = InsensitiveHash[ @args ]
 
     raise ArgumentError.new("driver not given") unless args.has_key? :driver
