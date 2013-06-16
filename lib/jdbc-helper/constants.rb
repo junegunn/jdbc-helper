@@ -21,6 +21,9 @@ module Constants
         :useServerPrepStmts   => 'true',
         :useCursorFetch       => 'true',
       },
+      :mariadb      => {
+        :driver     => 'org.mariadb.jdbc.Driver',
+      },
       :oracle       => {
         :driver     => 'oracle.jdbc.driver.OracleDriver',
       },
