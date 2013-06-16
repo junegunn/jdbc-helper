@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.version       = JDBCHelper::VERSION
 
   gem.add_runtime_dependency 'insensitive_hash', '>= 0.2.4'
+  gem.add_runtime_dependency 'sql_helper', '~> 0.1.0'
   gem.add_development_dependency "bundler"
   gem.add_development_dependency "simplecov"
   gem.add_development_dependency "test-unit"

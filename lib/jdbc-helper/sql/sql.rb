@@ -4,13 +4,13 @@
 require 'bigdecimal'
 
 module JDBCHelper
-
 # Generate SQL snippet, prevents the string from being quoted.
+# @deprecated
 # @param [String] SQL snippet
 # @return [JDBCHelper::SQL::Expression]
 # @deprecated Use JDBCHelper::SQL.expr instead
 def self.sql str
-  JDBCHelper::SQL::ScalarExpression.new str
+  { :sql => str }
 end
 class << self
   # @deprecated Use JDBCHelper::SQL.expr instead
@@ -18,89 +18,85 @@ class << self
 end
 
 # Class representing an SQL snippet. Also has many SQL generator class methods.
+# @deprecated
 module SQL
   # Formats the given data so that it can be injected into SQL
+  # @deprecated
   def self.value data
-    case data
-    when BigDecimal
-      data.to_s("F")
-    when Numeric
-      data
-    when String, Symbol
-      "'#{esc data}'"
-    when NilClass
-      'null'
-    when JDBCHelper::SQL::ScalarExpression
-      data.to_s
-    else
-      raise NotImplementedError.new("Unsupported datatype: #{data.class}")
-    end
+    SQLHelper.quote(data)
   end
 
   # Generates SQL where cluase with the given conditions.
   # Parameter can be either Hash of String.
+  # @deprecated
   def self.where *conds
-    where_clause = where_internal conds
-    where_clause.empty? ? where_clause : check(where_clause)
+    SQLHelper.where(*conds)
   end
 
+  # @deprecated
   def self.where_prepared *conds
+    SQLHelper.where_prepared(*conds)
   end
 
   # Generates SQL order by cluase with the given conditions.
+  # @deprecated
   def self.order *criteria
-    str = criteria.map(&:to_s).reject(&:empty?).join(', ')
-    str.empty? ? str : check('order by ' + str)
+    SQLHelper.order(*criteria)
   end
 
   # SQL Helpers
   # ===========
 
   # Generates insert SQL with hash
+  # @deprecated
   def self.insert table, data_hash
-    insert_internal 'insert', table, data_hash
+    SQLHelper.insert :table => table, :data => data_hash, :prepared => false
   end
 
   # Generates insert ignore SQL (Non-standard syntax)
+  # @deprecated
   def self.insert_ignore table, data_hash
-    insert_internal 'insert ignore', table, data_hash
+    SQLHelper.insert_ignore :table => table, :data => data_hash, :prepared => false
   end
 
   # Generates replace SQL (Non-standard syntax)
+  # @deprecated
   def self.replace table, data_hash
-    insert_internal 'replace', table, data_hash
+    SQLHelper.replace :table => table, :data => data_hash, :prepared => false
   end
 
   # Generates update SQL with hash.
   # :where element of the given hash is taken out to generate where clause.
+  # @deprecated
   def self.update table, data_hash, where
-    where_clause = where_internal where
-    updates = data_hash.map { |k, v| "#{k} = #{value v}" }.join(', ')
-    check "update #{table} set #{updates} #{where_clause}".strip
+    SQLHelper.update :table => table, :data => data_hash, :where => where, :prepared => false
   end
 
   # Generates select SQL with the given conditions
+  # @deprecated
   def self.select table, opts = {}
-    opts = opts.reject { |k, v| v.nil? }
-    check [
-      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}",
-      where_internal(opts.fetch(:where, {})),
-      order(opts.fetch(:order, []).join(', '))
-    ].reject(&:empty?).join(' ')
+    SQLHelper.select :table    => table,
+                     :project  => opts[:select],
+                     :where    => opts[:where],
+                     :order    => opts[:order],
+                     :prepared => false
   end
 
   # Generates count SQL with the given conditions
+  # @deprecated
   def self.count table, conds = nil
-    check "select count(*) from #{table} #{where_internal conds}".strip
+    SQLHelper.count :table => table, :where => conds, :prepared => false
   end
 
   # Generates delete SQL with the given conditions
+  # @deprecated
   def self.delete table, conds = nil
-    check "delete from #{table} #{where_internal conds}".strip
+    SQLHelper.delete :table => table, :where => conds, :prepared => false
   end
 
   # FIXME: Naive protection for SQL Injection
   # TODO: check caching?
+  # @deprecated
   def self.check expr, is_name = false
     return nil if expr.nil?
 
@@ -117,63 +113,6 @@ module SQL
     end
 
     return expr
-  end
-
-protected
-  def self.esc str
-    str.to_s.gsub("'", "''")
-  end
-
-  # No check
-  def self.where_internal conds
-    conds = [conds] unless conds.is_a? Array
-    where_clause = conds.compact.map { |cond| where_unit cond }.reject(&:empty?).join(' and ')
-    where_clause.empty? ? '' : 'where ' + where_clause
-  end
-
-  def self.where_unit conds
-    case conds
-    when String, JDBCHelper::SQL::ScalarExpression
-      conds = conds.to_s.strip
-      conds.empty? ? '' : "(#{conds})"
-    when Hash
-      conds.map { |k, v|
-        "#{k} " +
-          case v
-          when NilClass
-            "is null"
-          when Numeric, String, JDBCHelper::SQL::ScalarExpression
-            "= #{value v}"
-          when JDBCHelper::SQL::Expression
-            v.to_s
-          when Range
-            ">= #{v.first} and #{k} <#{'=' unless v.exclude_end?} #{v.last}"
-          when Array
-            "in (#{ v.map { |e| value(e) }.join(', ') })"
-          else
-            raise NotImplementedError.new("Unsupported class: #{v.class}")
-          end
-      }.join(' and ')
-    when Array
-      if conds.empty?
-        ''
-      else
-        base = conds.first.to_s
-        params = conds[1..-1] || []
-        '(' +
-        base.gsub('?') {
-          param = params.shift
-          param ? value(param) : '?'
-        } + ')'
-      end
-    else
-      raise NotImplementedError.new("Parameter to where must be either Hash or String")
-    end
-  end
-
-  def self.insert_internal cmd, table, data_hash
-    cols = data_hash.keys
-    check "#{cmd} into #{table} (#{cols.join ', '}) values (#{cols.map{|c|value data_hash[c]}.join ', '})"
   end
 end#SQL
 end#JDBCHelper

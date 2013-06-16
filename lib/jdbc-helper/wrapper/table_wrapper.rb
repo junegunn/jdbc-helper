@@ -12,31 +12,31 @@ module JDBCHelper
 #
 #  # Counting the records in the table
 #  table.count
-#  table.count(:a => 10)
-#  table.where(:a => 10).count
+#  table.count(a: 10)
+#  table.where(a: 10).count
 #
 #  table.empty?
-#  table.where(:a => 10).empty?
+#  table.where(a: 10).empty?
 #
 #  # Selects the table by combining select, where, and order methods
-#  table.select('a apple', :b).where(:c => (1..10)).order('b desc', 'a asc') do |row|
+#  table.select('a apple', :b).where(c: (1..10)).order('b desc', 'a asc') do |row|
 #    puts row.apple
 #  end
 #
 #  # Updates with conditions
-#  table.update(:a => 'hello', :b => JDBCHelper::SQL('now()'), :where => { :c => 3 })
+#  table.update(a: 'hello', b: { sql: 'now()' }, where: { c: 3 })
 #  # Or equivalently,
-#  table.where(:c => 3).update(:a => 'hello', :b => JDBCHelper::SQL('now()'))
+#  table.where(c: 3).update(a: 'hello', b: { sql: 'now()' })
 #
 #  # Insert into the table
-#  table.insert(:a => 10, :b => 20, :c => JDBCHelper::SQL('10 + 20'))
-#  table.insert_ignore(:a => 10, :b => 20, :c => 30)
-#  table.replace(:a => 10, :b => 20, :c => 30)
+#  table.insert(a: 10, b: 20, c: { sql: '10 + 20' })
+#  table.insert_ignore(a: 10, b: 20, c: 30)
+#  table.replace(a: 10, b: 20, c: 30)
 #
 #  # Delete with conditions
-#  table.delete(:c => 3)
+#  table.delete(c: 3)
 #  # Or equivalently,
-#  table.where(:c => 3).delete
+#  table.where(c: 3).delete
 #
 #  # Truncate or drop table (Cannot be undone)
 #  table.truncate_table!
@@ -50,7 +50,7 @@ class TableWrapper < ObjectWrapper
   # @param [List of Hash/String] where Filter conditions
   # @return [Fixnum] Count of the records.
   def count *where
-    sql, binds = JDBCHelper::SQLPrepared.count(name, @query_where + where)
+    sql, *binds = SQLHelper.count :table => name, :where => @query_where + where, :prepared => true
     pstmt = prepare :count, sql
     pstmt.query(*binds)[0][0].to_i
   end
@@ -66,7 +66,9 @@ class TableWrapper < ObjectWrapper
   # @param [Hash] data_hash Column values in Hash
   # @return [Fixnum] Number of affected records
   def insert data_hash = {}
-    sql, binds = JDBCHelper::SQLPrepared.insert(name, @query_default.merge(data_hash))
+    sql, *binds = SQLHelper.insert :table => name,
+                                   :data => @query_default.merge(data_hash),
+                                   :prepared => true
     pstmt = prepare :insert, sql
     pstmt.send @update_method, *binds
   end
@@ -77,7 +79,9 @@ class TableWrapper < ObjectWrapper
   # @param [Hash] data_hash Column values in Hash
   # @return [Fixnum] Number of affected records
   def insert_ignore data_hash = {}
-    sql, binds = JDBCHelper::SQLPrepared.insert_ignore(name, @query_default.merge(data_hash))
+    sql, *binds = SQLHelper.insert_ignore :table => name,
+                                          :data => @query_default.merge(data_hash),
+                                          :prepared => true
     pstmt = prepare :insert, sql
     pstmt.set_fetch_size @fetch_size if @fetch_size
     pstmt.send @update_method, *binds
@@ -88,7 +92,9 @@ class TableWrapper < ObjectWrapper
   # @param [Hash] data_hash Column values in Hash
   # @return [Fixnum] Number of affected records
   def replace data_hash = {}
-    sql, binds = JDBCHelper::SQLPrepared.replace(name, @query_default.merge(data_hash))
+    sql, *binds = SQLHelper.replace :table => name,
+                                    :data => @query_default.merge(data_hash),
+                                    :prepared => true
     pstmt = prepare :insert, sql
     pstmt.send @update_method, *binds
   end
@@ -101,9 +107,11 @@ class TableWrapper < ObjectWrapper
   def update data_hash_with_where = {}
     where_ext  = data_hash_with_where.delete(:where)
     where_ext  = [where_ext] unless where_ext.is_a? Array
-    sql, binds = JDBCHelper::SQLPrepared.update(name,
-                    @query_default.merge(data_hash_with_where),
-                    @query_where + where_ext.compact)
+    sql, *binds = SQLHelper.update(
+                    :prepared => true,
+                    :table => name,
+                    :data => @query_default.merge(data_hash_with_where),
+                    :where => @query_where + where_ext.compact)
     pstmt = prepare :update, sql
     pstmt.send @update_method, *binds
   end
@@ -112,7 +120,7 @@ class TableWrapper < ObjectWrapper
   # @param [List of Hash/String] where Delete filters
   # @return [Fixnum] Number of affected records
   def delete *where
-    sql, binds = JDBCHelper::SQLPrepared.delete(name, @query_where + where)
+    sql, *binds = SQLHelper.delete(:table => name, :where => @query_where + where, :prepared => true)
     pstmt = prepare :delete, sql
     pstmt.send @update_method, *binds
   end
@@ -121,7 +129,7 @@ class TableWrapper < ObjectWrapper
   # @note This operation cannot be undone
   # @return [JDBCHelper::TableWrapper] Self.
   def truncate!
-    @connection.update(JDBCHelper::SQL.check "truncate table #{name}")
+    @connection.update("truncate table #{name}")
     self
   end
   alias truncate_table! truncate!
@@ -130,7 +138,7 @@ class TableWrapper < ObjectWrapper
   # @note This operation cannot be undone
   # @return [JDBCHelper::TableWrapper] Self.
   def drop!
-    @connection.update(JDBCHelper::SQL.check "drop table #{name}")
+    @connection.update("drop table #{name}")
     self
   end
   alias drop_table! drop!
@@ -149,6 +157,7 @@ class TableWrapper < ObjectWrapper
     obj.instance_variable_set :@query_select, fields unless fields.empty?
     ret obj, &block
   end
+  alias project select
 
   # Returns a new TableWrapper object which can be used to execute a select
   # statement for the table with the specified filter conditions.
@@ -161,6 +170,16 @@ class TableWrapper < ObjectWrapper
 
     obj = self.dup
     obj.instance_variable_set :@query_where, @query_where + conditions
+    ret obj, &block
+  end
+
+  # @overload limit(offset, limit)
+  # @overload limit(limit)
+  # @return [JDBCHelper::TableWrapper]
+  # @since 0.8.0
+  def limit *args, &block
+    obj = self.dup
+    obj.instance_variable_set :@query_limit, args
     ret obj, &block
   end
 
@@ -206,11 +225,13 @@ class TableWrapper < ObjectWrapper
   # @return [JDBCHelper::Connection::ResultSetEnumerator]
   # @since 0.4.0
   def each &block
-    sql, binds = JDBCHelper::SQLPrepared.select(
-        name,
-        :select => @query_select,
-        :where => @query_where,
-        :order => @query_order)
+    sql, *binds = SQLHelper.select(
+        :prepared => true,
+        :table    => name,
+        :project  => @query_select,
+        :where    => @query_where,
+        :order    => @query_order,
+        :limit    => @query_limit)
     pstmt = prepare :select, sql
     pstmt.enumerate(*binds, &block)
   end
@@ -276,25 +297,28 @@ class TableWrapper < ObjectWrapper
   # @return [String] Select SQL
   # @since 0.4.0
   def sql
-    JDBCHelper::SQL.select(
-        name,
-        :select => @query_select,
-        :where => @query_where,
-        :order => @query_order)
+    SQLHelper.select(
+      :prepared => false,
+      :table    => name,
+      :project  => @query_select,
+      :where    => @query_where,
+      :limit    => @query_limit,
+      :order    => @query_order)
   end
 
   def initialize connection, table_name
     super connection, table_name
     @update_method = :update
     @query_default = {}
-    @query_where = []
-    @query_order = nil
-    @query_select = nil
+    @query_where   = []
+    @query_order   = nil
+    @query_limit   = nil
+    @query_select  = nil
     @pstmts = {
       :select => {},
       :insert => {},
       :delete => {},
-      :count => {},
+      :count  => {},
       :update => {}
     }
     @fetch_size = nil
@@ -319,13 +343,14 @@ class TableWrapper < ObjectWrapper
 
   def inspect
     {
-      :conn => @connection,
-      :name => name,
-      :sqls => @pstmts.values.map(&:keys).flatten,
-      :where => @query_where,
+      :conn    => @connection,
+      :name    => name,
+      :sqls    => @pstmts.values.map(&:keys).flatten,
+      :where   => @query_where,
       :default => @query_default,
-      :order => @query_order,
-      :batch? => batch?
+      :order   => @query_order,
+      :limit   => @query_limit,
+      :batch?  => batch?
     }.inspect
   end
 

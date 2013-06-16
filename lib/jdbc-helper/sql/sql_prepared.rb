@@ -4,163 +4,72 @@
 module JDBCHelper
 # SQL generator class methods for prepared operations.
 # WARNING: Does not perform SQL.check to minimize performance overhead
+# @deprecated
 module SQLPrepared
   # Generates SQL where cluase with the given conditions.
   # Parameter can be either Hash of String.
+  # @deprecated
   def self.where *conds
-    where_internal conds
+    sql, *binds = SQLHelper.where_prepared(*conds)
+    [sql, binds]
   end
 
   # SQL Helpers
   # ===========
   # Generates insert SQL with hash
+  # @deprecated
   def self.insert table, data_hash
-    insert_internal 'insert', table, data_hash
+    sql, *binds = SQLHelper.insert :table => table, :data => data_hash, :prepared => true
+    [sql, binds]
   end
 
   # Generates insert ignore SQL (Non-standard syntax)
+  # @deprecated
   def self.insert_ignore table, data_hash
-    insert_internal 'insert ignore', table, data_hash
+    sql, *binds = SQLHelper.insert_ignore :table => table, :data => data_hash, :prepared => true
+    [sql, binds]
   end
 
   # Generates replace SQL (Non-standard syntax)
+  # @deprecated
   def self.replace table, data_hash
-    insert_internal 'replace', table, data_hash
+    sql, *binds = SQLHelper.replace :table => table, :data => data_hash, :prepared => true
+    [sql, binds]
   end
 
   # Generates update SQL with hash.
   # :where element of the given hash is taken out to generate where clause.
+  # @deprecated
   def self.update table, data_hash, where
-    where_clause, where_binds = where_internal where
-
-    col_binds = []
-    sql = ("update #{table} set " + data_hash.map { |k, v|
-      case v
-      when JDBCHelper::SQL::ScalarExpression
-        "#{k} = #{v}"
-      else
-        col_binds << v
-        "#{k} = ?"
-      end
-    }.join(', ') + " #{where_clause}").strip
-
-    return sql, col_binds + where_binds
+    sql, *binds =
+      SQLHelper.update :table => table, :data => data_hash, :where => where, :prepared => true
+    [sql, binds]
   end
 
   # Generates select SQL with the given conditions
+  # @deprecated
   def self.select table, opts = {}
-    opts = opts.reject { |k, v| v.nil? }
-    w_c, w_b = where_internal(opts.fetch(:where, {}))
-    sql = [
-      "select #{opts.fetch(:select, ['*']).join(', ')} from #{table}",
-      w_c.to_s,
-      SQL.order(opts.fetch(:order, []).join(', '))
-    ].reject(&:empty?).join(' ')
-
-    return sql, w_b
+    sql, *binds = SQLHelper.select :table => table,
+                     :project  => opts[:select],
+                     :where    => opts[:where],
+                     :order    => opts[:order],
+                     :prepared => true
+    [sql, binds]
   end
 
   # Generates count SQL with the given conditions
+  # @deprecated
   def self.count table, conds = nil
-    w_c, w_b = where_internal(conds)
-    sql = "select count(*) from #{table} #{w_c}".strip
-
-    return sql, w_b
+    sql, *binds =
+      SQLHelper.count :table => table, :where => conds, :prepared => true
+    [sql, binds]
   end
 
   # Generates delete SQL with the given conditions
+  # @deprecated
   def self.delete table, conds = nil
-    w_c, w_b = where_internal(conds)
-    sql =  "delete from #{table} #{w_c}".strip
-    return sql, w_b
-  end
-
-  private
-  def self.where_internal conds
-    conds   = [conds] unless conds.is_a? Array
-    binds   = []
-    clauses = []
-    conds.compact.each do |cond|
-      c, b = where_unit cond
-      next if c.empty?
-
-      binds += b
-      clauses << c
-    end
-    where_clause = clauses.join(' and ')
-    if where_clause.empty?
-      return nil, []
-    else
-      where_clause = 'where ' + where_clause
-      return where_clause, binds
-    end
-  end
-
-  def self.where_unit conds
-    binds = []
-
-    clause = case conds
-             when String, JDBCHelper::SQL::ScalarExpression
-               conds = conds.strip
-               conds.empty? ? '' : "(#{conds})"
-             when Hash
-               conds.map { |k, v|
-                 "#{k} " +
-                   case v
-                   when NilClass
-                     "is null"
-                   when Numeric
-                     binds << v
-                     "= ?"
-                   when JDBCHelper::SQL::ScalarExpression
-                     "= #{v.to_s}"
-                   when JDBCHelper::SQL::NotNullExpression
-                     v.to_s
-                   when JDBCHelper::SQL::CriterionExpression
-                     e, b = v.to_bind
-                     case b.first
-                     when JDBCHelper::SQL::ScalarExpression
-                       v.to_s
-                     else
-                       binds += b
-                       e
-                     end
-                   when Range
-                     binds << v.begin << v.end
-                     ">= ? and #{k} <#{'=' unless v.exclude_end?} ?"
-                   when Array
-                     "in (" + v.map { |ie| SQL.value ie }.join(', ') + ")"
-                   else
-                     binds << v
-                     "= ?"
-                   end
-               }.join(' and ')
-             when Array
-               if conds.empty?
-                 ''
-               else
-                 binds += conds[1..-1] if conds.length > 1
-                 "(#{conds.first})"
-               end
-             else
-               raise NotImplementedError.new("Parameter to where must be either Hash or String")
-             end
-    return clause, binds
-  end
-
-  def self.insert_internal cmd, table, data_hash
-    binds  = []
-    values = data_hash.values.map { |v|
-      case v
-      when JDBCHelper::SQL::ScalarExpression
-        v
-      else
-        binds << v
-        '?'
-      end
-    }
-    sql = "#{cmd} into #{table} (#{data_hash.keys.join ', '}) values (#{values.join(', ')})"
-    return sql, binds
+    sql, *binds = SQLHelper.delete :table => table, :where => conds, :prepared => true
+    [sql, binds]
   end
 end#SQL
 end#JDBCHelper

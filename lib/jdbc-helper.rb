@@ -12,4 +12,5 @@ require 'jdbc-helper/sql'
 require 'jdbc-helper/constants'
 require 'jdbc-helper/connection'
 require 'jdbc-helper/connector'
+require 'sql_helper'
 

@@ -1,3 +1,9 @@
+### 0.8.0
+* Refined TableWrapper interface
+* Added MariaDB connector
+* Added SQLite connector
+* Deprecated the use of `JDBCHelper::SQL`
+
 ### 0.7.7 / 2013/01/0?
 * `PreparedStatment`s and `TableWrapper`s now inherit the fetch size of the connection
 * Added `JDBCHelper::TableWrapper#fetch_size`

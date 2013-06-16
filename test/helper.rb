@@ -84,7 +84,7 @@ module JDBCHelperTestHelper
 		config.each do | db, conn_info |
 			# Just for quick and dirty testing
 			@type = case conn_info[:driver]
-					when /mysql/i
+					when /mysql/i, /maria/i
 						:mysql
 					when /oracle/i
 						:oracle

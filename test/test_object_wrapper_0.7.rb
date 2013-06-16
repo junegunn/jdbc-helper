@@ -1,6 +1,6 @@
 require 'helper'
 
-class TestObjectWrapper < Test::Unit::TestCase
+class TestObjectWrapper_0_7 < Test::Unit::TestCase
   include JDBCHelperTestHelper
 
   def setup
@@ -119,10 +119,11 @@ class TestObjectWrapper < Test::Unit::TestCase
     end
   end
 
+
   def insert_params
     {
       :alpha => 100,
-      :beta => { :sql => '0.1 + 0.2' },
+      :beta => JDBCHelper::SQL('0.1 + 0.2'),
       :num_f => 1234567890.12345, # 16 digits
       :num_fstr => BigDecimal.new("12345678901234567890.12345"),
       :num_int => 123456789,
@@ -271,7 +272,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       params = {
         :id => 1,
         :alpha => 100,
-        :beta => { :sql => '0.1 + 0.2' },
+        :beta => JDBCHelper::SQL('0.1 + 0.2'),
         :gamma => 'hello world' }
 
       100.times do
@@ -290,7 +291,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       table = conn.table(@table_name)
       params = {
         :id => 1,
-        :beta => { :sql => '0.1 + 0.2' },
+        :beta => JDBCHelper::SQL('0.1 + 0.2'),
         :gamma => 'hello world' }
 
       100.times do |i|
@@ -498,7 +499,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       table.clear_batch
       assert_equal 50, table.count
 
-      table.batch.update(:alpha => { :sql => 'alpha * 2' })
+      table.batch.update(:alpha => JDBCHelper::SQL('alpha * 2'))
       assert_equal 100, table.select(:alpha).to_a.first.alpha.to_i
 
       # Independent update inbetween
@@ -516,7 +517,7 @@ class TestObjectWrapper < Test::Unit::TestCase
       assert_equal 200, table.select(:alpha).to_a.first.alpha.to_i
 
       # Order of execution
-      table.batch.update(:alpha => { :sql => 'alpha * 4' })
+      table.batch.update(:alpha => JDBCHelper::SQL('alpha * 4'))
       insert table.batch, 50, 2000
       table.batch.delete
       ret = table.execute_batch :delete, :insert, :update
@@ -730,20 +731,6 @@ class TestObjectWrapper < Test::Unit::TestCase
       assert_equal cnt2, conn.table(@table_name).count
 
       conn.table(@table_name).fetch_size("No").count
-    end
-  end
-
-  def test_limit
-    each_connection do |conn|
-      next unless [:mysql].include?(@type)
-
-      create_table conn
-      t = conn.table(@table_name)
-      insert t, 100
-      assert_equal 100, t.to_a.count
-
-      assert_equal 30, t.limit(30).to_a.count
-      assert_equal 100, t.limit(30).count
     end
   end
 end

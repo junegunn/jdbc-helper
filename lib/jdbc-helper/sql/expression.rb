@@ -4,141 +4,83 @@
 module JDBCHelper
 # SQL generator class methods for prepared operations.
 # WARNING: Does not perform SQL.check to minimize performance overhead
+# @deprecated
 module SQL
   # Generate SQL snippet, prevents the string from being quoted.
   # @param [String] SQL snippet
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
+  # @deprecated
   def self.expr sql
-    ScalarExpression.new sql
+    { :sql => sql }
   end
 
   # "is not null" expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   def self.not_nil
-    NotNullExpression.singleton
+    { :not => nil }
   end
   class << self
     alias not_null not_nil
   end
 
   # Greater-than expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.gt v
-    CriterionExpression.new '>', v
+    { :gt => v }
   end
 
   # Less-than expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.lt v
-    CriterionExpression.new '<', v
+    { :lt => v }
   end
 
   # Less-than-or-equal-to expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.le v
-    CriterionExpression.new '<=', v
+    { :le => v }
   end
 
   # Greater-than-or-equal-to expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.ge v
-    CriterionExpression.new '>=', v
+    { :ge => v }
   end
 
   # Not-equal expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.ne v
-    CriterionExpression.new '<>', v
+    { :ne => v }
   end
 
   # Like expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.like v
-    raise ArgumentError.new('Like expression must be given as a String') unless v.is_a?(String)
-    CriterionExpression.new 'like', v
+    raise ArgumentError, "expected String" unless v.is_a?(String)
+    { :like => v }
   end
 
   # "Not like" expression for where clauses
+  # @deprecated
   # @return [JDBCHelper::SQL::Expression]
   # @since 0.7.0
   def self.not_like v
-    raise ArgumentError.new('Like expression must be given as a String') unless v.is_a?(String)
-    CriterionExpression.new 'not like', v
-  end
-
-  # @since 0.7.0
-  class Expression
-    def initialize
-      raise Exception.new("JDBCHelper::SQL::Expression is an abstract class")
-    end
-
-    def == other
-      self.to_s == other.to_s
-    end
-
-    def eql? other
-      self.class == other.class && self.to_s == other.to_s
-    end
-
-    def hash
-      [self.class, self.to_s].hash
-    end
-  end
-
-  # @since 0.7.0
-  class ScalarExpression < Expression
-    def initialize sql
-      @sql = SQL.check sql.to_s
-    end
-
-    def to_s
-      @sql
-    end
-
-    def to_bind
-      [@to_s, []]
-    end
-  end
-
-  # @since 0.7.0
-  class NotNullExpression < Expression
-    def self.singleton
-      @@singleton ||= NotNullExpression.new
-    end
-
-    def initialize
-    end
-
-    def to_s
-      "is not null"
-    end
-
-    def to_bind
-      ["is not null", []]
-    end
-  end
-
-  # @since 0.7.0
-  class CriterionExpression < Expression
-    def initialize operator, param
-      @operator = operator
-      @param = param
-    end
-
-    def to_s
-      [@operator, SQL.value(@param)].join(' ')
-    end
-
-    def to_bind
-      [[@operator, '?'].join(' '), [@param]]
-    end
+    raise ArgumentError, "expected String" unless v.is_a?(String)
+    { :not => { :like => v } }
   end
 end#SQL
 end#JDBCHelper

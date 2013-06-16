@@ -475,7 +475,7 @@ class TestConnection < Test::Unit::TestCase
       if @type == :mysql
         conn.prepare("insert into #{TEST_TABLE} (a, b, c) values (?, ?, ?)").update(ts, d, t)
         # MySQL doesn't have subsecond precision
-        assert [lt, lt / 1000 * 1000].include?(conn.query("select a from #{TEST_TABLE}")[0][0].getTime)
+        assert [lt, (lt * 0.001).round * 1000].include?(conn.query("select a from #{TEST_TABLE}")[0][0].getTime)
         # The JDBC spec states that java.sql.Dates have _no_ time component
         # http://bugs.mysql.com/bug.php?id=2876
         assert_equal d.getTime, conn.query("select b from #{TEST_TABLE}")[0][0].getTime
@@ -501,6 +501,7 @@ class TestConnection < Test::Unit::TestCase
       got = conn.query("select a from #{TEST_TABLE}")[0][0]
       arr = [
               ts.to_i * 1000,
+              (ts.to_f.round) * 1000, # MySQL
               (ts.to_f * 1000).to_i,
               # SQL Server seems to round up the millisecond precision
               (ts.to_f * 1000).to_i / 10 * 10
