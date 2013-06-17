@@ -71,37 +71,22 @@ so that you don't have to specify lengthy class names and JDBC URLs.
 - SQLite (`JDBCHelper::SQLite`)
 
 ```ruby
-# MySQL shortcut connector
-mc = JDBCHelper::MySQL.connect(host, user, password, db)
+mysql     = JDBCHelper::MySQL.connect(host, user, password, db)
+mariadb   = JDBCHelper::MariaDB.connect(host, user, password, db)
+oracle    = JDBCHelper::Oracle.connect(host, user, password, service_name)
+postgres  = JDBCHelper::PostgreSQL.connect(host, user, password, db)
+mssql     = JDBCHelper::MSSQL.connect(host, user, password, db)
+cassandra = JDBCHelper::Cassandra.connect(host, keyspace)
+filemaker = JDBCHelper::FileMaker.connect(host, user, password, db)
+sqlite    = JDBCHelper::SQLite.connect(file_path)
 
-# MariaDB shortcut connector
-mc = JDBCHelper::MariaDB.connect(host, user, password, db)
-
-# Oracle shortcut connector
-oc = JDBCHelper::Oracle.connect(host, user, password, service_name)
-
-# PostgreSQL shortcut connector
-pc = JDBCHelper::PostgreSQL.connect(host, user, password, db)
-
-# MS SQL Server shortcut connector
-sc = JDBCHelper::MSSQL.connect(host, user, password, db)
-
-# Cassandra CQL3 connector
-cc = JDBCHelper::Cassandra.connect(host, keyspace)
-
-# FileMaker Pro shortcut connector
-fmp = JDBCHelper::FileMaker.connect(host, user, password, db)
-
-# SQLite connector
-sc = JDBCHelper::SQLite.connect(file_path)
-
-# Extra parameters
-mc = JDBCHelper::MySQL.connect(host, user, password, db,
-       rewriteBatchedStatements: true)
+# With extra parameters
+mysql = JDBCHelper::MySQL.connect(host, user, password, db,
+          rewriteBatchedStatements: true)
 
 # With connection timeout of 30 seconds
-mc = JDBCHelper::MySQL.connect(host, user, password, db,
-       rewriteBatchedStatements: true, timeout: 30)
+mysql = JDBCHelper::MySQL.connect(host, user, password, db,
+          rewriteBatchedStatements: true, timeout: 30)
 
 # When block is given, connection is automatically closed after the block is executed
 JDBCHelper::Cassandra.connect(host, keyspace) do |cc|
