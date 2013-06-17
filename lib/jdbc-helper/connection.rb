@@ -315,9 +315,9 @@ class Connection
   # @yield [JDBCHelper::Connection::Row] Yields each record if block is given
   # @return [JDBCHelper::Connection::ResultSetEnumerator] Returns an enumerator if block is not given
   def enumerate(qstr, &blk)
-    check_closed
-
     return query(qstr, &blk) if block_given?
+
+    check_closed
 
     stmt = @spool.take
     begin

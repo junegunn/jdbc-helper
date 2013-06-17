@@ -210,6 +210,35 @@ class TestConnection < Test::Unit::TestCase
       assert_equal 2, a.length
       check_one_two a.first
       assert enum.closed? == true
+
+      # Enumerator chain
+      cnt = 0
+      enum = conn.enumerate(get_one_two)
+      assert_equal false, enum.closed?
+      enum.each.each.each.each_slice(1) do |slice|
+        assert_equal Array, slice.class
+        assert_equal 1,     slice.length
+        cnt += 1
+        assert_equal false, enum.closed?
+      end
+      assert_equal true, enum.closed?
+      assert_equal 2, cnt
+
+      cnt = 0
+      enum = conn.enumerate(get_one_two)
+      assert_equal false, enum.closed?
+      enum.each.each.each.with_index.each_slice(2).each do |slice|
+        assert_equal Array,   slice.class
+        assert_equal 2,       slice.length
+        assert_equal Array,   slice[0].class
+        assert_equal 2,       slice[0].length
+        assert_equal cnt,     slice[0][1]
+        assert_equal cnt + 1, slice[1][1]
+        cnt += 2
+        assert_equal false, enum.closed?
+      end
+      assert_equal true, enum.closed?
+      assert_equal 2, cnt
     end
   end
 

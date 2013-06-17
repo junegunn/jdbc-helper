@@ -11,6 +11,7 @@ class ResultSetEnumerator
   include Enumerable
 
   def each
+    return enum_for(:each) unless block_given?
     return if closed?
 
     count = -1

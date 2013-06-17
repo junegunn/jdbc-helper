@@ -3,6 +3,7 @@
 * Added MariaDB connector
 * Added SQLite connector
 * Deprecated the use of `JDBCHelper::SQL`
+* `ResultSetEnumerator#each` returns an enumerator when block is not given
 
 ### 0.7.7 / 2013/01/0?
 * `PreparedStatment`s and `TableWrapper`s now inherit the fetch size of the connection
