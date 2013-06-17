@@ -39,7 +39,7 @@ class TestSQL < Test::Unit::TestCase
   end
 
   def test_complex_table_wrapper_query
-    assert_equal "select a + b sum from test where a = 'hello' and b between 1 and 10 and c >= 1 and c < 10 and (d = 'a' or d = 'b' or d = 'c') and e = sysdate and f is not null and g > 100 and h < 100 and i like 'ABC%' and not j like 'ABC%' and k <= sysdate order by a + b desc",
+    assert_equal "select a + b sum from test where a = 'hello' and b between 1 and 10 and c >= 1 and c < 10 and (d = 'a' or d = 'b' or d = 'c') and e = sysdate and f is not null and g > 100 and h < 100 and i like 'ABC%' and not (j like 'ABC%') and k <= sysdate order by a + b desc",
       JDBCHelper::TableWrapper.new(nil, :test).where(
         :a => 'hello',
         :b => (1..10),
@@ -99,7 +99,7 @@ class TestSQL < Test::Unit::TestCase
     assert_raise(ArgumentError) { SQL.like(123) }
     assert_raise(ArgumentError) { SQL.not_like(BigDecimal.new('1.23')) }
     assert_equal "where a like 'abc'",     SQL.where(:a => SQL.like('abc'))
-    assert_equal "where not a like 'abc'", SQL.where(:a => SQL.not_like('abc'))
+    assert_equal "where not (a like 'abc')", SQL.where(:a => SQL.not_like('abc'))
 
     # 0.7.0: with where
     assert_equal "where a > 1",        SQL.where(:a => SQL.gt(1))
@@ -108,7 +108,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal "where a <= sysdate", SQL.where(:a => SQL.le(SQL.expr 'sysdate'))
     assert_equal "where a <> 'z'",     SQL.where(:a => SQL.ne(:z))
     assert_equal "where a like 'hello''%'", SQL.where(:a => SQL.like("hello'%"))
-    assert_equal "where not a like 'hello''%'", SQL.where(:a => SQL.not_like("hello'%"))
+    assert_equal "where not (a like 'hello''%')", SQL.where(:a => SQL.not_like("hello'%"))
 
     # Non-primitive datatypes not implemented (TODO?)
     # assert_raise(ArgumentError) { SQL.where(:a => Time.now) }
@@ -162,7 +162,7 @@ class TestSQL < Test::Unit::TestCase
     assert_equal ["where a >= sysdate", []],          SQLPrepared.where(:a => SQL.ge(SQL.expr 'sysdate'))
     assert_equal ["where a <= sysdate", []],          SQLPrepared.where(:a => SQL.le(SQL.expr 'sysdate'))
     assert_equal ["where a like ?", ["hello'%"]],     SQLPrepared.where(:a => SQL.like("hello'%"))
-    assert_equal ["where not a like ?", ["hello'%"]], SQLPrepared.where(:a => SQL.not_like("hello'%"))
+    assert_equal ["where not (a like ?)", ["hello'%"]], SQLPrepared.where(:a => SQL.not_like("hello'%"))
   end
 
   def test_select
