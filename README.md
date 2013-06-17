@@ -269,13 +269,13 @@ scope = table.where(
   b: (1..10),                    # and b between 1 and 10
   c: (1...10),                   # and c >= 1 and c < 10
   d: %w[a b c],                  # and d in ('a', 'b', 'c')
-  e: { expr: 'sysdate' },        # and e = sysdate
+  e: { sql: 'sysdate' },         # and e = sysdate
   f: { not: nil },               # and f is not null
   g: { gt: 100, le: 200 },       # and g > 100 and g <= 200
   h: { lt: 100 },                # and h < 100
   i: { like: 'ABC%' },           # and i like 'ABC%'
   j: { not: { like: 'ABC%' } },  # and j not like 'ABC%'
-  k: { le: { expr: 'sysdate' } } # and k <= sysdate
+  k: { le: { sql: 'sysdate' } }  # and k <= sysdate
 )
 scope.update(a: 'xyz')
 ```
