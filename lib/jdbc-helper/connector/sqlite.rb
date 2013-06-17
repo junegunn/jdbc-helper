@@ -14,6 +14,6 @@ module SQLite
       :url      => "jdbc:sqlite:#{path}",
     }, extra_params, &block
   end
-end#MariaDB::Connector
+end#SQLite::Connector
 end#JDBCHelper
 
