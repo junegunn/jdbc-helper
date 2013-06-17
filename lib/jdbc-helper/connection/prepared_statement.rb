@@ -27,13 +27,13 @@ class PreparedStatement < ParameterizedStatement
     @java_obj = nil
   end
 
-  # @return [Fixnum|ResultSetEnumerator]
+  # @return [Fixnum|ResultSet]
   def execute(*params)
     check_closed
 
     set_params(params)
     if @java_obj.execute
-      ResultSetEnumerator.new(@java_obj.getResultSet)
+      ResultSet.new(@java_obj.getResultSet)
     else
       @java_obj.getUpdateCount
     end
@@ -52,19 +52,16 @@ class PreparedStatement < ParameterizedStatement
     check_closed
 
     set_params(params)
-    # sorry, ignoring privacy
-    @conn.send(:process_and_close_rset, @java_obj.execute_query, &blk)
+    enum = ResultSet.new(@java_obj.execute_query)
+    if block_given?
+      enum.each do |row|
+        yield row
+      end
+    else
+      enum
+    end
   end
-
-  # @return [JDBCHelper::Connection::ResultSetEnumerator]
-  def enumerate(*params, &blk)
-    check_closed
-
-    return query(*params, &blk) if block_given?
-
-    set_params(params)
-    ResultSetEnumerator.new(@java_obj.execute_query)
-  end
+  alias enumerate query
 
   # Adds to the batch
   # @return [NilClass]

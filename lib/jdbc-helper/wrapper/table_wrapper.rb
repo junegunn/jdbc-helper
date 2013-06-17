@@ -52,7 +52,7 @@ class TableWrapper < ObjectWrapper
   def count *where
     sql, *binds = SQLHelper.count :table => name, :where => @query_where + where, :prepared => true
     pstmt = prepare :count, sql
-    pstmt.query(*binds)[0][0].to_i
+    pstmt.query(*binds).to_a[0][0].to_i
   end
 
   # Sees if the table is empty
@@ -222,7 +222,7 @@ class TableWrapper < ObjectWrapper
 
   # Executes a select SQL for the table and returns an Enumerable object,
   # or yields each row if block is given.
-  # @return [JDBCHelper::Connection::ResultSetEnumerator]
+  # @return [JDBCHelper::Connection::ResultSet]
   # @since 0.4.0
   def each &block
     sql, *binds = SQLHelper.select(

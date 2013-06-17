@@ -27,7 +27,7 @@ class FunctionWrapper < ObjectWrapper
   def call(*args)
     pstmt = @connection.prepare("select #{name}(#{args.map{'?'}.join ','})#{@suffix}")
     begin
-      pstmt.query(*args)[0][0]
+      pstmt.query(*args).to_a[0][0]
     ensure
       pstmt.close
     end

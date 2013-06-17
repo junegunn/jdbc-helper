@@ -1,9 +1,16 @@
 ### 0.8.0
-* Refined TableWrapper interface
+
+0.8.0 introduces a few backward-incompatible changes.
+
+* `Connection#ResultSetEnumerator` is renamed to `Connection::ResultSet`
+* `Connection#query` method will return a ResultSet object instead of an Array
+  * `Connection#enumerate` method is now retired, and just a synonym for query method
+  * Partially consumed ResultSet must be closed explicitly
+* `ResultSet#each` method will return an enumerator when block is not given
+* Refined TableWrapper interface with external [sql_helper](https://github.com/junegunn/sql_helper) gem
+  * The use of `JDBCHelper::SQL` is deprecated
 * Added MariaDB connector
 * Added SQLite connector
-* Deprecated the use of `JDBCHelper::SQL`
-* `ResultSetEnumerator#each` returns an enumerator when block is not given
 
 ### 0.7.7 / 2013/01/0?
 * `PreparedStatment`s and `TableWrapper`s now inherit the fetch size of the connection

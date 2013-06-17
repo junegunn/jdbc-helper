@@ -31,13 +31,13 @@ class SequenceWrapper < ObjectWrapper
   # Increments the sequence and returns the value
   # @return [Fixnum]
   def nextval
-    @connection.query(@nextval_sql)[0][0].to_i
+    @connection.query(@nextval_sql).to_a[0][0].to_i
   end
 
   # Returns the incremented value of the sequence
   # @return [Fixnum]
   def currval
-    @connection.query(@currval_sql)[0][0].to_i
+    @connection.query(@currval_sql).to_a[0][0].to_i
   end
 
   # Recreates the sequence. Cannot be undone.

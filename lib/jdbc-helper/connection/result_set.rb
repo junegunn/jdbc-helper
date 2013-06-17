@@ -7,49 +7,47 @@ module JDBCHelper
 class Connection
 # Class for enumerating query results.
 # Automatically closed after used. When not used, you must close it explicitly by calling "close".
-class ResultSetEnumerator
+class ResultSet
   include Enumerable
 
   def each
     return enum_for(:each) unless block_given?
     return if closed?
 
-    count = -1
-    begin
-      while @rset.next
-        idx = 0
-        # Oracle returns numbers in NUMERIC type, which can be of any precision.
-        # So, we retrieve the numbers in String type not to lose their precision.
-        # This can be quite annoying when you're just working with integers,
-        # so I tried the following code to automatically convert integer string into integer
-        # when it's obvious. However, the performance drop is untolerable.
-        # Thus, commented out.
-        #
-        # if v && @cols_meta[i-1] == java.sql.Types::NUMERIC && v !~ /[\.e]/i
-        #   v.to_i
-        # else
-        #   v
-        # end
-        yield Connection::Row.new(
-            @col_labels,
-            @col_labels_d,
-            @getters.map { |gt|
-              case gt
-              when :getBigNum
-                v = @rset.getBigDecimal idx+=1
-                @rset.was_null ? nil : v.toPlainString.to_i
-              when :getBigDecimal
-                v = @rset.getBigDecimal idx+=1
-                @rset.was_null ? nil : BigDecimal.new(v.toPlainString)
-              else
-                v = @rset.send gt, idx+=1
-                @rset.was_null ? nil : v
-              end
-            }, count += 1)
-      end
-    ensure
-      close
+    while @nrow
+      idx = 0
+      # Oracle returns numbers in NUMERIC type, which can be of any precision.
+      # So, we retrieve the numbers in String type not to lose their precision.
+      # This can be quite annoying when you're just working with integers,
+      # so I tried the following code to automatically convert integer string into integer
+      # when it's obvious. However, the performance drop is untolerable.
+      # Thus, commented out.
+      #
+      # if v && @cols_meta[i-1] == java.sql.Types::NUMERIC && v !~ /[\.e]/i
+      #   v.to_i
+      # else
+      #   v
+      # end
+      row = Connection::Row.new(
+          @col_labels,
+          @col_labels_d,
+          @getters.map { |gt|
+            case gt
+            when :getBigNum
+              v = @rset.getBigDecimal idx+=1
+              @rset.was_null ? nil : v.toPlainString.to_i
+            when :getBigDecimal
+              v = @rset.getBigDecimal idx+=1
+              @rset.was_null ? nil : BigDecimal.new(v.toPlainString)
+            else
+              v = @rset.send gt, idx+=1
+              @rset.was_null ? nil : v
+            end
+          }, @rownum += 1)
+      close unless @nrow = @rset.next
+      yield row
     end
+    close
   end
 
   def close
@@ -116,9 +114,11 @@ private
 
     end
 
+    @rownum = -1
+    @nrow   = @rset.next
     @closed = false
   end
-end#ResultSetEnumerator
+end#ResultSet
 end#Connection
 end#JDBCHelper
 

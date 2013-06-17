@@ -8,7 +8,7 @@ require 'jdbc-helper/connection/parameterized_statement'
 require 'jdbc-helper/connection/prepared_statement'
 require 'jdbc-helper/connection/callable_statement'
 require 'jdbc-helper/connection/statement_pool'
-require 'jdbc-helper/connection/result_set_enumerator'
+require 'jdbc-helper/connection/result_set'
 require 'jdbc-helper/connection/row'
 
 require 'jdbc-helper/wrapper/object_wrapper'
@@ -241,18 +241,18 @@ class Connection
     status == :committed
   end
 
-  # Executes an SQL and returns the count of the update rows or a ResultSetEnumerator object
+  # Executes an SQL and returns the count of the update rows or a ResultSet object
   # depending on the type of the given statement.
-  # If a ResultSetEnumerator is returned, it must be enumerated or closed.
+  # If a ResultSet is returned, it must be enumerated or closed.
   # @param [String] qstr SQL string
-  # @return [Fixnum|ResultSetEnumerator]
+  # @return [Fixnum|ResultSet]
   def execute(qstr)
     check_closed
 
     stmt = @spool.take
     begin
       if stmt.execute(qstr)
-        ResultSetEnumerator.send(:new, stmt.getResultSet) { @spool.give stmt }
+        ResultSet.send(:new, stmt.getResultSet) { @spool.give stmt }
       else
         rset = stmt.getUpdateCount
         @spool.give stmt
@@ -277,16 +277,14 @@ class Connection
 
   # Executes a select query.
   # When a code block is given, each row of the result is passed to the block one by one.
-  # If a code block not given, this method will return the array of the entire result rows.
-  # (which can be pretty inefficient when the result set is large. In such cases, use enumerate instead.)
+  # If not given, ResultSet is returned, which can be used to enumerate through the result set.
+  # ResultSet is closed automatically when all the rows in the result set is consumed.
   #
-  # The concept of statement object of JDBC is encapsulated, so there's no need to do additional task,
-  # when you nest select queries, for example.
-  #
+  # @example Nested querying
   #   conn.query("SELECT a FROM T") do | trow |
-  #       conn.query("SELECT * FROM U_#{trow.a}") do | urow |
-  #           # ... and so on ...
-  #       end
+  #     conn.query("SELECT * FROM U_#{trow.a}").each_slice(10) do | urows |
+  #       # ...
+  #     end
   #   end
   # @param [String] qstr SQL string
   # @yield [JDBCHelper::Connection::Row]
@@ -294,40 +292,24 @@ class Connection
   def query(qstr, &blk)
     check_closed
 
-    @spool.with do | stmt |
-      rset = stmt.execute_query(qstr)
-      process_and_close_rset(rset, &blk)
-    end
-  end
-
-  # Returns an enumerable object of the query result.
-  # "enumerate" method is preferable when dealing with a large result set,
-  # since it doesn't have to build a large array.
-  #
-  # The returned enumerator is automatically closed after enumeration.
-  #
-  #   conn.enumerate('SELECT * FROM T').each_slice(10) do | slice |
-  #       slice.each { | row | print row }
-  #       puts
-  #   end
-  #
-  # @param [String] qstr SQL string
-  # @yield [JDBCHelper::Connection::Row] Yields each record if block is given
-  # @return [JDBCHelper::Connection::ResultSetEnumerator] Returns an enumerator if block is not given
-  def enumerate(qstr, &blk)
-    return query(qstr, &blk) if block_given?
-
-    check_closed
-
     stmt = @spool.take
     begin
       rset = stmt.execute_query(qstr)
-      return ResultSetEnumerator.send(:new, rset) { @spool.give stmt }
-    rescue Exception
+    rescue Exception => e
       @spool.give stmt
       raise
     end
+
+    enum = ResultSet.send(:new, rset) { @spool.give stmt }
+    if block_given?
+      enum.each do |row|
+        yield row
+      end
+    else
+      enum
+    end
   end
+  alias enumerate query
 
   # Adds a statement to be executed in batch
   # Adds to the batch
@@ -478,24 +460,6 @@ private
     stmt = @conn.create_statement
     stmt.set_fetch_size @fetch_size if @fetch_size
     stmt
-  end
-
-  def process_and_close_rset(rset) # :nodoc:
-    enum = ResultSetEnumerator.send :new, rset
-    rows = []
-
-    begin
-      enum.each do | row |
-        if block_given?
-          yield row
-        else
-          rows << row
-        end
-      end
-      block_given? ? nil : rows
-    ensure
-      enum.close
-    end
   end
 
   def close_pstmt pstmt

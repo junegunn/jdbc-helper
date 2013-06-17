@@ -187,9 +187,10 @@ class TestConnection < Test::Unit::TestCase
 
   def test_query_enumerate
     each_connection do | conn |
-      # Query without a block => Array
+      # Query without a block => ResultSet
       query_result = conn.query get_one_two
-      assert query_result.is_a? Array
+      assert query_result.is_a? JDBCHelper::Connection::ResultSet
+      query_result = query_result.to_a
       assert_equal 2, query_result.length
       check_one_two(query_result.first)
       assert_equal query_result.first, query_result.last
@@ -203,7 +204,7 @@ class TestConnection < Test::Unit::TestCase
       assert_equal 2, count
 
       # Enumerate
-      enum = conn.enumerate(get_one_two)
+      enum = conn.query(get_one_two)
       assert enum.is_a? Enumerable
       assert enum.closed? == false
       a = enum.to_a
@@ -213,19 +214,20 @@ class TestConnection < Test::Unit::TestCase
 
       # Enumerator chain
       cnt = 0
-      enum = conn.enumerate(get_one_two)
+      enum = conn.query(get_one_two)
       assert_equal false, enum.closed?
       enum.each.each.each.each_slice(1) do |slice|
         assert_equal Array, slice.class
         assert_equal 1,     slice.length
         cnt += 1
-        assert_equal false, enum.closed?
+        assert_equal cnt == 2, enum.closed?
       end
       assert_equal true, enum.closed?
       assert_equal 2, cnt
 
+      # Enumerator chain 2
       cnt = 0
-      enum = conn.enumerate(get_one_two)
+      enum = conn.query(get_one_two)
       assert_equal false, enum.closed?
       enum.each.each.each.with_index.each_slice(2).each do |slice|
         assert_equal Array,   slice.class
@@ -235,10 +237,31 @@ class TestConnection < Test::Unit::TestCase
         assert_equal cnt,     slice[0][1]
         assert_equal cnt + 1, slice[1][1]
         cnt += 2
-        assert_equal false, enum.closed?
+        assert_equal cnt == 2, enum.closed?
       end
       assert_equal true, enum.closed?
       assert_equal 2, cnt
+      assert_equal 0, enum.to_a.length
+
+      enum = conn.query('
+        select 1 a from dual union all
+        select 2 a from dual union all
+        select 3 a from dual')
+
+      row = enum.take(1).first
+      assert_equal 0, row.rownum
+      assert_equal false, enum.closed?
+
+      row = enum.take(1).first
+      assert_equal 1, row.rownum
+      assert_equal false, enum.closed?
+
+      row = enum.take(1).first
+      assert_equal 2, row.rownum
+      assert_equal true, enum.closed?
+
+      assert_equal [], enum.take(1)
+      assert_equal true, enum.closed?
     end
   end
 
@@ -246,17 +269,18 @@ class TestConnection < Test::Unit::TestCase
     each_connection do |conn|
       # On error, Statement object must be returned to the StatementPool
       (JDBCHelper::Constants::MAX_STATEMENT_NESTING_LEVEL * 2).times do |i|
-        conn.enumerate('xxx') rescue nil
+        conn.query('xxx') rescue nil
       end
-      assert_equal 'OK', conn.query("select 'OK' from dual")[0][0]
+      assert_equal 'OK', conn.query("select 'OK' from dual").to_a[0][0]
     end
   end
 
   def test_deep_nesting
     nest = lambda { |str, lev|
       if lev > 0
-        "conn.query('select 1 from dual') do |r#{lev}|
+        "conn.query('select 1 a from dual union all select 2 a from dual') do |r#{lev}|
            #{nest.call str, lev - 1}
+           break
          end"
       else
         str
@@ -352,7 +376,8 @@ class TestConnection < Test::Unit::TestCase
 
         # Query without a block => Array
         query_result = sel.query
-        assert query_result.is_a? Array
+        assert query_result.is_a? JDBCHelper::Connection::ResultSet
+        query_result = query_result.to_a
         assert_equal 2, query_result.length
         check_one_two(query_result.first)
 
@@ -365,7 +390,7 @@ class TestConnection < Test::Unit::TestCase
         assert_equal 2, count
 
         # Enumerate
-        enum = sel.enumerate
+        enum = sel.query
         assert enum.is_a? Enumerable
         assert enum.closed? == false
         a = enum.to_a
@@ -504,13 +529,13 @@ class TestConnection < Test::Unit::TestCase
       if @type == :mysql
         conn.prepare("insert into #{TEST_TABLE} (a, b, c) values (?, ?, ?)").update(ts, d, t)
         # MySQL doesn't have subsecond precision
-        assert [lt, (lt * 0.001).round * 1000].include?(conn.query("select a from #{TEST_TABLE}")[0][0].getTime)
+        assert [lt, (lt * 0.001).round * 1000].include?(conn.query("select a from #{TEST_TABLE}").to_a[0][0].getTime)
         # The JDBC spec states that java.sql.Dates have _no_ time component
         # http://bugs.mysql.com/bug.php?id=2876
-        assert_equal d.getTime, conn.query("select b from #{TEST_TABLE}")[0][0].getTime
+        assert_equal d.getTime, conn.query("select b from #{TEST_TABLE}").to_a[0][0].getTime
 
         # http://stackoverflow.com/questions/907170/java-getminutes-and-gethours
-        t2 = conn.query("select c from #{TEST_TABLE}")[0][0]
+        t2 = conn.query("select c from #{TEST_TABLE}").to_a[0][0]
         cal = java.util.Calendar.getInstance
         cal.setTime(t)
         cal2 = java.util.Calendar.getInstance
@@ -527,7 +552,7 @@ class TestConnection < Test::Unit::TestCase
       reset_test_table_ts conn
       ts = Time.now
       conn.prepare("insert into #{TEST_TABLE} (a) values (?)").update(ts)
-      got = conn.query("select a from #{TEST_TABLE}")[0][0]
+      got = conn.query("select a from #{TEST_TABLE}").to_a[0][0]
       arr = [
               ts.to_i * 1000,
               (ts.to_f.round) * 1000, # MySQL
@@ -641,7 +666,7 @@ class TestConnection < Test::Unit::TestCase
     each_connection do | conn |
       reset_test_table conn
 
-      rse_class = JDBCHelper::Connection::ResultSetEnumerator
+      rse_class = JDBCHelper::Connection::ResultSet
 
       # Connection#execute
       assert_equal 1, conn.execute("insert into #{TEST_TABLE} values (0, 'A')")
@@ -689,8 +714,8 @@ class TestConnection < Test::Unit::TestCase
 
       assert_equal 20, 20.times.select {
         conn.execute(q).close
-        conn.enumerate(q).close
-        conn.query q
+        conn.query(q).close
+        conn.query(q).to_a
         conn.update u
 
         conn.execute(q).count == 1

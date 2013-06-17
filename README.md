@@ -128,10 +128,6 @@ conn.query('SELECT a, b, c FROM T') do |row|
   row.to_h                     # Row as a Hash
 end
 
-# Returns an array of rows when block is not given
-rows = conn.query('SELECT b FROM T')
-uniq_rows = rows.uniq
-
 # You can even nest queries
 conn.query('SELECT a FROM T') do |row1|
   conn.query("SELECT * FROM T_#{row1.a}") do |row2|
@@ -139,12 +135,19 @@ conn.query('SELECT a FROM T') do |row1|
   end
 end
 
-# `enumerate' method returns an Enumerable object if block is not given.
-# When the result set of the query is expected to be large and you wish to
-# chain enumerators, `enumerate' is much preferred over `query'. (which returns the
-# array of the entire rows)
-conn.enumerate('SELECT * FROM LARGE_T').each_slice(1000) do |slice|
-  slice.each do | row |
+# Connection::ResultSet object is returned when block is not given
+# - ResultSet is automatically closed when entirely iterated
+rows = conn.query('SELECT * FROM T')
+uniq_rows = rows.to_a.uniq
+
+# However, partially consumed ResultSet objects *must be closed* manually
+rset = conn.query('SELECT * FROM T')
+rows = rset.take(2)
+rset.close
+
+# Enumerator chain
+conn.query('SELECT * FROM LARGE_T').each_slice(1000).with_index do |slice, idx|
+  slice.each do |row|
     # ...
   end
 end
