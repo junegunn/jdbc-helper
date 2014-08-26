@@ -1,3 +1,7 @@
+### 0.8.2
+
+* Allow :driver parameter to be an object that responds to `connect`
+
 ### 0.8.1
 
 * Allow :driver parameter to be in either String or Class

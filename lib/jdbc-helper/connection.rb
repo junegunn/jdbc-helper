@@ -116,7 +116,7 @@ class Connection
   attr_reader :url
 
   # JDBC driver of the connection
-  # @return [String]
+  # @return [String|Class|#connect]
   attr_reader :driver
 
   # Returns the underlying JDBC Connection object.
@@ -167,7 +167,11 @@ class Connection
             when Class
               @driver.new.connect(@url, props)
             else
-              raise ArgumentError.new('Invalid type for :driver')
+              if @driver.respond_to?(:connect)
+                @driver.connect(@url, props)
+              else
+                raise ArgumentError.new('Invalid type for :driver')
+              end
             end
     @spool = StatementPool.send :new, self
     @bstmt = nil
