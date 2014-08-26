@@ -1,3 +1,7 @@
+### 0.8.1
+
+* Allow :driver parameter to be in either String or Class
+
 ### 0.8.0
 
 0.8.0 introduces a few backward-incompatible changes.

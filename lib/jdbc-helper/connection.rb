@@ -146,9 +146,6 @@ class Connection
     @driver = args.delete :driver
     @url = args.delete :url
 
-    # NameError will be thrown for invalid drivers
-    Java::JavaClass.for_name @driver
-
     timeout = args.has_key?(:timeout) ? args.delete(:timeout) : Constants::DEFAULT_LOGIN_TIMEOUT
     if timeout
       if timeout.is_a?(Fixnum) == false || timeout <= 0
@@ -162,7 +159,16 @@ class Connection
       props.setProperty(k.to_s, v.to_s) if v
     end
 
-    @conn = Java::java.sql.DriverManager.get_connection(@url, props)
+    @conn = case @driver
+            when String
+              # NameError will be thrown for invalid drivers
+              Java::JavaClass.for_name @driver
+              Java::java.sql.DriverManager.get_connection(@url, props)
+            when Class
+              @driver.new.connect(@url, props)
+            else
+              raise ArgumentError.new('Invalid type for :driver')
+            end
     @spool = StatementPool.send :new, self
     @bstmt = nil
     @fetch_size = nil
