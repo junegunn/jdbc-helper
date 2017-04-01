@@ -156,7 +156,7 @@ class Connection
 
     props = Java::java.util.Properties.new
     args.each do |k, v|
-      props.setProperty(k.to_s, v.to_s) if v
+      props.setProperty(k.to_s, v.to_s) unless v.nil?
     end
 
     @conn = case @driver
