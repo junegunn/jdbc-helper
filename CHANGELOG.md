@@ -1,3 +1,7 @@
+### 0.8.3
+
+* Fixed not to ignore property with false value
+
 ### 0.8.2
 
 * Allow :driver parameter to be an object that responds to `connect`
