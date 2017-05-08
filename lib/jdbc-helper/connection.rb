@@ -145,6 +145,10 @@ class Connection
 
     @driver = args.delete :driver
     @url = args.delete :url
+    if args.has_key? :query
+      @url += "?#{args[:query].to_query}"
+      args.delete :query
+    end
 
     timeout = args.has_key?(:timeout) ? args.delete(:timeout) : Constants::DEFAULT_LOGIN_TIMEOUT
     if timeout
